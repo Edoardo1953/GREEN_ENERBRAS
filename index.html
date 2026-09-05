@@ -17,7 +17,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <!-- Auth Logic -->
-    <script src="auth.js?v=90"></script>
+    <script src="auth.js?v=95"></script>
 
     <style>
         .landing-container {
@@ -135,6 +135,9 @@
                 });
             });
         }
+
+        // Reset eventuale view mode precedente
+        sessionStorage.removeItem('green_enerbras_view_mode');
 
         // Se c'è ?logout=true nell'URL, forza il logout
         if (window.location.search.includes('logout=true')) {

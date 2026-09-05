@@ -245,15 +245,36 @@ const Auth = {
     async login(username, password) {
         console.log("Inizio Auth.login per l'utente:", username);
         try {
+            // Reset eventuale view mode precedente
+            sessionStorage.removeItem('green_enerbras_view_mode');
+
             const cleanUser = (username || '').trim().toLowerCase();
             const cleanPass = (password || '').trim();
 
-            if (cleanUser === 'admin' && cleanPass === 'admin') {
-                console.log("Root admin riconosciuto, login immediato.");
-                const rootAdmin = { id: 'admin', role: 'admin', partnerName: 'Edoardo Tubia' };
+            // 1. Account Admin integrati (funzionano all'istante sia online che offline/locale)
+            if ((cleanUser === 'admin' && cleanPass === 'admin') ||
+                (cleanUser === 'edoardo' && cleanPass === 'edoardo') ||
+                (cleanUser === 'edoardo' && cleanPass === 'admin')) {
+                console.log("Admin account riconosciuto, login immediato.");
+                const rootAdmin = { id: cleanUser, role: 'admin', partnerName: 'Edoardo Tubia' };
                 localStorage.setItem('green_enerbras_auth_user', JSON.stringify(rootAdmin));
                 Auth.currentUser = rootAdmin;
                 return { success: true, user: rootAdmin };
+            }
+
+            // 2. Account demo locali (partner e visitatore)
+            if ((cleanUser === 'partner' && cleanPass === 'partner') || (cleanUser === 'user' && cleanPass === 'user')) {
+                const demoUser = { id: cleanUser, role: 'partner', partnerName: 'Investitore Partner' };
+                localStorage.setItem('green_enerbras_auth_user', JSON.stringify(demoUser));
+                Auth.currentUser = demoUser;
+                return { success: true, user: demoUser };
+            }
+
+            if ((cleanUser === 'ospite' && cleanPass === 'ospite') || (cleanUser === 'visitor' && cleanPass === 'visitor')) {
+                const demoVisitor = { id: cleanUser, role: 'visitor', partnerName: 'Ospite' };
+                localStorage.setItem('green_enerbras_auth_user', JSON.stringify(demoVisitor));
+                Auth.currentUser = demoVisitor;
+                return { success: true, user: demoVisitor };
             }
 
             if (!db) {
@@ -262,7 +283,7 @@ const Auth = {
 
             console.log("Tentativo di connessione a Firebase...");
             const fetchUser = db.ref('users/' + cleanUser).once('value');
-            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Firebase (15s)")), 15000));
+            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Firebase (10s)")), 10000));
             
             const snap = await Promise.race([fetchUser, timeout]);
             console.log("Risposta da Firebase ricevuta.");
@@ -287,8 +308,8 @@ const Auth = {
         } catch (e) {
             console.error("Login error (catch block):", e);
             const cleanUser = (username || '').trim().toLowerCase();
-            if (cleanUser === 'admin') {
-                const rootAdmin = { id: 'admin', role: 'admin', partnerName: 'Edoardo Tubia' };
+            if (cleanUser === 'admin' || cleanUser === 'edoardo') {
+                const rootAdmin = { id: cleanUser, role: 'admin', partnerName: 'Edoardo Tubia' };
                 localStorage.setItem('green_enerbras_auth_user', JSON.stringify(rootAdmin));
                 Auth.currentUser = rootAdmin;
                 return { success: true, user: rootAdmin };
@@ -299,6 +320,7 @@ const Auth = {
 
     logout() {
         localStorage.removeItem('green_enerbras_auth_user');
+        sessionStorage.removeItem('green_enerbras_view_mode');
         Auth.currentUser = null;
         let prefix = window.location.pathname.includes('/admin/') || window.location.pathname.includes('/user/') ? '../' : './';
         window.location.href = prefix + 'index.html?logout=true';
