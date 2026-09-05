@@ -4,7 +4,10 @@ let currentImpiantoId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     // Set last updated date
-    document.getElementById('last-updated').textContent = APP_DATA.lastUpdated;
+    const lastUpdatedEl = document.getElementById('last-updated');
+    if (lastUpdatedEl && typeof APP_DATA !== 'undefined' && APP_DATA.lastUpdated) {
+        lastUpdatedEl.textContent = APP_DATA.lastUpdated;
+    }
     
     // Carica documenti da storage
     loadImpiantiDocuments();

@@ -11,7 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <link rel="stylesheet" href="../style.css?v=60">
+    <link rel="stylesheet" href="../style.css?v=70">
 
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
@@ -19,7 +19,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <script src="../shared/firebase_config.js"></script>
-    <script src="../auth.js?v=60"></script>
+    <script src="../auth.js?v=70"></script>
     <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
@@ -283,6 +283,11 @@
                 </div>
                 <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; margin-top: 1rem; border: 1px dashed #3b82f6; justify-content: center;"><i class="fa-solid fa-right-left"></i> <span data-i18n="nav_switch_user">Switch to USER</span></a>
                 <a href="#" onclick="Auth.logout()" class="nav-item" style="color: #ef4444; margin-top: 0.5rem; justify-content: center;"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="nav_logout">Esci</span></a>
+                            <div class="update-info">
+                    <p data-i18n="last_updated">Ultimo aggiornamento:</p>
+                    <p id="last-updated" class="text-bold">--/--/----</p>
+                    <button class="btn-refresh" onclick="if(window.location.hostname==='localhost'){fetch('http://localhost:8081/update').then(function(r){window.location.reload()}).catch(function(){alert('Errore: Il server locale non è avviato.')})}else{window.location.reload(true)}" data-i18n="btn_refresh"><i class="fa-solid fa-rotate-right"></i> Ricarica Dati</button>
+                </div>
             </nav>
         </aside>
 
@@ -395,7 +400,7 @@
     <!-- Data script -->
     <script src="../data.js"></script>
     <!-- App logic -->
-    <script src="impianti_app.js?v=20260705i"></script>
+    <script src="impianti_app.js?v=70i"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>

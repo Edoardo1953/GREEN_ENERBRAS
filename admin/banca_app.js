@@ -6,8 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const formatCurrency = (num) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(num);
 
-    if (APP_DATA.lastUpdated) {
-        document.getElementById('last-updated').textContent = APP_DATA.lastUpdated;
+    const lastUpdatedEl = document.getElementById('last-updated');
+    if (lastUpdatedEl && APP_DATA.lastUpdated) {
+        lastUpdatedEl.textContent = APP_DATA.lastUpdated;
     }
 
     // 1. Calculate Bank Balances

@@ -36,8 +36,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const expensesKpi = document.getElementById('kpi-expenses');
     if(expensesKpi) expensesKpi.textContent = formatCurrency(totalExpenses);
 
-    if (APP_DATA.lastUpdated) {
-        document.getElementById('last-updated').textContent = APP_DATA.lastUpdated;
+    const lastUpdatedEl = document.getElementById('last-updated');
+    if (lastUpdatedEl && APP_DATA.lastUpdated) {
+        lastUpdatedEl.textContent = APP_DATA.lastUpdated;
     }
 
     // 3. Sort Partners (GP first, then LPs by detention DESC)

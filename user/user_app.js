@@ -25,8 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('user-name-nav').textContent = currentUserName;
     document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserName)}&background=10b981&color=fff`;
     
-    if (APP_DATA.lastUpdated) {
-        document.getElementById('last-updated').textContent = APP_DATA.lastUpdated;
+    const lastUpdatedEl = document.getElementById('last-updated');
+    if (lastUpdatedEl && APP_DATA.lastUpdated) {
+        lastUpdatedEl.textContent = APP_DATA.lastUpdated;
     }
 
     // 4. Find User Data

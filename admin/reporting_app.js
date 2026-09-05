@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function setupDate() {
     const today = new Date();
-    document.getElementById('last-updated').textContent = today.toLocaleDateString('it-IT');
+    const lastUpdatedEl = document.getElementById('last-updated');
+    if (lastUpdatedEl) lastUpdatedEl.textContent = today.toLocaleDateString('it-IT');
 }
 
 function toggleFolder(contentId) {

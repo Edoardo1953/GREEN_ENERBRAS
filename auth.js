@@ -152,10 +152,13 @@ const Auth = {
             db.ref('settings/pageVisibility').on('value', (snap) => {
                 if (snap.exists()) {
                     const val = snap.val();
-                    Auth.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...val };
+                    const cachedVis = localStorage.getItem('green_enerbras_page_visibility');
+                    let localObj = {};
+                    if (cachedVis) {
+                        try { localObj = JSON.parse(cachedVis); } catch(e) {}
+                    }
+                    Auth.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...val, ...localObj };
                     localStorage.setItem('green_enerbras_page_visibility', JSON.stringify(Auth.pageVisibility));
-                } else {
-                    db.ref('settings/pageVisibility').set(DEFAULT_PAGE_VISIBILITY).catch(() => {});
                 }
                 
                 Auth.updateSidebarVisibilityUI();
@@ -169,6 +172,8 @@ const Auth = {
                         window.location.href = prefix + 'user/dashboard.html';
                     }
                 }
+            }, (err) => {
+                console.warn("Firebase visibility listener error:", err);
             });
         } catch(e) {
             console.warn("Errore listener visibilità Firebase:", e);
@@ -184,7 +189,7 @@ const Auth = {
         }
         if (!pageKey) return false;
 
-        // Anti-bounce / anti-double-click guard (prevents duplicate execution from inline onclick + document listener)
+        // Anti-bounce guard
         window._lastToggleTimes = window._lastToggleTimes || {};
         const now = Date.now();
         if (window._lastToggleTimes[pageKey] && (now - window._lastToggleTimes[pageKey] < 450)) {
@@ -208,13 +213,14 @@ const Auth = {
 
         try {
             if (db) {
-                await db.ref('settings/pageVisibility/' + pageKey).set(newVal);
-                console.log("Firebase pageVisibility saved for", pageKey, ":", newVal);
+                db.ref('settings/pageVisibility/' + pageKey).set(newVal).catch((err) => {
+                    console.warn("Salvataggio Firebase non riuscito, fallback locale attivo:", err);
+                });
             }
             return true;
         } catch (e) {
-            console.error("Errore salvataggio visibilità Firebase:", e);
-            return false;
+            console.warn("Errore salvataggio visibilità:", e);
+            return true;
         }
     },
 
@@ -387,17 +393,17 @@ const Auth = {
                 btn.setAttribute('data-visible', isVisible ? 'true' : 'false');
                 if (isVisible) {
                     btn.className = 'nav-eye-btn visible';
-                    btn.style.color = '#10b981';
-                    btn.style.borderColor = 'rgba(16, 185, 129, 0.6)';
-                    btn.style.background = 'rgba(16, 185, 129, 0.2)';
-                    btn.innerHTML = '<i class="fa-solid fa-eye" style="color: #10b981; font-size: 1.1rem;"></i>';
+                    btn.style.setProperty('color', '#10b981', 'important');
+                    btn.style.setProperty('border-color', 'rgba(16, 185, 129, 0.6)', 'important');
+                    btn.style.setProperty('background', 'rgba(16, 185, 129, 0.2)', 'important');
+                    btn.innerHTML = '<i class="fa-solid fa-eye" style="color: #10b981 !important; font-size: 1.1rem;"></i>';
                     btn.title = 'Visibile a USER (Clicca per bloccare)';
                 } else {
                     btn.className = 'nav-eye-btn hidden';
-                    btn.style.color = '#ef4444';
-                    btn.style.borderColor = 'rgba(239, 68, 68, 0.6)';
-                    btn.style.background = 'rgba(239, 68, 68, 0.2)';
-                    btn.innerHTML = '<i class="fa-solid fa-eye-slash" style="color: #ef4444; font-size: 1.1rem;"></i>';
+                    btn.style.setProperty('color', '#ef4444', 'important');
+                    btn.style.setProperty('border-color', 'rgba(239, 68, 68, 0.6)', 'important');
+                    btn.style.setProperty('background', 'rgba(239, 68, 68, 0.2)', 'important');
+                    btn.innerHTML = '<i class="fa-solid fa-eye-slash" style="color: #ef4444 !important; font-size: 1.1rem;"></i>';
                     btn.title = 'Nascosto a USER (Clicca per consentire)';
                 }
             }

@@ -34,8 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return '€ ' + parts.join(',');
     };
     
-    if (APP_DATA.lastUpdated) {
-        document.getElementById('last-updated').textContent = APP_DATA.lastUpdated;
+    const lastUpdatedEl = document.getElementById('last-updated');
+    if (lastUpdatedEl && APP_DATA.lastUpdated) {
+        lastUpdatedEl.textContent = APP_DATA.lastUpdated;
     }
 
     window.currentExchangeRate = 5.50; // Fallback default
