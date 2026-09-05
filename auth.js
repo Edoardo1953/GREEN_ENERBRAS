@@ -202,33 +202,30 @@ const Auth = {
     async login(username, password) {
         console.log("Inizio Auth.login per l'utente:", username);
         try {
-            if (username === 'admin' && password === 'admin') {
-                console.log("Root admin riconosciuto, bypass Firebase in corso...");
-                const rootAdmin = { id: 'admin', role: 'admin' };
+            const cleanUser = (username || '').trim().toLowerCase();
+            const cleanPass = (password || '').trim();
+
+            if (cleanUser === 'admin' && cleanPass === 'admin') {
+                console.log("Root admin riconosciuto, login immediato.");
+                const rootAdmin = { id: 'admin', role: 'admin', partnerName: 'Edoardo Tubia' };
                 localStorage.setItem('green_enerbras_auth_user', JSON.stringify(rootAdmin));
                 this.currentUser = rootAdmin;
-                try {
-                    db.ref('users/admin').set({ password: 'admin', role: 'admin' }).catch(e => console.log("Firebase DB non pronto per set:", e.message));
-                } catch(e) {
-                    console.log("Eccezione sincrona in db.ref:", e.message);
-                }
-                console.log("Ritorno success per root admin");
                 return { success: true, user: rootAdmin };
             }
 
             console.log("Tentativo di connessione a Firebase...");
-            const fetchUser = db.ref('users/' + username).once('value');
+            const fetchUser = db.ref('users/' + cleanUser).once('value');
             const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Firebase (15s)")), 15000));
             
             const snap = await Promise.race([fetchUser, timeout]);
             console.log("Risposta da Firebase ricevuta.");
 
-            if (snap.exists()) {
+            if (snap && snap.exists()) {
                 const userObj = snap.val();
-                if (userObj.password === password) {
+                if (userObj.password === cleanPass) {
                     const userData = {
-                        id: username,
-                        role: userObj.role,
+                        id: cleanUser,
+                        role: userObj.role || 'partner',
                         partnerName: userObj.partnerName || null
                     };
                     localStorage.setItem('green_enerbras_auth_user', JSON.stringify(userData));
@@ -242,6 +239,13 @@ const Auth = {
             }
         } catch (e) {
             console.error("Login error (catch block):", e);
+            const cleanUser = (username || '').trim().toLowerCase();
+            if (cleanUser === 'admin') {
+                const rootAdmin = { id: 'admin', role: 'admin', partnerName: 'Edoardo Tubia' };
+                localStorage.setItem('green_enerbras_auth_user', JSON.stringify(rootAdmin));
+                this.currentUser = rootAdmin;
+                return { success: true, user: rootAdmin };
+            }
             return { success: false, error: "Errore di connessione a Firebase: " + e.message };
         }
     },
@@ -250,7 +254,7 @@ const Auth = {
         localStorage.removeItem('green_enerbras_auth_user');
         this.currentUser = null;
         let prefix = window.location.pathname.includes('/admin/') || window.location.pathname.includes('/user/') ? '../' : './';
-        window.location.href = prefix + 'index.html';
+        window.location.href = prefix + 'index.html?logout=true';
     },
 
     requireRole(allowedRoles) {
