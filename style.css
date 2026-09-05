@@ -121,39 +121,52 @@ body {
 }
 
 .nav-eye-btn {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 8px;
-    padding: 0.5rem 0.65rem;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    line-height: 1;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-    z-index: 10;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-radius: 8px !important;
+    padding: 0.45rem 0.65rem !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.05rem !important;
+    line-height: 1 !important;
+    transition: all 0.2s ease !important;
+    flex-shrink: 0 !important;
+    z-index: 100 !important;
+    user-select: none !important;
+    pointer-events: auto !important;
 }
 
 .nav-eye-btn:hover {
-    transform: scale(1.18);
-    background: rgba(255, 255, 255, 0.18);
-    box-shadow: 0 0 12px rgba(0,0,0,0.4);
+    transform: scale(1.2) !important;
+    box-shadow: 0 0 14px rgba(0,0,0,0.5) !important;
 }
 
-.nav-eye-btn.visible {
-    color: #10b981;
-    border-color: rgba(16, 185, 129, 0.5);
-    background: rgba(16, 185, 129, 0.15);
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
+.nav-eye-btn.visible,
+.nav-eye-btn[data-visible="true"] {
+    color: #10b981 !important;
+    border-color: rgba(16, 185, 129, 0.6) !important;
+    background: rgba(16, 185, 129, 0.2) !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3) !important;
 }
 
-.nav-eye-btn.hidden {
-    color: #ef4444;
-    border-color: rgba(239, 68, 68, 0.5);
-    background: rgba(239, 68, 68, 0.15);
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
+.nav-eye-btn.visible i,
+.nav-eye-btn[data-visible="true"] i {
+    color: #10b981 !important;
+}
+
+.nav-eye-btn.hidden,
+.nav-eye-btn[data-visible="false"] {
+    color: #ef4444 !important;
+    border-color: rgba(239, 68, 68, 0.6) !important;
+    background: rgba(239, 68, 68, 0.2) !important;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.3) !important;
+}
+
+.nav-eye-btn.hidden i,
+.nav-eye-btn[data-visible="false"] i {
+    color: #ef4444 !important;
 }
 
 .nav-visibility-header {

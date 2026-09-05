@@ -12,13 +12,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     
-    <link rel="stylesheet" href="../style.css?v=40">
+    <link rel="stylesheet" href="../style.css?v=50">
 
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="../auth.js?v=40"></script>
+    <script src="../auth.js?v=50"></script>
     <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
     <script src="../i18n.js?v=9"></script>
 </head>
@@ -30,55 +30,50 @@
                 <img src="Loghi/Green Enerbras solo logo.png" alt="Logo" style="height: 55px; filter: grayscale(1) invert(1) brightness(10); mix-blend-mode: screen;">
                 <h2 style="margin: 0; font-size: 1.1rem;">GREEN ENERBRAS ONE</h2>
             </div>
-                        <nav class="nav-menu">
+                                    <nav class="nav-menu">
                 <div class="nav-visibility-header">
                     <span data-i18n="nav_menu_title">PAGINA</span>
                     <span class="user-view-col-header" data-i18n="nav_col_partner_view"><i class="fa-solid fa-users-viewfinder"></i> USER VIEW</span>
                 </div>
                 <div class="nav-item-row" data-page="azionariato">
                     <a href="index.html" class="nav-item"><i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_azionariato">Azionariato (LPs)</span></a>
-                    <button type="button" class="nav-eye-btn" data-page="azionariato" onclick="Auth.togglePageVisibility('azionariato')" title="USER VIEW"><i class="fa-solid fa-eye-slash"></i></button>
+                    <button type="button" class="nav-eye-btn hidden" data-page="azionariato" data-visible="false" onclick="Auth.togglePageVisibility('azionariato')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
                 </div>
                 <div class="nav-item-row" data-page="banca">
                     <a href="banca.html" class="nav-item active"><i class="fa-solid fa-building-columns"></i> <span data-i18n="nav_conto">Conto Bancario</span></a>
-                    <button type="button" class="nav-eye-btn" data-page="banca" onclick="Auth.togglePageVisibility('banca')" title="USER VIEW"><i class="fa-solid fa-eye-slash"></i></button>
+                    <button type="button" class="nav-eye-btn hidden" data-page="banca" data-visible="false" onclick="Auth.togglePageVisibility('banca')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
                 </div>
                 <div class="nav-item-row" data-page="produzione">
                     <a href="produzione.html" class="nav-item"><i class="fa-solid fa-solar-panel"></i> <span data-i18n="nav_produzione">Produzione Energia</span></a>
-                    <button type="button" class="nav-eye-btn" data-page="produzione" onclick="Auth.togglePageVisibility('produzione')" title="USER VIEW"><i class="fa-solid fa-eye"></i></button>
+                    <button type="button" class="nav-eye-btn visible" data-page="produzione" data-visible="true" onclick="Auth.togglePageVisibility('produzione')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
                 </div>
                 <div class="nav-item-row" data-page="vendite">
                     <a href="vendite.html" class="nav-item"><i class="fa-solid fa-money-bill-trend-up"></i> <span data-i18n="nav_vendite">Vendite Energia</span></a>
-                    <button type="button" class="nav-eye-btn" data-page="vendite" onclick="Auth.togglePageVisibility('vendite')" title="USER VIEW"><i class="fa-solid fa-eye"></i></button>
+                    <button type="button" class="nav-eye-btn visible" data-page="vendite" data-visible="true" onclick="Auth.togglePageVisibility('vendite')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
                 </div>
                 <div class="nav-item-row" data-page="impianti">
                     <a href="impianti.html" class="nav-item"><i class="fa-solid fa-map-location-dot"></i> <span data-i18n="nav_impianti">Impianti e Mappa</span></a>
-                    <button type="button" class="nav-eye-btn" data-page="impianti" onclick="Auth.togglePageVisibility('impianti')" title="USER VIEW"><i class="fa-solid fa-eye"></i></button>
+                    <button type="button" class="nav-eye-btn visible" data-page="impianti" data-visible="true" onclick="Auth.togglePageVisibility('impianti')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
                 </div>
                 <div class="nav-item-row" data-page="reporting">
                     <a href="reporting.html" class="nav-item"><i class="fa-solid fa-file-pdf"></i> <span data-i18n="nav_reporting">Reporting Partners</span></a>
-                    <button type="button" class="nav-eye-btn" data-page="reporting" onclick="Auth.togglePageVisibility('reporting')" title="USER VIEW"><i class="fa-solid fa-eye"></i></button>
+                    <button type="button" class="nav-eye-btn visible" data-page="reporting" data-visible="true" onclick="Auth.togglePageVisibility('reporting')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
                 </div>
                 <div class="nav-item-row" data-page="tristar">
                     <a href="tristar.html" class="nav-item"><i class="fa-solid fa-file-contract"></i> <span data-i18n="nav_tristar">TRI STAR</span></a>
-                    <button type="button" class="nav-eye-btn" data-page="tristar" onclick="Auth.togglePageVisibility('tristar')" title="USER VIEW"><i class="fa-solid fa-eye"></i></button>
+                    <button type="button" class="nav-eye-btn visible" data-page="tristar" data-visible="true" onclick="Auth.togglePageVisibility('tristar')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
                 </div>
                 <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.8rem 0;"></div>
                 <div class="nav-item-row" data-page="strumenti">
                     <a href="strumenti.html" class="nav-item"><i class="fa-solid fa-toolbox"></i> <span data-i18n="nav_strumenti">Strumenti</span></a>
-                    <button type="button" class="nav-eye-btn" data-page="strumenti" onclick="Auth.togglePageVisibility('strumenti')" title="USER VIEW"><i class="fa-solid fa-eye-slash"></i></button>
+                    <button type="button" class="nav-eye-btn hidden" data-page="strumenti" data-visible="false" onclick="Auth.togglePageVisibility('strumenti')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
                 </div>
                 <div class="nav-item-row" data-page="risultati">
                     <a href="risultati.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> <span data-i18n="menu_risultati">Risultati</span></a>
-                    <button type="button" class="nav-eye-btn" data-page="risultati" onclick="Auth.togglePageVisibility('risultati')" title="USER VIEW"><i class="fa-solid fa-eye-slash"></i></button>
+                    <button type="button" class="nav-eye-btn hidden" data-page="risultati" data-visible="false" onclick="Auth.togglePageVisibility('risultati')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
                 </div>
                 <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; margin-top: 1rem; border: 1px dashed #3b82f6; justify-content: center;"><i class="fa-solid fa-right-left"></i> <span data-i18n="nav_switch_user">Switch to USER</span></a>
                 <a href="#" onclick="Auth.logout()" class="nav-item" style="color: #ef4444; margin-top: 0.5rem; justify-content: center;"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="nav_logout">Esci</span></a>
-            <div class="update-info">
-                <p data-i18n="last_updated">Ultimo aggiornamento:</p>
-                <p id="last-updated" class="text-bold">--/--/----</p>
-                <button class="btn-refresh" onclick="if(window.location.hostname==='localhost'){if(window.location.hostname==='localhost'){fetch('http://localhost:8081/update').then(function(r){window.location.reload()}).catch(function(){alert('Errore: Il server locale non è avviato.')})}else{window.location.reload(true)}}else{window.location.reload(true)}" data-i18n="btn_refresh"><i class="fa-solid fa-rotate-right"></i> Ricarica Dati</button>
-            </div>
             </nav>
         </aside>
 
