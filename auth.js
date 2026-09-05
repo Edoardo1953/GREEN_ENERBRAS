@@ -121,45 +121,144 @@ function showToastNotification(pageKey, isVisible) {
     }, 3200);
 }
 
+function getStoredAuthUser() {
+    try {
+        const stored = localStorage.getItem('green_enerbras_auth_user');
+        if (stored) return JSON.parse(stored);
+    } catch(e) {}
+
+    try {
+        if (window.name && window.name.startsWith('{')) {
+            const data = JSON.parse(window.name);
+            if (data && data.user) return data.user;
+        }
+    } catch(e) {}
+
+    // Se l'app viene aperta direttamente da file locale su una pagina admin, assegna root admin come default
+    if (window.location.protocol === 'file:' && window.location.pathname.toLowerCase().includes('/admin/')) {
+        return { id: 'admin', role: 'admin', partnerName: 'Edoardo Tubia' };
+    }
+
+    return null;
+}
+
+function setStoredAuthUser(userData) {
+    try {
+        if (userData) {
+            localStorage.setItem('green_enerbras_auth_user', JSON.stringify(userData));
+        } else {
+            localStorage.removeItem('green_enerbras_auth_user');
+        }
+    } catch(e) {}
+
+    try {
+        let nameObj = {};
+        if (window.name && window.name.startsWith('{')) {
+            try { nameObj = JSON.parse(window.name); } catch(e) {}
+        }
+        if (userData) {
+            nameObj.user = userData;
+        } else {
+            delete nameObj.user;
+        }
+        window.name = JSON.stringify(nameObj);
+    } catch(e) {}
+}
+
+function getStoredVisibility() {
+    try {
+        const stored = localStorage.getItem('green_enerbras_page_visibility');
+        if (stored) return JSON.parse(stored);
+    } catch(e) {}
+
+    try {
+        if (window.name && window.name.startsWith('{')) {
+            const data = JSON.parse(window.name);
+            if (data && data.visibility) return data.visibility;
+        }
+    } catch(e) {}
+
+    return DEFAULT_PAGE_VISIBILITY;
+}
+
+function setStoredVisibility(vis) {
+    try {
+        localStorage.setItem('green_enerbras_page_visibility', JSON.stringify(vis));
+    } catch(e) {}
+
+    try {
+        let nameObj = {};
+        if (window.name && window.name.startsWith('{')) {
+            try { nameObj = JSON.parse(window.name); } catch(e) {}
+        }
+        nameObj.visibility = vis;
+        window.name = JSON.stringify(nameObj);
+    } catch(e) {}
+}
+
+function getStoredViewMode() {
+    try {
+        const mode = sessionStorage.getItem('green_enerbras_view_mode');
+        if (mode) return mode;
+    } catch(e) {}
+
+    try {
+        if (window.name && window.name.startsWith('{')) {
+            const data = JSON.parse(window.name);
+            if (data && data.viewMode) return data.viewMode;
+        }
+    } catch(e) {}
+
+    return null;
+}
+
+function setStoredViewMode(mode) {
+    try {
+        if (mode) {
+            sessionStorage.setItem('green_enerbras_view_mode', mode);
+        } else {
+            sessionStorage.removeItem('green_enerbras_view_mode');
+        }
+    } catch(e) {}
+
+    try {
+        let nameObj = {};
+        if (window.name && window.name.startsWith('{')) {
+            try { nameObj = JSON.parse(window.name); } catch(e) {}
+        }
+        if (mode) {
+            nameObj.viewMode = mode;
+        } else {
+            delete nameObj.viewMode;
+        }
+        window.name = JSON.stringify(nameObj);
+    } catch(e) {}
+}
+
 const Auth = {
     currentUser: null,
     pageVisibility: { ...DEFAULT_PAGE_VISIBILITY },
 
     init() {
-        const storedUser = localStorage.getItem('green_enerbras_auth_user');
-        if (storedUser) {
-            try {
-                this.currentUser = JSON.parse(storedUser);
-            } catch (e) {
-                console.error("Errore parsing utente", e);
-                localStorage.removeItem('green_enerbras_auth_user');
-            }
-        }
-
-        const cachedVis = localStorage.getItem('green_enerbras_page_visibility');
-        if (cachedVis) {
-            try {
-                this.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...JSON.parse(cachedVis) };
-            } catch (e) {}
-        }
-
+        this.currentUser = getStoredAuthUser();
+        this.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...getStoredVisibility() };
         this.initVisibilityListener();
     },
 
     isUserView() {
         if (!Auth.currentUser) return true;
         if (Auth.currentUser.role !== 'admin') return true;
-        return sessionStorage.getItem('green_enerbras_view_mode') === 'user';
+        return getStoredViewMode() === 'user';
     },
 
     switchToUserView() {
-        sessionStorage.setItem('green_enerbras_view_mode', 'user');
+        setStoredViewMode('user');
         const prefix = window.location.pathname.includes('/admin/') ? '../' : './';
         window.location.href = prefix + 'user/dashboard.html';
     },
 
     switchToAdminView() {
-        sessionStorage.removeItem('green_enerbras_view_mode');
+        setStoredViewMode(null);
         const prefix = window.location.pathname.includes('/user/') ? '../admin/' : './';
         window.location.href = prefix + 'index.html';
     },
@@ -170,13 +269,9 @@ const Auth = {
             db.ref('settings/pageVisibility').on('value', (snap) => {
                 if (snap.exists()) {
                     const val = snap.val();
-                    const cachedVis = localStorage.getItem('green_enerbras_page_visibility');
-                    let localObj = {};
-                    if (cachedVis) {
-                        try { localObj = JSON.parse(cachedVis); } catch(e) {}
-                    }
-                    Auth.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...val, ...localObj };
-                    localStorage.setItem('green_enerbras_page_visibility', JSON.stringify(Auth.pageVisibility));
+                    const localVis = getStoredVisibility();
+                    Auth.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...val, ...localVis };
+                    setStoredVisibility(Auth.pageVisibility);
                 }
                 
                 Auth.updateSidebarVisibilityUI();
@@ -246,7 +341,7 @@ const Auth = {
         console.log("Inizio Auth.login per l'utente:", username);
         try {
             // Reset eventuale view mode precedente
-            sessionStorage.removeItem('green_enerbras_view_mode');
+            setStoredViewMode(null);
 
             const cleanUser = (username || '').trim().toLowerCase();
             const cleanPass = (password || '').trim();
@@ -257,7 +352,7 @@ const Auth = {
                 (cleanUser === 'edoardo' && cleanPass === 'admin')) {
                 console.log("Admin account riconosciuto, login immediato.");
                 const rootAdmin = { id: cleanUser, role: 'admin', partnerName: 'Edoardo Tubia' };
-                localStorage.setItem('green_enerbras_auth_user', JSON.stringify(rootAdmin));
+                setStoredAuthUser(rootAdmin);
                 Auth.currentUser = rootAdmin;
                 return { success: true, user: rootAdmin };
             }
@@ -265,14 +360,14 @@ const Auth = {
             // 2. Account demo locali (partner e visitatore)
             if ((cleanUser === 'partner' && cleanPass === 'partner') || (cleanUser === 'user' && cleanPass === 'user')) {
                 const demoUser = { id: cleanUser, role: 'partner', partnerName: 'Investitore Partner' };
-                localStorage.setItem('green_enerbras_auth_user', JSON.stringify(demoUser));
+                setStoredAuthUser(demoUser);
                 Auth.currentUser = demoUser;
                 return { success: true, user: demoUser };
             }
 
             if ((cleanUser === 'ospite' && cleanPass === 'ospite') || (cleanUser === 'visitor' && cleanPass === 'visitor')) {
                 const demoVisitor = { id: cleanUser, role: 'visitor', partnerName: 'Ospite' };
-                localStorage.setItem('green_enerbras_auth_user', JSON.stringify(demoVisitor));
+                setStoredAuthUser(demoVisitor);
                 Auth.currentUser = demoVisitor;
                 return { success: true, user: demoVisitor };
             }
@@ -296,7 +391,7 @@ const Auth = {
                         role: userObj.role || 'partner',
                         partnerName: userObj.partnerName || null
                     };
-                    localStorage.setItem('green_enerbras_auth_user', JSON.stringify(userData));
+                    setStoredAuthUser(userData);
                     Auth.currentUser = userData;
                     return { success: true, user: userData };
                 } else {
@@ -310,7 +405,7 @@ const Auth = {
             const cleanUser = (username || '').trim().toLowerCase();
             if (cleanUser === 'admin' || cleanUser === 'edoardo') {
                 const rootAdmin = { id: cleanUser, role: 'admin', partnerName: 'Edoardo Tubia' };
-                localStorage.setItem('green_enerbras_auth_user', JSON.stringify(rootAdmin));
+                setStoredAuthUser(rootAdmin);
                 Auth.currentUser = rootAdmin;
                 return { success: true, user: rootAdmin };
             }
@@ -319,14 +414,17 @@ const Auth = {
     },
 
     logout() {
-        localStorage.removeItem('green_enerbras_auth_user');
-        sessionStorage.removeItem('green_enerbras_view_mode');
+        setStoredAuthUser(null);
+        setStoredViewMode(null);
         Auth.currentUser = null;
         let prefix = window.location.pathname.includes('/admin/') || window.location.pathname.includes('/user/') ? '../' : './';
         window.location.href = prefix + 'index.html?logout=true';
     },
 
     requireRole(allowedRoles) {
+        if (!Auth.currentUser) {
+            Auth.currentUser = getStoredAuthUser();
+        }
         if (!Auth.currentUser) {
             Auth.logout();
             return false;
