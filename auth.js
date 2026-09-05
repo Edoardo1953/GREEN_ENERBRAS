@@ -136,12 +136,6 @@ const Auth = {
             }
         }
 
-        // Se ci troviamo in un percorso admin e currentUser non è impostato, impostiamo default admin
-        if (!this.currentUser && window.location.pathname.includes('/admin/')) {
-            this.currentUser = { id: 'admin', role: 'admin' };
-            localStorage.setItem('green_enerbras_auth_user', JSON.stringify(this.currentUser));
-        }
-
         const cachedVis = localStorage.getItem('green_enerbras_page_visibility');
         if (cachedVis) {
             try {
@@ -183,16 +177,6 @@ const Auth = {
 
     async togglePageVisibility(pageKey) {
         if (!pageKey) return false;
-        
-        // Failsafe permessi admin
-        if (!this.currentUser || this.currentUser.role !== 'admin') {
-            if (window.location.pathname.includes('/admin/')) {
-                this.currentUser = { id: 'admin', role: 'admin' };
-                localStorage.setItem('green_enerbras_auth_user', JSON.stringify(this.currentUser));
-            } else {
-                return false;
-            }
-        }
 
         const currentVal = this.pageVisibility[pageKey] !== false;
         const newVal = !currentVal;
@@ -271,13 +255,8 @@ const Auth = {
 
     requireRole(allowedRoles) {
         if (!this.currentUser) {
-            if (window.location.pathname.includes('/admin/')) {
-                this.currentUser = { id: 'admin', role: 'admin' };
-                localStorage.setItem('green_enerbras_auth_user', JSON.stringify(this.currentUser));
-            } else {
-                this.logout();
-                return false;
-            }
+            this.logout();
+            return false;
         }
         if (!allowedRoles.includes(this.currentUser.role)) {
             alert("Non hai i permessi per accedere a questa pagina.");
@@ -358,8 +337,8 @@ const Auth = {
     },
 
     updateSidebarVisibilityUI() {
-        const isAdmin = !this.currentUser || this.currentUser.role === 'admin' || window.location.pathname.includes('/admin/');
-        const isUser = this.currentUser && this.currentUser.role !== 'admin' && !window.location.pathname.includes('/admin/');
+        const isAdmin = this.currentUser && this.currentUser.role === 'admin';
+        const isUser = this.currentUser && this.currentUser.role !== 'admin';
 
         // 1. Header colonna visibilità
         const header = document.querySelector('.nav-visibility-header');
@@ -401,6 +380,12 @@ const Auth = {
                     row.style.display = isVisible ? 'flex' : 'none';
                 }
             });
+
+            // Nascondi pulsanti switch riservati ad admin
+            document.querySelectorAll('a[data-i18n="nav_switch_user"], a[data-i18n="nav_switch_admin"]').forEach(el => {
+                el.style.display = 'none';
+                if (el.closest('.nav-item-row')) el.closest('.nav-item-row').style.display = 'none';
+            });
         }
     }
 };
@@ -408,11 +393,12 @@ const Auth = {
 Auth.init();
 
 document.addEventListener('DOMContentLoaded', () => {
-    const isUserRole = Auth.currentUser && Auth.currentUser.role !== 'admin' && !window.location.pathname.includes('/admin/');
+    const isAdmin = Auth.currentUser && Auth.currentUser.role === 'admin';
+    const isUser = Auth.currentUser && Auth.currentUser.role !== 'admin';
     const isInsideAdmin = window.location.pathname.includes('/admin/');
 
     // Admin: Show "Switch to ADMIN" button if in user area
-    if (Auth.currentUser && Auth.currentUser.role === 'admin') {
+    if (isAdmin) {
         const switchBtn = document.getElementById('switch-admin-btn');
         if (switchBtn) {
             switchBtn.style.display = 'flex';
@@ -420,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // User viewing shared admin page
-    if (isUserRole && isInsideAdmin) {
+    if (isUser && isInsideAdmin) {
         const sidebarNav = document.querySelector('.nav-menu');
         if (sidebarNav) {
             let myReportLink = sidebarNav.querySelector('a[data-i18n="nav_my_report"]');
@@ -488,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Change password button
     const sidebarNav = document.querySelector('.nav-menu');
-    if (sidebarNav && Auth.currentUser && (!window.location.pathname.includes('/admin/') || isUserRole)) {
+    if (sidebarNav && Auth.currentUser && (!window.location.pathname.includes('/admin/') || isUser)) {
         const esciBtn = Array.from(sidebarNav.querySelectorAll('a')).find(el => el.textContent.includes('Esci') || el.innerHTML.includes('fa-right-from-bracket'));
         
         const changePwdBtn = document.createElement('a');
