@@ -16,9 +16,108 @@ if (!firebase.apps.length) {
 
 const db = firebase.database();
 
+const DEFAULT_PAGE_VISIBILITY = {
+    produzione: true,
+    vendite: true,
+    impianti: true,
+    reporting: true,
+    tristar: true,
+    azionariato: false,
+    banca: false,
+    strumenti: false,
+    risultati: false
+};
+
+function getPageKeyFromElement(el) {
+    const href = (el.getAttribute('href') || '').toLowerCase();
+    const i18n = (el.getAttribute('data-i18n') || '').toLowerCase();
+    
+    if (href.includes('produzione.html') || i18n === 'nav_produzione') return 'produzione';
+    if (href.includes('vendite.html') || i18n === 'nav_vendite') return 'vendite';
+    if (href.includes('impianti.html') || i18n === 'nav_impianti') return 'impianti';
+    if (href.includes('reporting.html') || i18n === 'nav_reporting') return 'reporting';
+    if (href.includes('tristar.html') || i18n === 'nav_tristar') return 'tristar';
+    if (href.includes('banca.html') || i18n === 'nav_conto') return 'banca';
+    if (href.includes('strumenti.html') || i18n === 'nav_strumenti') return 'strumenti';
+    if (href.includes('risultati.html') || i18n === 'menu_risultati' || i18n === 'nav_risultati') return 'risultati';
+    if (href.includes('index.html') || i18n === 'nav_azionariato') return 'azionariato';
+    return null;
+}
+
+function getCurrentPageKey() {
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes('produzione.html')) return 'produzione';
+    if (path.includes('vendite.html')) return 'vendite';
+    if (path.includes('impianti.html')) return 'impianti';
+    if (path.includes('reporting.html')) return 'reporting';
+    if (path.includes('tristar.html')) return 'tristar';
+    if (path.includes('banca.html')) return 'banca';
+    if (path.includes('strumenti.html')) return 'strumenti';
+    if (path.includes('risultati.html')) return 'risultati';
+    if (path.includes('/admin/index.html') || path.endsWith('/admin/') || path.endsWith('/admin')) return 'azionariato';
+    return null;
+}
+
+function showToastNotification(pageKey, isVisible) {
+    let toast = document.getElementById('ge-toast-notification');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'ge-toast-notification';
+        toast.style.position = 'fixed';
+        toast.style.bottom = '25px';
+        toast.style.right = '25px';
+        toast.style.padding = '14px 22px';
+        toast.style.borderRadius = '12px';
+        toast.style.color = '#fff';
+        toast.style.fontWeight = '600';
+        toast.style.fontSize = '0.92rem';
+        toast.style.zIndex = '99999';
+        toast.style.boxShadow = '0 12px 30px rgba(0,0,0,0.6)';
+        toast.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        toast.style.display = 'flex';
+        toast.style.alignItems = 'center';
+        toast.style.gap = '12px';
+        toast.style.backdropFilter = 'blur(10px)';
+        document.body.appendChild(toast);
+    }
+    
+    const pageLabels = {
+        'azionariato': 'Azionariato (LPs)',
+        'banca': 'Conto Bancario',
+        'produzione': 'Produzione Energia',
+        'vendite': 'Vendite Energia',
+        'impianti': 'Impianti e Mappa',
+        'reporting': 'Reporting Partners',
+        'tristar': 'TRI STAR',
+        'strumenti': 'Strumenti',
+        'risultati': 'Risultati'
+    };
+    const title = pageLabels[pageKey] || pageKey;
+    
+    if (isVisible) {
+        toast.style.background = 'linear-gradient(135deg, rgba(5, 150, 105, 0.95), rgba(16, 185, 129, 0.95))';
+        toast.style.border = '1px solid rgba(52, 211, 153, 0.5)';
+        toast.innerHTML = `<i class="fa-solid fa-eye" style="font-size: 1.2rem;"></i> <span><strong>${title}</strong>: Accesso USER <strong style="color: #a7f3d0;">ATTIVATO (Verde)</strong></span>`;
+    } else {
+        toast.style.background = 'linear-gradient(135deg, rgba(220, 38, 38, 0.95), rgba(239, 68, 68, 0.95))';
+        toast.style.border = '1px solid rgba(248, 113, 113, 0.5)';
+        toast.innerHTML = `<i class="fa-solid fa-eye-slash" style="font-size: 1.2rem;"></i> <span><strong>${title}</strong>: Accesso USER <strong style="color: #fecaca;">DISATTIVATO (Rosso)</strong></span>`;
+    }
+    
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0) scale(1)';
+    
+    clearTimeout(window._geToastTimeout);
+    window._geToastTimeout = setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(15px) scale(0.95)';
+    }, 3200);
+}
+
 const Auth = {
     // Current logged in user object
     currentUser: null,
+    pageVisibility: { ...DEFAULT_PAGE_VISIBILITY },
 
     init() {
         const storedUser = localStorage.getItem('green_enerbras_auth_user');
@@ -30,9 +129,67 @@ const Auth = {
                 localStorage.removeItem('green_enerbras_auth_user');
             }
         }
+
+        const cachedVis = localStorage.getItem('green_enerbras_page_visibility');
+        if (cachedVis) {
+            try {
+                this.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...JSON.parse(cachedVis) };
+            } catch (e) {}
+        }
+
+        this.initVisibilityListener();
     },
 
-        async login(username, password) {
+    initVisibilityListener() {
+        if (!db) return;
+        try {
+            db.ref('settings/pageVisibility').on('value', (snap) => {
+                if (snap.exists()) {
+                    const val = snap.val();
+                    this.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...val };
+                    localStorage.setItem('green_enerbras_page_visibility', JSON.stringify(this.pageVisibility));
+                } else {
+                    db.ref('settings/pageVisibility').set(DEFAULT_PAGE_VISIBILITY).catch(() => {});
+                }
+                
+                this.updateSidebarVisibilityUI();
+                
+                // Guard: If non-admin user is on a disabled page, redirect to dashboard
+                if (this.currentUser && this.currentUser.role !== 'admin') {
+                    const pageKey = getCurrentPageKey();
+                    if (pageKey && this.pageVisibility[pageKey] === false) {
+                        alert("Questa pagina non è al momento accessibile per il tuo profilo.");
+                        let prefix = window.location.pathname.includes('/admin/') ? '../' : './';
+                        window.location.href = prefix + 'user/dashboard.html';
+                    }
+                }
+            });
+        } catch(e) {
+            console.warn("Errore listener visibilità Firebase:", e);
+        }
+    },
+
+    async togglePageVisibility(pageKey) {
+        if (!this.currentUser || this.currentUser.role !== 'admin') return false;
+        const currentVal = this.pageVisibility[pageKey] !== false;
+        const newVal = !currentVal;
+        this.pageVisibility[pageKey] = newVal;
+        localStorage.setItem('green_enerbras_page_visibility', JSON.stringify(this.pageVisibility));
+        
+        // Immediate UI refresh
+        this.updateSidebarVisibilityUI();
+        showToastNotification(pageKey, newVal);
+
+        try {
+            await db.ref('settings/pageVisibility/' + pageKey).set(newVal);
+            return true;
+        } catch (e) {
+            console.error("Errore salvataggio visibilità:", e);
+            return false;
+        }
+    },
+
+    async login(username, password) {
         console.log("Inizio Auth.login per l'utente:", username);
         try {
             if (username === 'admin' && password === 'admin') {
@@ -79,16 +236,13 @@ const Auth = {
         }
     },
 
-
     logout() {
         localStorage.removeItem('green_enerbras_auth_user');
         this.currentUser = null;
-        // Redirect to root login page
         let prefix = window.location.pathname.includes('/admin/') || window.location.pathname.includes('/user/') ? '../' : './';
         window.location.href = prefix + 'index.html';
     },
 
-    // To be called at the top of protected pages
     requireRole(allowedRoles) {
         if (!this.currentUser) {
             this.logout();
@@ -99,11 +253,24 @@ const Auth = {
             this.logout();
             return false;
         }
+
+        // Check page visibility for non-admin users
+        if (this.currentUser.role !== 'admin') {
+            const pageKey = getCurrentPageKey();
+            if (pageKey) {
+                const isVisible = this.pageVisibility ? (this.pageVisibility[pageKey] !== false) : (DEFAULT_PAGE_VISIBILITY[pageKey] !== false);
+                if (!isVisible) {
+                    alert("Questa pagina è al momento riservata all'Amministratore.");
+                    let prefix = window.location.pathname.includes('/admin/') ? '../' : './';
+                    window.location.href = prefix + 'user/dashboard.html';
+                    return false;
+                }
+            }
+        }
         return true;
     },
 
-    // Restituisce la lista di utenti (solo Admin)
-        async getUsers() {
+    async getUsers() {
         if (!this.currentUser || this.currentUser.role !== 'admin') return null;
         try {
             const fetchUsers = db.ref('users').once('value');
@@ -119,8 +286,7 @@ const Auth = {
         }
     },
 
-    // Salva un utente (solo Admin)
-        async saveUser(username, data) {
+    async saveUser(username, data) {
         if (!this.currentUser || this.currentUser.role !== 'admin') return false;
         try {
             const saveTask = db.ref('users/' + username).set(data);
@@ -133,8 +299,7 @@ const Auth = {
         }
     },
 
-    // Elimina un utente (solo Admin)
-        async deleteUser(username) {
+    async deleteUser(username) {
         if (!this.currentUser || this.currentUser.role !== 'admin') return false;
         try {
             const delTask = db.ref('users/' + username).remove();
@@ -147,8 +312,7 @@ const Auth = {
         }
     },
 
-    // Cambia password per l'utente corrente
-        async changeMyPassword(newPassword) {
+    async changeMyPassword(newPassword) {
         if (!this.currentUser) return false;
         try {
             const username = this.currentUser.id;
@@ -160,20 +324,111 @@ const Auth = {
             console.error("Error changing password", e);
             throw e;
         }
+    },
+
+    updateSidebarVisibilityUI() {
+        const sidebarNav = document.querySelector('.nav-menu');
+        if (!sidebarNav) return;
+
+        const isAdmin = this.currentUser && this.currentUser.role === 'admin';
+        const isUser = this.currentUser && this.currentUser.role !== 'admin';
+
+        if (isAdmin) {
+            // Add column header if not present
+            let header = sidebarNav.querySelector('.nav-visibility-header');
+            if (!header) {
+                header = document.createElement('div');
+                header.className = 'nav-visibility-header';
+                header.innerHTML = `
+                    <span data-i18n="nav_menu_title">PAGINA</span>
+                    <span style="display: flex; align-items: center; gap: 5px; color: #34d399;"><i class="fa-solid fa-users-viewfinder"></i> USER VIEW</span>
+                `;
+                sidebarNav.insertBefore(header, sidebarNav.firstChild);
+            }
+
+            // Iterate over all links in sidebar
+            const links = sidebarNav.querySelectorAll('a.nav-item');
+            links.forEach(a => {
+                const pageKey = getPageKeyFromElement(a);
+                if (!pageKey) return;
+
+                const isVisible = this.pageVisibility[pageKey] !== false;
+
+                // Ensure link has container for text if not present
+                let titleSpan = a.querySelector('.nav-item-title');
+                if (!titleSpan) {
+                    titleSpan = document.createElement('span');
+                    titleSpan.className = 'nav-item-title';
+                    // Move existing childNodes except button into titleSpan
+                    while (a.firstChild) {
+                        if (a.firstChild.classList && a.firstChild.classList.contains('nav-eye-btn')) {
+                            break;
+                        }
+                        titleSpan.appendChild(a.firstChild);
+                    }
+                    a.insertBefore(titleSpan, a.firstChild);
+                }
+
+                // Eye toggle button
+                let eyeBtn = a.querySelector('.nav-eye-btn');
+                if (!eyeBtn) {
+                    eyeBtn = document.createElement('button');
+                    eyeBtn.className = 'nav-eye-btn';
+                    eyeBtn.type = 'button';
+                    a.appendChild(eyeBtn);
+
+                    eyeBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        Auth.togglePageVisibility(pageKey);
+                    });
+                }
+
+                if (isVisible) {
+                    eyeBtn.className = 'nav-eye-btn visible';
+                    eyeBtn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+                    eyeBtn.title = 'Visibile a USER (Clicca per bloccare)';
+                } else {
+                    eyeBtn.className = 'nav-eye-btn hidden';
+                    eyeBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+                    eyeBtn.title = 'Nascosto a USER (Clicca per mostrare)';
+                }
+            });
+        } else if (isUser) {
+            // Non-admin user view: hide/show according to pageVisibility
+            const header = sidebarNav.querySelector('.nav-visibility-header');
+            if (header) header.remove();
+
+            const links = sidebarNav.querySelectorAll('a.nav-item');
+            links.forEach(a => {
+                const pageKey = getPageKeyFromElement(a);
+                const i18n = a.getAttribute('data-i18n') || '';
+
+                // Remove any eye buttons if left over
+                const eyeBtn = a.querySelector('.nav-eye-btn');
+                if (eyeBtn) eyeBtn.remove();
+
+                if (i18n === 'nav_switch_user' || i18n === 'nav_switch_admin') {
+                    a.style.display = 'none';
+                    return;
+                }
+
+                if (pageKey) {
+                    const isVisible = this.pageVisibility[pageKey] !== false;
+                    a.style.display = isVisible ? 'flex' : 'none';
+                }
+            });
+        }
     }
 };
 
 Auth.init();
 
-
-
-
-
 document.addEventListener('DOMContentLoaded', () => {
     const isUserRole = Auth.currentUser && Auth.currentUser.role !== 'admin';
     const isInsideAdmin = window.location.pathname.includes('/admin/');
 
-    // Se loggato come admin, mostra l'eventuale tasto "Switch to ADMIN" nell'area User
+    // Admin: Show "Switch to ADMIN" button if in user area
     if (Auth.currentUser && Auth.currentUser.role === 'admin') {
         const switchBtn = document.getElementById('switch-admin-btn');
         if (switchBtn) {
@@ -181,42 +436,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Se l'utente è uno USER (partner/visitor) e si trova in una pagina condivisa:
+    // User viewing shared admin page
     if (isUserRole && isInsideAdmin) {
-        // 1. Aggiorna la sidebar nascondendo le sezioni riservate all'Admin
         const sidebarNav = document.querySelector('.nav-menu');
         if (sidebarNav) {
-            // Nascondi Azionariato, Conto Bancario, Strumenti, Risultati, Switch to User
-            const links = sidebarNav.querySelectorAll('a');
-            links.forEach(a => {
-                const href = a.getAttribute('href') || '';
-                const i18n = a.getAttribute('data-i18n') || '';
-                if (
-                    href.includes('index.html') || 
-                    href.includes('banca.html') || 
-                    href.includes('strumenti.html') || 
-                    href.includes('risultati.html') ||
-                    i18n === 'nav_switch_user' ||
-                    i18n === 'nav_azionariato' ||
-                    i18n === 'nav_conto' ||
-                    i18n === 'nav_strumenti' ||
-                    i18n === 'menu_risultati'
-                ) {
-                    a.style.display = 'none';
-                }
-            });
-
-            // Aggiungi link "Il Mio Report" in cima alla sidebar
-            const myReportLink = document.createElement('a');
-            myReportLink.href = '../user/dashboard.html';
-            myReportLink.className = 'nav-item';
-            myReportLink.style.color = '#3b82f6';
-            myReportLink.style.fontWeight = 'bold';
-            myReportLink.innerHTML = '<i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_my_report">Il Mio Report</span>';
-            sidebarNav.insertBefore(myReportLink, sidebarNav.firstChild);
+            // Add "Il Mio Report" link at top of sidebar if not already present
+            let myReportLink = sidebarNav.querySelector('a[data-i18n="nav_my_report"]');
+            if (!myReportLink) {
+                myReportLink = document.createElement('a');
+                myReportLink.href = '../user/dashboard.html';
+                myReportLink.className = 'nav-item';
+                myReportLink.setAttribute('data-i18n', 'nav_my_report');
+                myReportLink.style.color = '#3b82f6';
+                myReportLink.style.fontWeight = 'bold';
+                myReportLink.innerHTML = '<i class="fa-solid fa-chart-pie"></i> <span>Il Mio Report</span>';
+                sidebarNav.insertBefore(myReportLink, sidebarNav.firstChild);
+            }
         }
 
-        // 2. Aggiorna il badge utente in alto a destra
+        // Update user profile badge
         const userProfile = document.querySelector('.user-profile');
         if (userProfile) {
             const displayName = Auth.currentUser.partnerName || Auth.currentUser.id || 'User';
@@ -227,17 +465,20 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
-        // 3. Nascondi eventuali pulsanti di aggiornamento da server locale (solo Admin)
+        // Hide admin local server refresh buttons
         const refreshBtn = document.querySelector('.btn-refresh[onclick*="localhost"]');
         if (refreshBtn) refreshBtn.style.display = 'none';
         
-        // 4. Nascondi drop zone di caricamento documenti per gli utenti non-admin
+        // Hide upload drop zones for non-admin
         document.querySelectorAll('.drop-zone, .file-input, .upload-btn').forEach(el => {
             el.style.display = 'none';
         });
     }
 
-    // Inizializza menu mobile globale
+    // Initial sidebar visibility render
+    Auth.updateSidebarVisibilityUI();
+
+    // Mobile menu toggle
     const sidebar = document.querySelector('.sidebar');
     if (sidebar) {
         const hamburgerBtn = document.createElement('button');
@@ -245,7 +486,6 @@ document.addEventListener('DOMContentLoaded', () => {
         hamburgerBtn.innerHTML = '<i class="fa-solid fa-bars"></i>';
         document.body.appendChild(hamburgerBtn);
 
-        // Aggiungi Logo e Titolo per Mobile
         const prefix = window.location.pathname.includes('/admin/') || window.location.pathname.includes('/user/') ? '../' : './';
         const mobileBrand = document.createElement('div');
         mobileBrand.className = 'mobile-brand';
@@ -256,7 +496,6 @@ document.addEventListener('DOMContentLoaded', () => {
             sidebar.classList.toggle('open');
         });
 
-        // Chiudi sidebar quando si clicca fuori
         document.addEventListener('click', (e) => {
             if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !hamburgerBtn.contains(e.target)) {
                 sidebar.classList.remove('open');
@@ -264,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Aggiungi bottone Cambia Password per gli utenti
+    // Change password button
     const sidebarNav = document.querySelector('.nav-menu');
     if (sidebarNav && Auth.currentUser && (!window.location.pathname.includes('/admin/') || isUserRole)) {
         const esciBtn = Array.from(sidebarNav.querySelectorAll('a')).find(el => el.textContent.includes('Esci') || el.innerHTML.includes('fa-right-from-bracket'));
@@ -289,11 +528,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (esciBtn) {
-            // Insert after Esci button
             esciBtn.parentNode.insertBefore(changePwdBtn, esciBtn.nextSibling);
         } else {
             sidebarNav.appendChild(changePwdBtn);
         }
     }
 });
-

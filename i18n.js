@@ -37,6 +37,7 @@ const translations = {
         'nav_switch_admin': 'Switch to ADMIN',
         'nav_logout': 'Esci',
         'nav_change_pwd': 'Cambia Password',
+        'nav_col_partner_view': 'USER VIEW',
 
         'title_risultati': 'Risultati',
         'tab_ricavi_costi': 'Costi e Ricavi',
@@ -320,6 +321,7 @@ const translations = {
         'nav_switch_admin': 'Switch to ADMIN',
         'nav_logout': 'Log Out',
         'nav_change_pwd': 'Change Password',
+        'nav_col_partner_view': 'USER VIEW',
 
         'title_risultati': 'Results',
         'tab_ricavi_costi': 'Costs & Revenues',
@@ -598,6 +600,7 @@ const translations = {
         'nav_switch_admin': 'Passer à ADMIN',
         'nav_logout': 'Déconnexion',
         'nav_change_pwd': 'Changer le mot de passe',
+        'nav_col_partner_view': 'VUE USER',
 
         'title_risultati': 'Résultats',
         'tab_ricavi_costi': 'Coûts et Revenus',

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -19,7 +19,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="../auth.js?v=11"></script>
-    <script>Auth.requireRole(['admin']);</script>
+    <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
     <script src="../i18n.js?v=9"></script>
 </head>
 <body>
@@ -50,7 +50,7 @@
             <div class="update-info">
                 <p data-i18n="last_updated">Ultimo aggiornamento:</p>
                 <p id="last-updated" class="text-bold">--/--/----</p>
-                <button class="btn-refresh" onclick="if(window.location.hostname==='localhost'){if(window.location.hostname==='localhost'){fetch('http://localhost:8081/update').then(function(r){window.location.reload()}).catch(function(){alert('Errore: Il server locale non � avviato.')})}else{window.location.reload(true)}}else{window.location.reload(true)}" data-i18n="btn_refresh"><i class="fa-solid fa-rotate-right"></i> Ricarica Dati</button>
+                <button class="btn-refresh" onclick="if(window.location.hostname==='localhost'){if(window.location.hostname==='localhost'){fetch('http://localhost:8081/update').then(function(r){window.location.reload()}).catch(function(){alert('Errore: Il server locale non è avviato.')})}else{window.location.reload(true)}}else{window.location.reload(true)}" data-i18n="btn_refresh"><i class="fa-solid fa-rotate-right"></i> Ricarica Dati</button>
             </div>
             </nav>
         </aside>
@@ -82,7 +82,7 @@
                             <h3 style="margin:0;"><span data-i18n="saldo_banque">Saldo C/C Banque de Luxembourg</span></h3>
                             <span id="kpi-last-date" style="font-size: 0.85rem; color: #9ca3af;"></span>
                         </div>
-                        <p id="kpi-balance" class="kpi-value text-green">€ 0</p>
+                        <p id="kpi-balance" class="kpi-value text-green">â‚¬ 0</p>
                     </div>
                 </div>
                 <div class="kpi-card glass-panel">
@@ -90,11 +90,11 @@
                     <div class="kpi-data" style="width: 100%; display: flex; flex-direction: column; gap: 0.5rem; justify-content: center;">
                         <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.3rem;">
                             <h3 style="margin:0; font-size: 1rem; color: #f3f4f6;" data-i18n="kpi_spese_generali">Spese generali</h3>
-                            <span id="kpi-general-expenses" class="text-bold text-red" style="font-size: 1.1rem; color: #ef4444;">€ 0</span>
+                            <span id="kpi-general-expenses" class="text-bold text-red" style="font-size: 1.1rem; color: #ef4444;">â‚¬ 0</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.3rem;">
                             <h3 style="margin:0; font-size: 1rem; color: #f3f4f6;" data-i18n="kpi_participation_fees">Participation Fees 2%</h3>
-                            <span id="kpi-participation-fees" class="text-bold text-red" style="font-size: 1.1rem; color: #ef4444;">€ 0</span>
+                            <span id="kpi-participation-fees" class="text-bold text-red" style="font-size: 1.1rem; color: #ef4444;">â‚¬ 0</span>
                         </div>
                     </div>
                 </div>
@@ -164,8 +164,8 @@
                                             </div>
                                         </div>
                                     </th>
-                                    <th style="text-align: right; vertical-align: top;"><span data-i18n="table_importo">Importo (�)</span></th>
-                                    <th id="col-progressivo" style="text-align: right; vertical-align: top;"><span data-i18n="table_progressivo">Progressivo (�)</span></th>
+                                    <th style="text-align: right; vertical-align: top;"><span data-i18n="table_importo">Importo (€)</span></th>
+                                    <th id="col-progressivo" style="text-align: right; vertical-align: top;"><span data-i18n="table_progressivo">Progressivo (€)</span></th>
                                 </tr>
                             </thead>
                             <tbody id="bank-table-body">
@@ -175,7 +175,7 @@
                     </div>
                     <div class="subtotal-container" style="display: flex; justify-content: flex-end; align-items: center; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 1rem;">
                         <span style="font-weight: bold; margin-right: 1rem;">Subtotale Filtrato:</span>
-                        <span id="subtotal-amount" class="text-bold" style="font-size: 1.2rem;">€ 0,00</span>
+                        <span id="subtotal-amount" class="text-bold" style="font-size: 1.2rem;">â‚¬ 0,00</span>
                     </div>
                 </div>
             </section>
@@ -186,6 +186,7 @@
     <script src="banca_app.js?v=8"></script>
 </body>
 </html>
+
 
 
 
