@@ -10,11 +10,11 @@ var firebaseConfig = {
 };
 
 // Initialize Firebase if not already initialized
-if (!firebase.apps.length) {
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 
-const db = firebase.database();
+const db = (typeof firebase !== 'undefined' && firebase.apps.length) ? firebase.database() : null;
 
 const DEFAULT_PAGE_VISIBILITY = {
     produzione: true,
@@ -152,18 +152,18 @@ const Auth = {
             db.ref('settings/pageVisibility').on('value', (snap) => {
                 if (snap.exists()) {
                     const val = snap.val();
-                    this.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...val };
-                    localStorage.setItem('green_enerbras_page_visibility', JSON.stringify(this.pageVisibility));
+                    Auth.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...val };
+                    localStorage.setItem('green_enerbras_page_visibility', JSON.stringify(Auth.pageVisibility));
                 } else {
                     db.ref('settings/pageVisibility').set(DEFAULT_PAGE_VISIBILITY).catch(() => {});
                 }
                 
-                this.updateSidebarVisibilityUI();
+                Auth.updateSidebarVisibilityUI();
                 
                 // Guard: Se un utente non-admin si trova su una pagina disabilitata, reindirizza
-                if (this.currentUser && this.currentUser.role !== 'admin') {
+                if (Auth.currentUser && Auth.currentUser.role !== 'admin') {
                     const pageKey = getCurrentPageKey();
-                    if (pageKey && this.pageVisibility[pageKey] === false) {
+                    if (pageKey && Auth.pageVisibility[pageKey] === false) {
                         alert("Questa pagina non è al momento accessibile per il tuo profilo.");
                         let prefix = window.location.pathname.includes('/admin/') ? '../' : './';
                         window.location.href = prefix + 'user/dashboard.html';
@@ -178,13 +178,16 @@ const Auth = {
     async togglePageVisibility(pageKey) {
         if (!pageKey) return false;
 
-        const currentVal = this.pageVisibility[pageKey] !== false;
+        const currentVal = (Auth.pageVisibility[pageKey] !== false);
         const newVal = !currentVal;
-        this.pageVisibility[pageKey] = newVal;
-        localStorage.setItem('green_enerbras_page_visibility', JSON.stringify(this.pageVisibility));
+        Auth.pageVisibility[pageKey] = newVal;
+        
+        try {
+            localStorage.setItem('green_enerbras_page_visibility', JSON.stringify(Auth.pageVisibility));
+        } catch(e) {}
         
         // Aggiornamento immediato interfaccia e notifica toast
-        this.updateSidebarVisibilityUI();
+        Auth.updateSidebarVisibilityUI();
         showToastNotification(pageKey, newVal);
 
         try {
@@ -209,8 +212,12 @@ const Auth = {
                 console.log("Root admin riconosciuto, login immediato.");
                 const rootAdmin = { id: 'admin', role: 'admin', partnerName: 'Edoardo Tubia' };
                 localStorage.setItem('green_enerbras_auth_user', JSON.stringify(rootAdmin));
-                this.currentUser = rootAdmin;
+                Auth.currentUser = rootAdmin;
                 return { success: true, user: rootAdmin };
+            }
+
+            if (!db) {
+                return { success: false, error: "Database non connesso." };
             }
 
             console.log("Tentativo di connessione a Firebase...");
@@ -229,7 +236,7 @@ const Auth = {
                         partnerName: userObj.partnerName || null
                     };
                     localStorage.setItem('green_enerbras_auth_user', JSON.stringify(userData));
-                    this.currentUser = userData;
+                    Auth.currentUser = userData;
                     return { success: true, user: userData };
                 } else {
                     return { success: false, error: "Password errata." };
@@ -243,7 +250,7 @@ const Auth = {
             if (cleanUser === 'admin') {
                 const rootAdmin = { id: 'admin', role: 'admin', partnerName: 'Edoardo Tubia' };
                 localStorage.setItem('green_enerbras_auth_user', JSON.stringify(rootAdmin));
-                this.currentUser = rootAdmin;
+                Auth.currentUser = rootAdmin;
                 return { success: true, user: rootAdmin };
             }
             return { success: false, error: "Errore di connessione a Firebase: " + e.message };
@@ -252,27 +259,27 @@ const Auth = {
 
     logout() {
         localStorage.removeItem('green_enerbras_auth_user');
-        this.currentUser = null;
+        Auth.currentUser = null;
         let prefix = window.location.pathname.includes('/admin/') || window.location.pathname.includes('/user/') ? '../' : './';
         window.location.href = prefix + 'index.html?logout=true';
     },
 
     requireRole(allowedRoles) {
-        if (!this.currentUser) {
-            this.logout();
+        if (!Auth.currentUser) {
+            Auth.logout();
             return false;
         }
-        if (!allowedRoles.includes(this.currentUser.role)) {
+        if (!allowedRoles.includes(Auth.currentUser.role)) {
             alert("Non hai i permessi per accedere a questa pagina.");
-            this.logout();
+            Auth.logout();
             return false;
         }
 
         // Controllo dinamico visibilità per utenti non-admin
-        if (this.currentUser.role !== 'admin') {
+        if (Auth.currentUser.role !== 'admin') {
             const pageKey = getCurrentPageKey();
             if (pageKey) {
-                const isVisible = this.pageVisibility ? (this.pageVisibility[pageKey] !== false) : (DEFAULT_PAGE_VISIBILITY[pageKey] !== false);
+                const isVisible = Auth.pageVisibility ? (Auth.pageVisibility[pageKey] !== false) : (DEFAULT_PAGE_VISIBILITY[pageKey] !== false);
                 if (!isVisible) {
                     alert("Questa pagina è al momento riservata all'Amministratore.");
                     let prefix = window.location.pathname.includes('/admin/') ? '../' : './';
@@ -285,7 +292,7 @@ const Auth = {
     },
 
     async getUsers() {
-        if (!this.currentUser || this.currentUser.role !== 'admin') return null;
+        if (!Auth.currentUser || Auth.currentUser.role !== 'admin' || !db) return null;
         try {
             const fetchUsers = db.ref('users').once('value');
             const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Firebase (15s)")), 15000));
@@ -301,7 +308,7 @@ const Auth = {
     },
 
     async saveUser(username, data) {
-        if (!this.currentUser || this.currentUser.role !== 'admin') return false;
+        if (!Auth.currentUser || Auth.currentUser.role !== 'admin' || !db) return false;
         try {
             const saveTask = db.ref('users/' + username).set(data);
             const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Firebase (15s)")), 15000));
@@ -314,7 +321,7 @@ const Auth = {
     },
 
     async deleteUser(username) {
-        if (!this.currentUser || this.currentUser.role !== 'admin') return false;
+        if (!Auth.currentUser || Auth.currentUser.role !== 'admin' || !db) return false;
         try {
             const delTask = db.ref('users/' + username).remove();
             const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Firebase (15s)")), 15000));
@@ -327,9 +334,9 @@ const Auth = {
     },
 
     async changeMyPassword(newPassword) {
-        if (!this.currentUser) return false;
+        if (!Auth.currentUser || !db) return false;
         try {
-            const username = this.currentUser.id;
+            const username = Auth.currentUser.id;
             const updateTask = db.ref('users/' + username).update({ password: newPassword });
             const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Firebase (15s)")), 15000));
             await Promise.race([updateTask, timeout]);
@@ -341,13 +348,13 @@ const Auth = {
     },
 
     updateSidebarVisibilityUI() {
-        const isAdmin = this.currentUser && this.currentUser.role === 'admin';
-        const isUser = this.currentUser && this.currentUser.role !== 'admin';
+        const isAdmin = Auth.currentUser && Auth.currentUser.role === 'admin';
+        const isUser = Auth.currentUser && Auth.currentUser.role !== 'admin';
 
         // 1. Header colonna visibilità
         const header = document.querySelector('.nav-visibility-header');
         if (header) {
-            header.style.display = isAdmin ? 'flex' : 'none';
+            header.style.display = isUser ? 'none' : 'flex';
         }
 
         // 2. Icone occhio admin
@@ -357,9 +364,11 @@ const Auth = {
             if (!pageKey) return;
             
             btn.setAttribute('data-page', pageKey);
-            if (isAdmin) {
+            if (isUser) {
+                btn.style.display = 'none';
+            } else {
                 btn.style.display = 'inline-flex';
-                const isVisible = this.pageVisibility[pageKey] !== false;
+                const isVisible = (Auth.pageVisibility[pageKey] !== false);
                 if (isVisible) {
                     btn.className = 'nav-eye-btn visible';
                     btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
@@ -369,8 +378,6 @@ const Auth = {
                     btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
                     btn.title = 'Nascosto a USER (Clicca per consentire)';
                 }
-            } else {
-                btn.style.display = 'none';
             }
         });
 
@@ -380,7 +387,7 @@ const Auth = {
             rows.forEach(row => {
                 const pageKey = row.getAttribute('data-page') || getPageKeyFromElement(row.querySelector('a'));
                 if (pageKey && pageKey !== 'my_report') {
-                    const isVisible = this.pageVisibility[pageKey] !== false;
+                    const isVisible = (Auth.pageVisibility[pageKey] !== false);
                     row.style.display = isVisible ? 'flex' : 'none';
                 }
             });
@@ -394,7 +401,22 @@ const Auth = {
     }
 };
 
+// Global export to window
+window.Auth = Auth;
 Auth.init();
+
+// Global click event delegation for eye toggle buttons
+document.addEventListener('click', (e) => {
+    const eyeBtn = e.target.closest('.nav-eye-btn');
+    if (eyeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const pageKey = eyeBtn.getAttribute('data-page');
+        if (pageKey) {
+            Auth.togglePageVisibility(pageKey);
+        }
+    }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     const isAdmin = Auth.currentUser && Auth.currentUser.role === 'admin';
