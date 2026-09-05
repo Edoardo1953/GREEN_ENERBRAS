@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produzione e vendita energia - GREEN ENERBRAS ONE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="../style.css?v=7">
+
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <script src="../shared/firebase_config.js"></script>
+    <script src="../auth.js?v=11"></script>
+    <script>Auth.requireRole(['admin']);</script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <style>
+        .impianti-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .impianto-card {
+            padding: 1.5rem;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .impianto-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            border-color: var(--green);
+        }
+        .impianto-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .impianto-header h3 {
+            font-size: 1.2rem;
+            color: var(--text-main);
+        }
+        .impianto-status {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 99px;
+            font-weight: bold;
+        }
+        .status-attivo { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .status-costruzione { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        
+        .impianto-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+        .impianto-detail i {
+            color: var(--blue);
+            width: 20px;
+            text-align: center;
+        }
+        .map-container {
+            height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Custom map pin style */
+        .custom-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+        }
+        
+        .map-btn {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid #10b981;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .map-btn:hover {
+            background: rgba(16, 185, 129, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Stili per la Rubrica Documenti */
+        .doc-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .doc-modal-content {
+            background: #0f172a;
+            width: 90%; max-width: 1000px;
+            max-height: 90vh;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+        .doc-modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .doc-modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .doc-icon { font-size: 1.5rem; }
+        .icon-pdf { color: #ef4444; }
+        .icon-word { color: #3b82f6; }
+        .icon-image { color: #10b981; }
+        .icon-video { color: #8b5cf6; }
+        .icon-default { color: #9ca3af; }
+        
+        .btn-action { background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #3b82f6; transition: color 0.3s; margin-right: 0.5rem; }
+        .btn-action:hover { color: #60a5fa; }
+        
+        .btn-docs {
+            background: transparent;
+            color: #3b82f6;
+            border: 1px solid #3b82f6;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        .btn-docs:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .drop-zone {
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            background: rgba(255,255,255,0.02);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--green);
+            background: rgba(16, 185, 129, 0.05);
+        }
+        .drop-zone i { font-size: 3rem; color: var(--green); margin-bottom: 1rem; }
+        .file-input { display: none; }
+        .upload-btn {
+            background: var(--green); color: #fff; border: none;
+            padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer;
+            font-weight: 600; margin-top: 1rem; transition: opacity 0.3s;
+        }
+        .upload-btn:hover { opacity: 0.9; }
+
+        #upload-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        #upload-overlay.active { display: flex; }
+        .upload-progress-box {
+            background: #1e293b;
+            border: 1px solid rgba(16,185,129,0.4);
+            border-radius: 16px;
+            padding: 2rem 3rem;
+            text-align: center;
+            min-width: 320px;
+        }
+        .upload-progress-box h3 { margin: 0 0 1rem; color: #fff; font-size: 1.1rem; }
+        .upload-progress-box p  { margin: 0.5rem 0 0; color: #94a3b8; font-size: 0.85rem; }
+        .progress-bar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 99px;
+            height: 10px;
+            width: 100%;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            border-radius: 99px;
+            transition: width 0.3s ease;
+        }
+    </style>    <script src="../i18n.js?v=12"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass-panel">
+            <div class="logo" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 3rem;">
+                <img src="Loghi/Green Enerbras solo logo.png" alt="Logo" style="height: 55px; filter: grayscale(1) invert(1) brightness(10); mix-blend-mode: screen;">
+                <h2 style="margin: 0; font-size: 1.1rem;">GREEN ENERBRAS ONE</h2>
+            </div>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item" data-i18n="nav_azionariato"><i class="fa-solid fa-chart-pie"></i> Azionariato (LPs)</a>
+                <a href="banca.html" class="nav-item" data-i18n="nav_conto"><i class="fa-solid fa-building-columns"></i> Conto Bancario</a>
+                <a href="produzione.html" class="nav-item" data-i18n="nav_produzione"><i class="fa-solid fa-solar-panel"></i> Produzione Energia</a>
+                <a href="vendite.html" class="nav-item" data-i18n="nav_vendite"><i class="fa-solid fa-money-bill-trend-up"></i> Vendite Energia</a>
+                <a href="impianti.html" class="nav-item active" data-i18n="nav_impianti"><i class="fa-solid fa-map-location-dot"></i> Impianti e Mappa</a>
+                <a href="reporting.html" class="nav-item" data-i18n="nav_reporting"><i class="fa-solid fa-file-pdf"></i> Reporting Partners</a>
+                <a href="tristar.html" class="nav-item" data-i18n="nav_tristar"><i class="fa-solid fa-file-contract"></i> TRI STAR</a>
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 1rem 0;"></div>
+                <a href="strumenti.html" class="nav-item" data-i18n="nav_strumenti"><i class="fa-solid fa-toolbox"></i> Strumenti</a>
+                
+                <a href="risultati.html" class="nav-item">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span data-i18n="menu_risultati">Risultati</span>
+                </a>
+                <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; margin-top: 1rem; border: 1px dashed #3b82f6; justify-content: center;" data-i18n="nav_switch_user"><i class="fa-solid fa-right-left"></i> Switch to USER</a>
+                <a href="#" onclick="Auth.logout()" class="nav-item" style="color: #ef4444; margin-top: 1rem; justify-content: center;" data-i18n="nav_logout"><i class="fa-solid fa-right-from-bracket"></i> Esci</a>
+            <div class="update-info">
+                <p data-i18n="last_updated">Ultimo aggiornamento:</p>
+                <p id="last-updated" class="text-bold">--/--/----</p>
+                <button class="btn-refresh" onclick="if(window.location.hostname==='localhost'){fetch('http://localhost:8081/update').then(function(r){window.location.reload()}).catch(function(){alert('Errore: Il server di aggiornamento non Ã¯Â¿Â½ avviato. Usa il collegamento sul Desktop per avviare il server.')})}else{window.location.reload(true)}" data-i18n="btn_refresh"><i class="fa-solid fa-rotate-right"></i> Ricarica Dati</button>
+            </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <h1 data-i18n="title_impianti">Impianti e Mappa</h1>
+                
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    <div class="lang-selector" style="display: flex; gap: 0.5rem; align-items: center;">
+                        <img src="https://flagcdn.com/w40/it.png" alt="IT" data-lang="it" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        <img src="https://flagcdn.com/w40/gb.png" alt="EN" data-lang="en" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        <img src="https://flagcdn.com/w40/fr.png" alt="FR" data-lang="fr" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                    </div>
+                    <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=3b82f6&color=fff" alt="Admin" class="avatar">
+                    <span>Edoardo Tubia (Admin)</span>
+                </div>
+                </div>
+            </header>
+
+                        <section>
+                <div class="glass-panel map-container">
+                    <div id="map"></div>
+                </div>
+            </section>
+
+            <section style="margin-top: 2rem;">
+                <h2 style="margin-bottom: 1rem;" data-i18n="title_lista_impianti">Dettaglio Impianti</h2>
+                <div class="impianti-grid" id="impianti-container">
+                    <!-- Cards injected via JS -->
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Modale Rubrica Documenti Impianto -->
+    <div id="impianto-docs-modal" class="doc-modal-overlay">
+        <div class="doc-modal-content">
+            <div class="doc-modal-header">
+                <h2 id="docs-modal-title"><i class="fa-solid fa-folder-open"></i> Documenti Impianto</h2>
+                <button onclick="closeDocsModal()" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="doc-modal-body">
+                <!-- Upload Area -->
+                <div class="drop-zone" id="drop-zone-impianto">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <h3 data-i18n="testo_trascina_file">Trascina i file qui o clicca per caricare</h3>
+
+                    <p style="color: var(--text-muted); margin-top: 0.5rem;"><span data-i18n="upload_supported">Supportati: PDF, Word, Immagini, Video</span></p>
+                    <input type="file" id="file-input-impianto" class="file-input" multiple>
+                    <button class="upload-btn" onclick="document.getElementById('file-input-impianto').click()" data-i18n="upload_browse">Sfoglia File</button>
+                </div>
+                
+                <!-- Filter Section -->
+                <div id="usina-filter-container" style="margin: 1rem 0; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; background: rgba(255,255,255,0.05); padding: 0.8rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                    <!-- Checkboxes injected via JS -->
+                </div>
+
+                <!-- File Table -->
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;"></th>
+                                <th style="width: 50px;" data-i18n="table_tipo">Tipo</th>
+                                <th data-i18n="table_nome_file">Nome File</th>
+                                <th data-i18n="table_data_upload">Data Upload</th>
+                                <th data-i18n="table_dimensione">Dimensione</th>
+                                <th style="text-align: right;" data-i18n="table_azioni">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-impianto-docs">
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Document Preview Modal -->
+    <div id="preview-modal" class="doc-modal-overlay" style="z-index: 1001;">
+        <div class="doc-modal-content" style="height: 85%;">
+            <div class="doc-modal-header">
+                <h3 id="preview-title" style="margin: 0;"><i class="fa-solid fa-file"></i> Anteprima Documento</h3>
+                <button onclick="document.getElementById('preview-modal').style.display='none'" style="background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="preview-content-container" style="flex-grow: 1; display: flex; justify-content: center; align-items: center; background: #000; padding: 1rem; overflow: hidden;">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Progress Overlay -->
+    <div id="upload-overlay">
+        <div class="upload-progress-box">
+            <h3><i class="fa-solid fa-cloud-arrow-up" style="color:#10b981; margin-right:0.5rem;"></i> Caricamento in corso...</h3>
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="upload-progress-fill" style="width:0%"></div>
+            </div>
+            <p id="upload-progress-text">0%</p>
+            <p id="upload-file-name" style="font-size:0.8rem; margin-top:0.3rem;"></p>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <!-- Data script -->
+    <script src="../data.js"></script>
+    <!-- App logic -->
+    <script src="impianti_app.js?v=20260705i"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="pdf_ai_translate.js?v=3"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

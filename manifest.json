@@ -1,0 +1,17 @@
+{
+  "name": "Green Enerbras One SCSp",
+  "short_name": "Green Enerbras",
+  "description": "Portale Investimenti Green Enerbras",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "admin/Loghi/Green Enerbras solo logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

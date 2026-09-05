@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GREEN ENERBRAS ONE - Strumenti</title>
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css?v=7">
+    <style>
+        .tabs { display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; }
+        .tab-btn { background: none; border: none; color: var(--text-muted); font-size: 1.1rem; font-weight: 600; cursor: pointer; padding: 0.5rem 1rem; border-radius: 8px; transition: all 0.3s; }
+        .tab-btn:hover { color: white; background: rgba(255,255,255,0.05); }
+        .tab-btn.active { color: var(--accent-green); background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .slide-editor { display: flex; gap: 2rem; margin-bottom: 3rem; flex-wrap: wrap; background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+        .slide-preview-container { flex: 1; min-width: 300px; position: relative; background: #000; border: 2px dashed rgba(255,255,255,0.2); border-radius: 8px; overflow: hidden; aspect-ratio: 16/9; display: flex; align-items: center; justify-content: center; }
+        .slide-preview-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+        .draggable-text { position: absolute; color: white; font-size: 2rem; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); cursor: grab; padding: 5px; border: 1px solid transparent; user-select: none; white-space: nowrap; }
+        .draggable-text:hover { border: 1px dashed rgba(255,255,255,0.5); background: rgba(0,0,0,0.2); }
+        .draggable-text:active { cursor: grabbing; }
+        .slide-controls { flex: 1; min-width: 300px; display: flex; flex-direction: column; gap: 1rem; }
+        .btn-upload { background: var(--accent-blue); color: white; border: none; padding: 0.8rem; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-add-text { background: var(--accent-purple); color: white; border: none; padding: 0.8rem; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-save-slide { background: var(--accent-green); color: white; border: none; padding: 0.8rem; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 1rem; }
+        .text-input-row { display: flex; gap: 10px; align-items: center; margin-top: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 5px; }
+        .text-input-row input { flex: 1; padding: 5px; background: rgba(255,255,255,0.1); border: 1px solid var(--border-color); color: white; border-radius: 4px; }
+        .text-input-row button { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="../auth.js?v=11"></script>
+    <script>Auth.requireRole(['admin']);</script>
+    <script src="../i18n.js?v=9"></script>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar glass-panel">
+            <div class="logo" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 3rem;">
+                <img src="Loghi/Green Enerbras solo logo.png" alt="Logo" style="height: 55px; filter: grayscale(1) invert(1) brightness(10); mix-blend-mode: screen;">
+                <h2 style="margin: 0; font-size: 1.1rem;">GREEN ENERBRAS ONE</h2>
+            </div>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item" data-i18n="nav_azionariato"><i class="fa-solid fa-chart-pie"></i> Azionariato (LPs)</a>
+                <a href="banca.html" class="nav-item" data-i18n="nav_conto"><i class="fa-solid fa-building-columns"></i> Conto Bancario</a>
+                <a href="produzione.html" class="nav-item" data-i18n="nav_produzione"><i class="fa-solid fa-solar-panel"></i> Produzione Energia</a>
+                <a href="vendite.html" class="nav-item" data-i18n="nav_vendite"><i class="fa-solid fa-money-bill-trend-up"></i> Vendite Energia</a>
+                <a href="impianti.html" class="nav-item" data-i18n="nav_impianti"><i class="fa-solid fa-map-location-dot"></i> Impianti e Mappa</a>
+                <a href="reporting.html" class="nav-item" data-i18n="nav_reporting"><i class="fa-solid fa-file-pdf"></i> Reporting Partners</a>
+                <a href="tristar.html" class="nav-item" data-i18n="nav_tristar"><i class="fa-solid fa-file-contract"></i> TRI STAR</a>
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 1rem 0;"></div>
+                <a href="strumenti.html" class="nav-item active" data-i18n="nav_strumenti"><i class="fa-solid fa-toolbox"></i> Strumenti</a>
+                
+                <a href="risultati.html" class="nav-item">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span data-i18n="menu_risultati">Risultati</span>
+                </a>
+                <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; margin-top: 1rem; border: 1px dashed #3b82f6; justify-content: center;" data-i18n="nav_switch_user"><i class="fa-solid fa-right-left"></i> Switch to USER</a>
+                <a href="#" onclick="Auth.logout()" class="nav-item" style="color: #ef4444; margin-top: 1rem; justify-content: center;" data-i18n="nav_logout"><i class="fa-solid fa-right-from-bracket"></i> Esci</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <h1 data-i18n="title_strumenti_page">Strumenti</h1>
+                
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    <div class="lang-selector" style="display: flex; gap: 0.5rem; align-items: center;">
+                        <img src="https://flagcdn.com/w40/it.png" alt="IT" data-lang="it" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        <img src="https://flagcdn.com/w40/gb.png" alt="EN" data-lang="en" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        <img src="https://flagcdn.com/w40/fr.png" alt="FR" data-lang="fr" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                    </div>
+                    <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=10b981&color=fff" alt="User" class="avatar">
+                    <span id="current-username">Admin</span>
+                </div>
+                </div>
+            </header>
+
+            <div class="tabs">
+                <button id="btn-tab-utenti" class="tab-btn active" onclick="switchTab('utenti')"><i class="fa-solid fa-users-gear"></i> <span data-i18n="tab_gestione_utenti">Gestione Utenti</span></button>
+                <button id="btn-tab-slideshow" class="tab-btn" onclick="switchTab('slideshow')"><i class="fa-solid fa-images"></i> <span data-i18n="tab_gestione_slideshow">Gestione Slideshow</span></button>
+            </div>
+
+            <!-- TAB UTENTI -->
+            <div id="tab-utenti" class="tab-content active">
+                <section class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="glass-panel" style="padding: 2rem;">
+                        <h2 style="margin-bottom: 1.5rem;" data-i18n="title_utenti_esistenti">Utenti Esistenti</h2>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px;"></th>
+                                    <th data-i18n="table_id_utente">ID Utente</th>
+                                    <th data-i18n="table_password">Password</th>
+                                    <th data-i18n="table_ruolo">Ruolo</th>
+                                    <th data-i18n="table_partner_associato">Partner Associato</th>
+                                    <th data-i18n="table_azioni" data-i18n="table_azioni">Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="glass-panel" style="padding: 2rem;">
+                        <h2 style="margin-bottom: 1.5rem;" id="form-title" data-i18n="title_aggiungi_utente">Aggiungi / Modifica Utente</h2>
+                        <form id="user-form" style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div>
+                                <label style="display:block; margin-bottom:0.5rem; color:var(--text-muted);" data-i18n="form_id_utente">ID Utente (Username)</label>
+                                <input type="text" id="form-username" required style="width:100%; padding:0.8rem; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white; border-radius:5px; box-sizing: border-box;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:0.5rem; color:var(--text-muted);" data-i18n="table_password">Password</label>
+                                <input type="text" id="form-password" required style="width:100%; padding:0.8rem; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white; border-radius:5px; box-sizing: border-box;">
+                            </div>
+                            <div>
+                                <label style="display:block; margin-bottom:0.5rem; color:var(--text-muted);" data-i18n="table_ruolo">Ruolo</label>
+                                <select id="form-role" required style="width:100%; padding:0.8rem; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white; border-radius:5px; box-sizing: border-box;">
+                                    <option value="partner">Partner</option>
+                                    <option value="visitor">Visitor</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <div id="partner-select-container">
+                                <label style="display:block; margin-bottom:0.5rem; color:var(--text-muted);" data-i18n="form_partner_associato">Partner Associato (solo se ruolo = Partner)</label>
+                                <select id="form-partner" style="width:100%; padding:0.8rem; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white; border-radius:5px; box-sizing: border-box;">
+                                    <option value="" data-i18n="form_nessuno">Nessuno</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                <button type="submit" style="flex: 1; padding:1rem; background:var(--accent-green); color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;" data-i18n="btn_salva_utente">Salva Utente</button>
+                                <button type="button" onclick="document.getElementById('user-form').reset()" style="flex: 1; padding:1rem; background:rgba(255,255,255,0.1); color:white; border:1px solid rgba(255,255,255,0.2); border-radius:5px; cursor:pointer; font-weight:bold;" data-i18n="btn_pulisci">Pulisci</button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </div>
+
+            <!-- TAB SLIDESHOW -->
+            <div id="tab-slideshow" class="tab-content">
+                <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2 style="margin-bottom: 0.5rem;" data-i18n="title_impostazioni_slideshow">Impostazioni Generali Slideshow</h2>
+                        <label style="color:var(--text-muted);" data-i18n="form_tempo_transizione">Tempo di Transizione (ms):</label>
+                        <select id="slideshow-interval" style="padding:0.5rem; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); color:white; border-radius:5px; margin-left: 10px;">
+                            <option value="3000" data-i18n="form_3_secondi">3 Secondi</option>
+                            <option value="5000" selected data-i18n="form_5_secondi">5 Secondi</option>
+                            <option value="7000" data-i18n="form_7_secondi">7 Secondi</option>
+                            <option value="10000" data-i18n="form_10_secondi">10 Secondi</option>
+                        </select>
+                    </div>
+                    <button id="btn-save-slideshow" data-i18n="btn_salva_config" style="padding:1rem; background:var(--accent-green); color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-floppy-disk"></i> Salva Configurazione su Database</button>
+                </div>
+
+                <div id="slides-container" style="display: flex; flex-direction: column; gap: 2rem;">
+                    <!-- Generato via JS -->
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="../data.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="strumenti_app.js?v=3"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+

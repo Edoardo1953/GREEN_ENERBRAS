@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conto Bancario - GREEN ENERBRAS ONE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Librerie Esportazione -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    <link rel="stylesheet" href="../style.css?v=7">
+
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="../auth.js?v=11"></script>
+    <script>Auth.requireRole(['admin']);</script>
+    <script src="../i18n.js?v=9"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass-panel">
+            <div class="logo" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 3rem;">
+                <img src="Loghi/Green Enerbras solo logo.png" alt="Logo" style="height: 55px; filter: grayscale(1) invert(1) brightness(10); mix-blend-mode: screen;">
+                <h2 style="margin: 0; font-size: 1.1rem;">GREEN ENERBRAS ONE</h2>
+            </div>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item" data-i18n="nav_azionariato"><i class="fa-solid fa-chart-pie"></i> Azionariato (LPs)</a>
+                <a href="#" class="nav-item active" data-i18n="nav_conto"><i class="fa-solid fa-building-columns"></i> Conto Bancario</a>
+                <a href="produzione.html" class="nav-item" data-i18n="nav_produzione"><i class="fa-solid fa-solar-panel"></i> Produzione Energia</a>
+                <a href="vendite.html" class="nav-item" data-i18n="nav_vendite"><i class="fa-solid fa-money-bill-trend-up"></i> Vendite Energia</a>
+                <a href="impianti.html" class="nav-item" data-i18n="nav_impianti"><i class="fa-solid fa-map-location-dot"></i> Impianti e Mappa</a>
+                <a href="reporting.html" class="nav-item" data-i18n="nav_reporting"><i class="fa-solid fa-file-pdf"></i> Reporting Partners</a>
+                <a href="tristar.html" class="nav-item" data-i18n="nav_tristar"><i class="fa-solid fa-file-contract"></i> TRI STAR</a>
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 1rem 0;"></div>
+                <a href="strumenti.html" class="nav-item" data-i18n="nav_strumenti"><i class="fa-solid fa-toolbox"></i> Strumenti</a>
+                
+                <a href="risultati.html" class="nav-item">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span data-i18n="menu_risultati">Risultati</span>
+                </a>
+                <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; margin-top: 1rem; border: 1px dashed #3b82f6; justify-content: center;" data-i18n="nav_switch_user"><i class="fa-solid fa-right-left"></i> Switch to USER</a>
+                <a href="#" onclick="Auth.logout()" class="nav-item" style="color: #ef4444; margin-top: 1rem; justify-content: center;" data-i18n="nav_logout"><i class="fa-solid fa-right-from-bracket"></i> Esci</a>
+            <div class="update-info">
+                <p data-i18n="last_updated">Ultimo aggiornamento:</p>
+                <p id="last-updated" class="text-bold">--/--/----</p>
+                <button class="btn-refresh" onclick="if(window.location.hostname==='localhost'){if(window.location.hostname==='localhost'){fetch('http://localhost:8081/update').then(function(r){window.location.reload()}).catch(function(){alert('Errore: Il server locale non è avviato.')})}else{window.location.reload(true)}}else{window.location.reload(true)}" data-i18n="btn_refresh"><i class="fa-solid fa-rotate-right"></i> Ricarica Dati</button>
+            </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <h1 data-i18n="title_banca_db">Database Conto Bancario</h1>
+                
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    <div class="lang-selector" style="display: flex; gap: 0.5rem; align-items: center;">
+                        <img src="https://flagcdn.com/w40/it.png" alt="IT" data-lang="it" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        <img src="https://flagcdn.com/w40/gb.png" alt="EN" data-lang="en" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        <img src="https://flagcdn.com/w40/fr.png" alt="FR" data-lang="fr" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                    </div>
+                    <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=3b82f6&color=fff" alt="Admin" class="avatar">
+                    <span>Edoardo Tubia (Admin)</span>
+                </div>
+                </div>
+            </header>
+
+            <!-- KPIs -->
+            <section class="kpi-grid">
+                <div class="kpi-card glass-panel">
+                    <div class="kpi-icon bg-green"><i class="fa-solid fa-building-columns"></i></div>
+                    <div class="kpi-data" style="width: 100%;">
+                        <div style="display: flex; justify-content: flex-start; gap: 0.5rem; align-items: baseline; margin-bottom: 0.5rem;">
+                            <h3 style="margin:0;"><span data-i18n="saldo_banque">Saldo C/C Banque de Luxembourg</span></h3>
+                            <span id="kpi-last-date" style="font-size: 0.85rem; color: #9ca3af;"></span>
+                        </div>
+                        <p id="kpi-balance" class="kpi-value text-green">â‚¬ 0</p>
+                    </div>
+                </div>
+                <div class="kpi-card glass-panel">
+                    <div class="kpi-icon bg-red"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                    <div class="kpi-data" style="width: 100%; display: flex; flex-direction: column; gap: 0.5rem; justify-content: center;">
+                        <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.3rem;">
+                            <h3 style="margin:0; font-size: 1rem; color: #f3f4f6;" data-i18n="kpi_spese_generali">Spese generali</h3>
+                            <span id="kpi-general-expenses" class="text-bold text-red" style="font-size: 1.1rem; color: #ef4444;">â‚¬ 0</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.3rem;">
+                            <h3 style="margin:0; font-size: 1rem; color: #f3f4f6;" data-i18n="kpi_participation_fees">Participation Fees 2%</h3>
+                            <span id="kpi-participation-fees" class="text-bold text-red" style="font-size: 1.1rem; color: #ef4444;">â‚¬ 0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bank Movements -->
+            <section class="dashboard-grid" style="grid-template-columns: 1fr; margin-top: 1.5rem;">
+                <div class="table-container glass-panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                        <h2 style="margin: 0;" data-i18n="title_ultimi_movimenti">Ultimi Movimenti Bancari (Estratto Conto)</h2>
+                        <div class="export-actions" style="display: flex; gap: 0.5rem; align-items: center; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 8px;">
+                            <span style="color: var(--text-muted); font-size: 0.9rem;" data-i18n="btn_export"><i class="fa-solid fa-download"></i> Esporta:</span>
+                            <select id="export-period" class="filter-input" style="padding: 0.3rem; min-width: 150px;">
+                                <option value="filtered" data-i18n="export_filtrati">Dati Attualmente Filtrati</option>
+                                <option value="current_month" data-i18n="export_mese_corso">Mese in corso</option>
+                                <option value="current_year" data-i18n="export_anno_corso">Anno in corso</option>
+                                <option value="global" data-i18n="export_globale">Globale (Tutto)</option>
+                            </select>
+                            <button class="btn-refresh" style="background: #107c41; margin-left: 0.5rem;" onclick="exportData('excel')"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                            <button class="btn-refresh" style="background: #dc2626;" onclick="exportData('pdf')"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="vertical-align: top; width: 150px;"><span data-i18n="table_data">Data</span> <br>
+                                        <div style="display: flex; gap: 5px;">
+                                            <select id="filter-year" class="filter-input" style="flex: 1; min-width: 0; padding: 0.3rem;">
+                                                <option value="" data-i18n="filter_anno">Anno</option>
+                                            </select>
+                                            <select id="filter-month" class="filter-input" style="flex: 1; min-width: 0; padding: 0.3rem;">
+                                                <option value="" data-i18n="filter_mese">Mese</option>
+                                                <option value="01" data-i18n="month_01">Gen</option>
+                                                <option value="02" data-i18n="month_02">Feb</option>
+                                                <option value="03" data-i18n="month_03">Mar</option>
+                                                <option value="04" data-i18n="month_04">Apr</option>
+                                                <option value="05" data-i18n="month_05">Mag</option>
+                                                <option value="06" data-i18n="month_06">Giu</option>
+                                                <option value="07" data-i18n="month_07">Lug</option>
+                                                <option value="08" data-i18n="month_08">Ago</option>
+                                                <option value="09" data-i18n="month_09">Set</option>
+                                                <option value="10" data-i18n="month_10">Ott</option>
+                                                <option value="11" data-i18n="month_11">Nov</option>
+                                                <option value="12" data-i18n="month_12">Dic</option>
+                                            </select>
+                                        </div>
+                                    </th>
+                                    <th style="vertical-align: top;"><span data-i18n="table_categoria">Categoria</span> <br>
+                                        <div class="custom-multiselect" id="ms-category" style="position:relative; width: 100%; font-weight: normal;">
+                                            <div class="multiselect-btn filter-input" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; min-height: 38px;">
+                                                <span class="multiselect-label" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" data-i18n="filter_tutte">Tutte</span>
+                                                <i class="fa-solid fa-chevron-down" style="font-size: 0.8em; margin-left: 5px;"></i>
+                                            </div>
+                                            <div class="multiselect-dropdown" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; width: 250px; background: #1f2937; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; z-index: 1000; max-height: 250px; overflow-y: auto; text-align: left; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); padding: 0.5rem;">
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th style="vertical-align: top;"><span data-i18n="table_descrizione">Descrizione</span> <br><input type="text" id="filter-desc" class="filter-input" placeholder="Cerca..." data-i18n-placeholder="search_placeholder"></th>
+                                    <th style="vertical-align: top;"><span data-i18n="table_partner">Partner</span> <br>
+                                        <div class="custom-multiselect" id="ms-partner" style="position:relative; width: 100%; font-weight: normal;">
+                                            <div class="multiselect-btn filter-input" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; min-height: 38px;">
+                                                <span class="multiselect-label" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" data-i18n="filter_tutti">Tutti</span>
+                                                <i class="fa-solid fa-chevron-down" style="font-size: 0.8em; margin-left: 5px;"></i>
+                                            </div>
+                                            <div class="multiselect-dropdown" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; width: 250px; background: #1f2937; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; z-index: 1000; max-height: 250px; overflow-y: auto; text-align: left; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); padding: 0.5rem;">
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th style="text-align: right; vertical-align: top;"><span data-i18n="table_importo">Importo (€)</span></th>
+                                    <th id="col-progressivo" style="text-align: right; vertical-align: top;"><span data-i18n="table_progressivo">Progressivo (€)</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="bank-table-body">
+                                <!-- Data injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="subtotal-container" style="display: flex; justify-content: flex-end; align-items: center; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 1rem;">
+                        <span style="font-weight: bold; margin-right: 1rem;">Subtotale Filtrato:</span>
+                        <span id="subtotal-amount" class="text-bold" style="font-size: 1.2rem;">â‚¬ 0,00</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="../data.js"></script>
+    <script src="banca_app.js?v=8"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

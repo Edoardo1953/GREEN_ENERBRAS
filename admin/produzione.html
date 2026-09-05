@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produzione e vendita energia - GREEN ENERBRAS ONE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <link rel="stylesheet" href="../style.css?v=7">
+
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="../auth.js?v=11"></script>
+    <script>Auth.requireRole(['admin']);</script>
+    <script src="../i18n.js?v=9"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass-panel">
+            <div class="logo" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 3rem;">
+                <img src="Loghi/Green Enerbras solo logo.png" alt="Logo" style="height: 55px; filter: grayscale(1) invert(1) brightness(10); mix-blend-mode: screen;">
+                <h2 style="margin: 0; font-size: 1.1rem;">GREEN ENERBRAS ONE</h2>
+            </div>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item" data-i18n="nav_azionariato"><i class="fa-solid fa-chart-pie"></i> Azionariato (LPs)</a>
+                <a href="banca.html" class="nav-item" data-i18n="nav_conto"><i class="fa-solid fa-building-columns"></i> Conto Bancario</a>
+                <a href="#" class="nav-item active" data-i18n="nav_produzione"><i class="fa-solid fa-solar-panel"></i> Produzione Energia</a>
+                <a href="vendite.html" class="nav-item" data-i18n="nav_vendite"><i class="fa-solid fa-money-bill-trend-up"></i> Vendite Energia</a>
+                <a href="impianti.html" class="nav-item" data-i18n="nav_impianti"><i class="fa-solid fa-map-location-dot"></i> Impianti e Mappa</a>
+                <a href="reporting.html" class="nav-item" data-i18n="nav_reporting"><i class="fa-solid fa-file-pdf"></i> Reporting Partners</a>
+                <a href="tristar.html" class="nav-item" data-i18n="nav_tristar"><i class="fa-solid fa-file-contract"></i> TRI STAR</a>
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 1rem 0;"></div>
+                <a href="strumenti.html" class="nav-item" data-i18n="nav_strumenti"><i class="fa-solid fa-toolbox"></i> Strumenti</a>
+                
+                <a href="risultati.html" class="nav-item">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span data-i18n="menu_risultati">Risultati</span>
+                </a>
+                <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; margin-top: 1rem; border: 1px dashed #3b82f6; justify-content: center;" data-i18n="nav_switch_user"><i class="fa-solid fa-right-left"></i> Switch to USER</a>
+                <a href="#" onclick="Auth.logout()" class="nav-item" style="color: #ef4444; margin-top: 1rem; justify-content: center;" data-i18n="nav_logout"><i class="fa-solid fa-right-from-bracket"></i> Esci</a>
+            <div class="update-info">
+                <p data-i18n="last_updated">Ultimo aggiornamento:</p>
+                <p id="last-updated" class="text-bold">--/--/----</p>
+                <button class="btn-refresh" onclick="if(window.location.hostname==='localhost'){fetch('http://localhost:8081/update').then(function(r){window.location.reload()}).catch(function(){alert('Errore: Il server di aggiornamento non ï¿½ avviato. Usa il collegamento sul Desktop per avviare il server.')})}else{window.location.reload(true)}" data-i18n="btn_refresh"><i class="fa-solid fa-rotate-right"></i> Ricarica Dati</button>
+            </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <h1 data-i18n="title_produzione">Produzione Energia Elettrica</h1>
+                
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    <div class="lang-selector" style="display: flex; gap: 0.5rem; align-items: center;">
+                        <img src="https://flagcdn.com/w40/it.png" alt="IT" data-lang="it" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        <img src="https://flagcdn.com/w40/gb.png" alt="EN" data-lang="en" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        <img src="https://flagcdn.com/w40/fr.png" alt="FR" data-lang="fr" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                    </div>
+                    <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=3b82f6&color=fff" alt="Admin" class="avatar">
+                    <span>Edoardo Tubia (Admin)</span>
+                </div>
+                </div>
+            </header>
+
+            <!-- KPIs -->
+            <section class="kpi-grid">
+                <div class="kpi-card glass-panel">
+                    <div class="kpi-icon bg-green"><i class="fa-solid fa-solar-panel"></i></div>
+                    <div class="kpi-data">
+                        <h3 data-i18n="kpi_impianti_attivi">Impianti Attivi</h3>
+                          <div id="kpi-plants-list" style="font-size: 0.95rem; margin-top: 0.5rem; line-height: 1.5; font-weight: normal; color: var(--text-muted);">
+                              <!-- Injected via JS -->
+                          </div>
+                      </div>
+                </div>
+                <div class="kpi-card glass-panel">
+                    <div class="kpi-icon bg-blue"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="kpi-data">
+                        <h3 data-i18n="kpi_totale_energia">Totale Energia Prodotta</h3>
+                        <div style="display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap;">
+                            <p id="kpi-total-kwh" class="kpi-value text-blue" style="margin: 0;">0</p>
+                            <span id="kpi-total-kwh-year" style="font-size: 1rem; font-weight: 600; color: #93c5fd; background: rgba(59, 130, 246, 0.2); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.4);">nel 2026</span>
+                        </div>
+                        <div id="kpi-plants-production-list" style="font-size: 0.85rem; margin-top: 0.5rem; line-height: 1.5; font-weight: normal; color: var(--text-muted);"></div>
+                    </div>
+                </div>
+                
+                <div class="kpi-card glass-panel" style="position: relative; cursor: pointer; justify-content: center; align-items: center; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.5); transition: all 0.3s;" onmouseover="this.style.background='rgba(59, 130, 246, 0.3)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'" onclick="openComparatoreModal()">
+                    <div style="text-align: center;">
+                        <i class="fa-solid fa-chart-column" style="font-size: 2.2rem; color: #3b82f6; margin-bottom: 0.5rem;"></i>
+                        <h3 style="margin: 0; color: white; font-weight: 600; font-size: 1.1rem;" data-i18n="btn_comparatore_prod">COMPARATORE PRODUZIONE</h3>                        <div id="toggle-comparatore-btn" style="position: absolute; top: 10px; right: 10px; cursor: pointer; color: #9ca3af; padding: 5px; z-index: 10;" onclick="event.stopPropagation(); toggleComparatoreVisibility()">                            <i class="fa-solid fa-eye-slash" id="comparatore-eye-icon"></i>                        </div>
+                    </div>
+                </div>
+</section>
+
+            <section class="dashboard-grid" style="grid-template-columns: 2.5fr 1fr;">
+                <!-- Bar Chart -->
+                <div class="chart-container glass-panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h2 style="margin: 0;" data-i18n="title_andamento_prod">Andamento Produzione</h2>
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            
+                            <div class="multi-select-container" style="position:relative; width: 180px;">
+                                <button type="button" class="filter-input" style="width: 100%; text-align:left; cursor:pointer; padding: 0.4rem 0.8rem; background: rgba(0,0,0,0.2);" onclick="toggleDropdown('dropdown-chart-mese')"><span data-i18n="filter_mesi">Mesi...</span></button>
+                                <div id="dropdown-chart-mese" class="multi-select-dropdown" style="display:none; position:absolute; top:100%; left:0; background:#1e293b; border:1px solid rgba(255,255,255,0.1); padding:0.5rem; z-index:9999; border-radius:4px; max-height:250px; overflow-y:auto; width:100%; box-shadow:0 8px 16px rgba(0,0,0,0.8);"></div>
+                            </div>
+                            <select id="chart-year-select" onchange="changeChartYear(this.value)" class="filter-input" style="width: auto; margin: 0; padding: 0.4rem 0.8rem; cursor: pointer; border-color: #f59e0b; color: #fff; background: rgba(245, 158, 11, 0.2);">
+                                <option value="all" style="color: #000;" data-i18n="filter_tutti_anni">Tutti gli anni</option>
+                            </select>
+                            <select id="chart-type-select" onchange="changeChartType(this.value)" class="filter-input" style="width: auto; margin: 0; padding: 0.4rem 0.8rem; cursor: pointer;">
+                                <option value="bar" data-i18n="filter_a_barre">A Barre</option>
+                                <option value="pie" data-i18n="filter_a_torta">A Torta</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper" style="margin-top: 1.5rem;">
+                        <canvas id="prodChart"></canvas>
+                    </div>
+                </div>
+                <!-- Filters -->
+                <div class="table-container glass-panel" style="display: flex; flex-direction: column; max-height: 500px;">
+                    <div id="custom-chart-legend" style="flex: 1; display: flex; flex-direction: column; gap: 1rem; overflow: hidden;"></div>
+                </div>
+            </section>
+
+            <!-- Detailed Production Table -->
+            <section class="dashboard-grid" style="grid-template-columns: 1fr; margin-top: 1.5rem;">
+                <div class="table-container glass-panel" style="padding-bottom: 0;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                        <h2 style="margin: 0;" data-i18n="title_registro_prod">Registro Produzione</h2>
+                        <div class="export-actions" style="display: flex; gap: 0.5rem; align-items: center; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 8px;">
+                            <span style="color: var(--text-muted); font-size: 0.9rem;" data-i18n="btn_export"><i class="fa-solid fa-download"></i> Esporta:</span>
+                            <select id="export-period" class="filter-input" style="padding: 0.3rem; min-width: 150px;">
+                                <option value="filtered" data-i18n="export_filtrati">Dati Attualmente Filtrati</option>
+                                <option value="current_year" data-i18n="export_anno_corso">Anno in corso</option>
+                                <option value="global" data-i18n="export_globale">Globale (Tutto)</option>
+                            </select>
+                            <button class="btn-refresh" style="background: #107c41; margin-left: 0.5rem;" onclick="exportData('excel')"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                            <button class="btn-refresh" style="background: #dc2626;" onclick="exportData('pdf')"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="multi-select-container" style="position:relative; width: 220px;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.3rem;" data-i18n="filter_mese_anno">Filtra Mese/Anno</label>
+                            <button type="button" class="filter-input" style="width: 100%; text-align:left; cursor:pointer;" onclick="toggleDropdown('dropdown-mese')" data-i18n="filter_seleziona">Seleziona...</button>
+                            <div id="dropdown-mese" class="multi-select-dropdown" style="display:none; position:absolute; top:100%; left:0; background:#1e293b; border:1px solid rgba(255,255,255,0.1); padding:0.5rem; z-index:9999; border-radius:4px; max-height:250px; overflow-y:auto; width:100%; box-shadow:0 8px 16px rgba(0,0,0,0.8);"></div>
+                        </div>
+                        <div class="multi-select-container" style="position:relative; width: 220px;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.3rem;" data-i18n="filter_impianto">Filtra Impianto</label>
+                            <button type="button" class="filter-input" style="width: 100%; text-align:left; cursor:pointer;" onclick="toggleDropdown('dropdown-impianto')" data-i18n="filter_seleziona">Seleziona...</button>
+                            <div id="dropdown-impianto" class="multi-select-dropdown" style="display:none; position:absolute; top:100%; left:0; background:#1e293b; border:1px solid rgba(255,255,255,0.1); padding:0.5rem; z-index:9999; border-radius:4px; max-height:250px; overflow-y:auto; width:100%; box-shadow:0 8px 16px rgba(0,0,0,0.8);"></div>
+                        </div>
+                    </div>
+                    <div class="table-wrapper" style="height: 500px; overflow-y: auto;">
+                        <table class="data-table">
+                            <thead style="position: sticky; top: 0; z-index: 50; background: var(--bg-dark);">
+                                <tr>
+                                    <th data-i18n="table_mese_anno">Mese/Anno</th>
+                                    <th data-i18n="table_impianto">Impianto</th>
+                                    <th style="text-align: right;" data-i18n="table_produzione_kwh">Produzione (kWh)</th>
+                                    
+                                </tr>
+                            </thead>
+                            <tbody id="production-table-body">
+                                <!-- Data injected via JS -->
+                            </tbody>
+                            <tfoot style="background: rgba(0,0,0,0.4); position: sticky; bottom: 0; z-index: 10;">
+                                <tr>
+                                    <td colspan="2" style="text-align: right; font-weight: bold; font-size: 1rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.2);" data-i18n="table_subtotali">SUBTOTALI:</td>
+                                    <td id="subtotal-kwh" class="text-bold" style="text-align: right; color: #3b82f6; font-size: 1.1rem; border-top: 1px solid rgba(255,255,255,0.2);">0</td>
+                                    
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Data script -->
+    <script src="../data.js"></script>
+    <!-- App logic -->
+    <script src="prod_app.js?v=17"></script>
+
+    <!-- Modal Comparatore -->
+    <div id="comparatoreModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center;">
+        <div class="glass-panel" style="width: 95%; max-width: 1200px; padding: 2rem; position: relative; max-height: 90vh; overflow-y: auto;">
+            <button onclick="closeComparatoreModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            <h2 style="margin-bottom: 1.5rem;"><span data-i18n="title_comparatore_impianto">Comparatore Produzione per Impianto</span></h2>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center;">
+                <select id="comparatore-period-type" class="filter-input" style="padding: 0.5rem; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.2);" onchange="updateComparatorePeriodValues()">
+                    <option value="year" data-i18n="comp_annuale">Confronto Annuale (Totale Anno)</option>
+                    <option value="two_years" data-i18n="comp_due_anni">Confronto tra 2 Anni</option>
+                    <option value="month" data-i18n="comp_mensile">Confronto Mensile (Mese Singolo)</option>
+                    <option value="two_months" data-i18n="comp_due_mesi">Confronto tra 2 Mesi</option>
+                </select>
+                <select id="comparatore-period-value" class="filter-input" style="padding: 0.5rem; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.2);" onchange="updateComparatoreChart()">
+                </select>
+                <div id="comparatore-two-years-container" style="display: none; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span style="color: #94a3b8; font-size: 0.85rem;" data-i18n="comp_anno_1">Anno 1:</span>
+                        <select id="comparatore-year-1" class="filter-input" style="padding: 0.5rem; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.2);" onchange="updateComparatoreChart()">
+                        </select>
+                    </div>
+                    <span style="color: #60a5fa; font-weight: bold; font-size: 0.9rem;">VS</span>
+                    <div style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span style="color: #94a3b8; font-size: 0.85rem;" data-i18n="comp_anno_2">Anno 2:</span>
+                        <select id="comparatore-year-2" class="filter-input" style="padding: 0.5rem; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.2);" onchange="updateComparatoreChart()">
+                        </select>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.35rem; margin-left: 0.5rem;">
+                        <span style="color: #94a3b8; font-size: 0.85rem;" data-i18n="comp_vista">Vista:</span>
+                        <select id="comparatore-two-years-view" class="filter-input" style="padding: 0.5rem; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.2);" onchange="updateComparatoreChart()">
+                            <option value="by_usina" data-i18n="comp_view_usina">Per Impianto (USINA)</option>
+                            <option value="by_month" data-i18n="comp_view_month">Mese per Mese (Gen-Dic)</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="comparatore-two-months-container" style="display: none; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span style="color: #94a3b8; font-size: 0.85rem;" data-i18n="comp_mese_1">Mese 1:</span>
+                        <select id="comparatore-month-1" class="filter-input" style="padding: 0.5rem; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.2);" onchange="updateComparatoreChart()">
+                        </select>
+                    </div>
+                    <span style="color: #60a5fa; font-weight: bold; font-size: 0.9rem;">VS</span>
+                    <div style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span style="color: #94a3b8; font-size: 0.85rem;" data-i18n="comp_mese_2">Mese 2:</span>
+                        <select id="comparatore-month-2" class="filter-input" style="padding: 0.5rem; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.2);" onchange="updateComparatoreChart()">
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <!-- KPI Summary Bar for 2-Year Comparison -->
+            <div id="comparatore-summary-kpi" style="display: none; gap: 1.5rem; margin-bottom: 1rem; padding: 0.8rem 1.2rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; align-items: center; justify-content: space-around; flex-wrap: wrap;">
+                <div>
+                    <span style="color: #94a3b8; font-size: 0.85rem;" id="kpi-y1-label">Anno 1:</span>
+                    <span style="color: #60a5fa; font-weight: bold; font-size: 1.15rem; margin-left: 0.5rem;" id="kpi-y1-val">0 kWh</span>
+                </div>
+                <div>
+                    <span style="color: #94a3b8; font-size: 0.85rem;" id="kpi-y2-label">Anno 2:</span>
+                    <span style="color: #34d399; font-weight: bold; font-size: 1.15rem; margin-left: 0.5rem;" id="kpi-y2-val">0 kWh</span>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <span style="color: #94a3b8; font-size: 0.85rem;">Variazione:</span>
+                    <span id="kpi-diff-badge" style="padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 1rem; margin-left: 0.5rem; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">+0.0%</span>
+                </div>
+            </div>
+
+            <div style="position: relative; height: 40vh; width: 100%;">
+                <canvas id="comparatoreChartCanvas"></canvas>
+            </div>
+            
+            <div style="margin-top: 2rem; overflow-x: auto; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;"><span data-i18n="title_tabella_produzione">Dettaglio Produzione (kWh)</span></h3>
+                <table class="data-table" id="comparatore-table" style="width: 100%; border-collapse: collapse; text-align: right;">
+                    <thead id="comparatore-table-head" style="background: rgba(0,0,0,0.4);">
+                        <!-- Injected via JS -->
+                    </thead>
+                    <tbody id="comparatore-table-body">
+                        <!-- Injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

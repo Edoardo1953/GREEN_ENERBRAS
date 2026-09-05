@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRI STAR - GREEN ENERBRAS ONE</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../style.css?v=7">
+    
+    <!-- LocalForage per IndexedDB -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+
+    <style>
+        .folder-section {
+            margin-bottom: 2rem;
+        }
+        .folder-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: background 0.3s;
+            border: 1px solid var(--border-color);
+        }
+        .folder-header:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .folder-content {
+            padding: 1rem 0;
+            display: none;
+        }
+        .folder-content.active {
+            display: block;
+        }
+        .drop-zone {
+            border: 2px dashed var(--accent-green);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            background: rgba(16, 185, 129, 0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+            margin-bottom: 1rem;
+        }
+        .drop-zone.dragover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #fff;
+        }
+        .drop-zone i {
+            font-size: 3rem;
+            color: var(--accent-green);
+            margin-bottom: 1rem;
+        }
+        .file-input {
+            display: none;
+        }
+        .doc-icon {
+            font-size: 1.5rem;
+        }
+        .icon-pdf { color: #ef4444; }
+        .icon-word { color: #3b82f6; }
+        .icon-image { color: #10b981; }
+        .icon-video { color: #8b5cf6; }
+        .icon-default { color: #9ca3af; }
+
+        .btn-action {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 0.5rem;
+            transition: color 0.3s;
+        }
+        .btn-delete { color: #ef4444; }
+        .btn-delete:hover { color: #ff6b6b; }
+        .btn-visible { color: #10b981; }
+        .btn-hidden { color: #6b7280; }
+        
+        .upload-btn {
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        .upload-btn:hover { background: var(--accent-green-hover); }
+
+        #upload-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        #upload-overlay.active { display: flex; }
+        .upload-progress-box {
+            background: #1e293b;
+            border: 1px solid rgba(16,185,129,0.4);
+            border-radius: 16px;
+            padding: 2rem 3rem;
+            text-align: center;
+            min-width: 320px;
+        }
+        .upload-progress-box h3 { margin: 0 0 1rem; color: #fff; font-size: 1.1rem; }
+        .upload-progress-box p  { margin: 0.5rem 0 0; color: #94a3b8; font-size: 0.85rem; }
+        .progress-bar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 99px;
+            height: 10px;
+            width: 100%;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            border-radius: 99px;
+            transition: width 0.3s ease;
+        }
+    </style>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <script src="../shared/firebase_config.js"></script>
+
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
+    <script src="../auth.js?v=11"></script>
+    <script>Auth.requireRole(['admin']);</script>
+    <script src="../i18n.js?v=9"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass-panel">
+            <div class="logo" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 3rem;">
+                <img src="Loghi/Green Enerbras solo logo.png" alt="Logo" style="height: 55px; filter: grayscale(1) invert(1) brightness(10); mix-blend-mode: screen;">
+                <h2 style="margin: 0; font-size: 1.1rem;">GREEN ENERBRAS ONE</h2>
+            </div>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item" data-i18n="nav_azionariato"><i class="fa-solid fa-chart-pie"></i> Azionariato (LPs)</a>
+                <a href="banca.html" class="nav-item" data-i18n="nav_conto"><i class="fa-solid fa-building-columns"></i> Conto Bancario</a>
+                <a href="produzione.html" class="nav-item" data-i18n="nav_produzione"><i class="fa-solid fa-solar-panel"></i> Produzione Energia</a>
+                <a href="vendite.html" class="nav-item" data-i18n="nav_vendite"><i class="fa-solid fa-money-bill-trend-up"></i> Vendite Energia</a>
+                <a href="impianti.html" class="nav-item" data-i18n="nav_impianti"><i class="fa-solid fa-map-location-dot"></i> Impianti e Mappa</a>
+                <a href="reporting.html" class="nav-item" data-i18n="nav_reporting"><i class="fa-solid fa-file-pdf"></i> Reporting Partners</a>
+                <a href="#" class="nav-item active" data-i18n="nav_tristar"><i class="fa-solid fa-file-contract"></i> TRI STAR</a>
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 1rem 0;"></div>
+                <a href="strumenti.html" class="nav-item" data-i18n="nav_strumenti"><i class="fa-solid fa-toolbox"></i> Strumenti</a>
+                
+                <a href="risultati.html" class="nav-item">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span data-i18n="menu_risultati">Risultati</span>
+                </a>
+                <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; margin-top: 1rem; border: 1px dashed #3b82f6; justify-content: center;" data-i18n="nav_switch_user"><i class="fa-solid fa-right-left"></i> Switch to USER</a>
+                <a href="#" onclick="Auth.logout()" class="nav-item" style="color: #ef4444; margin-top: 1rem; justify-content: center;" data-i18n="nav_logout"><i class="fa-solid fa-right-from-bracket"></i> Esci</a>
+            <div class="update-info">
+                <p data-i18n="last_updated">Ultimo aggiornamento:</p>
+                <p id="last-updated" class="text-bold">--/--/----</p>
+            </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <h1 data-i18n="title_tristar_doc">Gestione Documentale (TRI STAR)</h1>
+                
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    <div class="lang-selector" style="display: flex; gap: 0.5rem; align-items: center;">
+                        <img src="https://flagcdn.com/w40/it.png" alt="IT" data-lang="it" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        <img src="https://flagcdn.com/w40/gb.png" alt="EN" data-lang="en" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        <img src="https://flagcdn.com/w40/fr.png" alt="FR" data-lang="fr" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                    </div>
+                    <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=3b82f6&color=fff" alt="Admin" class="avatar">
+                    <span>Edoardo Tubia (Admin)</span>
+                </div>
+                </div>
+            </header>
+
+            <section class="dashboard-grid" style="grid-template-columns: 1fr;">
+                
+                <!-- TRI STAR Folder -->
+                <div class="folder-section glass-panel">
+                    <div class="folder-header" onclick="toggleFolder('tri-star-content')">
+                        <i class="fa-solid fa-folder-open text-blue" style="font-size: 2rem;"></i>
+                        <div>
+                            <h2 style="margin:0;">TRI STAR ENERBRAS ONE SCP</h2>
+                            <span style="color: var(--text-muted); font-size: 0.9rem;" data-i18n="doc_tristar">Documentazione della controllata in Brasile</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-up" style="margin-left: auto;"></i>
+                    </div>
+                    
+                    <div id="tri-star-content" class="folder-content active">
+                        <!-- Upload Area -->
+                        <div class="drop-zone" id="drop-zone-ts">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <h3 data-i18n="testo_trascina_file">Trascina i file qui o clicca per caricare</h3>
+                            <p style="color: var(--text-muted); margin-top: 0.5rem;"><span data-i18n="upload_supported">Supportati: PDF, Word, Immagini, Video</span></p>
+                            <input type="file" id="file-input-ts" class="file-input" multiple>
+                            <button class="upload-btn" onclick="document.getElementById('file-input-ts').click()" data-i18n="upload_browse">Sfoglia File</button>
+                        </div>
+                        
+                        <!-- File Table -->
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;" data-i18n="table_tipo">Tipo</th>
+                                        <th data-i18n="table_nome_file">Nome File</th>
+                                        <th data-i18n="table_data_upload">Data Upload</th>
+                                        <th data-i18n="table_dimensione">Dimensione</th>
+                                        <th style="text-align: right;" data-i18n="table_azioni">Azioni</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-ts">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- Document Preview Modal -->
+    <div id="preview-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center;">
+        <div style="width: 85%; height: 85%; display: flex; flex-direction: column; background: #0f172a; border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
+            <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="preview-title" style="margin: 0;"><i class="fa-solid fa-file"></i> Anteprima Documento</h3>
+                <button onclick="document.getElementById('preview-modal').style.display='none'" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="preview-content-container" style="flex-grow: 1; display: flex; justify-content: center; align-items: center; background: #000; padding: 1rem; overflow: hidden;">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Progress Overlay -->
+    <div id="upload-overlay">
+        <div class="upload-progress-box">
+            <h3><i class="fa-solid fa-cloud-arrow-up" style="color:#10b981; margin-right:0.5rem;"></i> Caricamento in corso...</h3>
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="upload-progress-fill" style="width:0%"></div>
+            </div>
+            <p id="upload-progress-text">0%</p>
+            <p id="upload-file-name" style="font-size:0.8rem; margin-top:0.3rem;"></p>
+        </div>
+    </div>
+
+    <!-- Data script -->
+    <script src="../data.js"></script>
+    <!-- App logic -->
+    <script src="reporting_app.js?v=7"></script>
+    
+    <!-- AI Translation scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="pdf_ai_translate.js?v=3"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
