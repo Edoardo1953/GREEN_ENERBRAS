@@ -370,12 +370,20 @@ const Auth = {
     },
 
     updateSidebarVisibilityUI() {
-        const isUser = Auth.currentUser && Auth.currentUser.role !== 'admin';
+        const isUser = !Auth.currentUser || Auth.currentUser.role !== 'admin';
+
+        if (isUser) {
+            if (document.body) document.body.classList.add('is-user');
+            if (document.documentElement) document.documentElement.classList.add('is-user');
+        } else {
+            if (document.body) document.body.classList.remove('is-user');
+            if (document.documentElement) document.documentElement.classList.remove('is-user');
+        }
 
         // 1. Header colonna visibilità
         const header = document.querySelector('.nav-visibility-header');
         if (header) {
-            header.style.display = isUser ? 'none' : 'flex';
+            header.style.setProperty('display', isUser ? 'none' : 'flex', 'important');
         }
 
         // 2. Icone occhio admin con stili espliciti
@@ -386,9 +394,9 @@ const Auth = {
             
             btn.setAttribute('data-page', pageKey);
             if (isUser) {
-                btn.style.display = 'none';
+                btn.style.setProperty('display', 'none', 'important');
             } else {
-                btn.style.display = 'inline-flex';
+                btn.style.setProperty('display', 'inline-flex', 'important');
                 const isVisible = (Auth.pageVisibility[pageKey] !== false);
                 btn.setAttribute('data-visible', isVisible ? 'true' : 'false');
                 if (isVisible) {
@@ -416,14 +424,14 @@ const Auth = {
                 const pageKey = row.getAttribute('data-page') || getPageKeyFromElement(row.querySelector('a'));
                 if (pageKey && pageKey !== 'my_report') {
                     const isVisible = (Auth.pageVisibility[pageKey] !== false);
-                    row.style.display = isVisible ? 'flex' : 'none';
+                    row.style.setProperty('display', isVisible ? 'flex' : 'none', 'important');
                 }
             });
 
             // Nascondi pulsanti switch riservati ad admin
             document.querySelectorAll('a[data-i18n="nav_switch_user"], a[data-i18n="nav_switch_admin"]').forEach(el => {
-                el.style.display = 'none';
-                if (el.closest('.nav-item-row')) el.closest('.nav-item-row').style.display = 'none';
+                el.style.setProperty('display', 'none', 'important');
+                if (el.closest('.nav-item-row')) el.closest('.nav-item-row').style.setProperty('display', 'none', 'important');
             });
         }
     }

@@ -121,26 +121,33 @@ body {
 }
 
 .nav-eye-btn {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border: 1px solid rgba(255, 255, 255, 0.16) !important;
-    border-radius: 8px !important;
-    padding: 0.45rem 0.65rem !important;
-    cursor: pointer !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 1.05rem !important;
-    line-height: 1 !important;
-    transition: all 0.2s ease !important;
-    flex-shrink: 0 !important;
-    z-index: 100 !important;
-    user-select: none !important;
-    pointer-events: auto !important;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+    padding: 0.45rem 0.65rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    line-height: 1;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    z-index: 100;
+    user-select: none;
+    pointer-events: auto;
+}
+
+body.is-user .nav-eye-btn,
+body.is-user .nav-visibility-header,
+.is-user .nav-eye-btn,
+.is-user .nav-visibility-header {
+    display: none !important;
 }
 
 .nav-eye-btn:hover {
-    transform: scale(1.2) !important;
-    box-shadow: 0 0 14px rgba(0,0,0,0.5) !important;
+    transform: scale(1.2);
+    box-shadow: 0 0 14px rgba(0,0,0,0.5);
 }
 
 .nav-eye-btn.visible,
