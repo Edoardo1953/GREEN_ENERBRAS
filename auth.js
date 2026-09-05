@@ -170,12 +170,71 @@ Auth.init();
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    const isUserRole = Auth.currentUser && Auth.currentUser.role !== 'admin';
+    const isInsideAdmin = window.location.pathname.includes('/admin/');
+
     // Se loggato come admin, mostra l'eventuale tasto "Switch to ADMIN" nell'area User
     if (Auth.currentUser && Auth.currentUser.role === 'admin') {
         const switchBtn = document.getElementById('switch-admin-btn');
         if (switchBtn) {
             switchBtn.style.display = 'flex';
         }
+    }
+
+    // Se l'utente è uno USER (partner/visitor) e si trova in una pagina condivisa:
+    if (isUserRole && isInsideAdmin) {
+        // 1. Aggiorna la sidebar nascondendo le sezioni riservate all'Admin
+        const sidebarNav = document.querySelector('.nav-menu');
+        if (sidebarNav) {
+            // Nascondi Azionariato, Conto Bancario, Strumenti, Risultati, Switch to User
+            const links = sidebarNav.querySelectorAll('a');
+            links.forEach(a => {
+                const href = a.getAttribute('href') || '';
+                const i18n = a.getAttribute('data-i18n') || '';
+                if (
+                    href.includes('index.html') || 
+                    href.includes('banca.html') || 
+                    href.includes('strumenti.html') || 
+                    href.includes('risultati.html') ||
+                    i18n === 'nav_switch_user' ||
+                    i18n === 'nav_azionariato' ||
+                    i18n === 'nav_conto' ||
+                    i18n === 'nav_strumenti' ||
+                    i18n === 'menu_risultati'
+                ) {
+                    a.style.display = 'none';
+                }
+            });
+
+            // Aggiungi link "Il Mio Report" in cima alla sidebar
+            const myReportLink = document.createElement('a');
+            myReportLink.href = '../user/dashboard.html';
+            myReportLink.className = 'nav-item';
+            myReportLink.style.color = '#3b82f6';
+            myReportLink.style.fontWeight = 'bold';
+            myReportLink.innerHTML = '<i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_my_report">Il Mio Report</span>';
+            sidebarNav.insertBefore(myReportLink, sidebarNav.firstChild);
+        }
+
+        // 2. Aggiorna il badge utente in alto a destra
+        const userProfile = document.querySelector('.user-profile');
+        if (userProfile) {
+            const displayName = Auth.currentUser.partnerName || Auth.currentUser.id || 'User';
+            const roleLabel = Auth.currentUser.role === 'visitor' ? 'Ospite' : 'Investitore';
+            userProfile.innerHTML = `
+                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=10b981&color=fff" alt="${displayName}" class="avatar">
+                <span>${displayName} (${roleLabel})</span>
+            `;
+        }
+
+        // 3. Nascondi eventuali pulsanti di aggiornamento da server locale (solo Admin)
+        const refreshBtn = document.querySelector('.btn-refresh[onclick*="localhost"]');
+        if (refreshBtn) refreshBtn.style.display = 'none';
+        
+        // 4. Nascondi drop zone di caricamento documenti per gli utenti non-admin
+        document.querySelectorAll('.drop-zone, .file-input, .upload-btn').forEach(el => {
+            el.style.display = 'none';
+        });
     }
 
     // Inizializza menu mobile globale
@@ -207,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Aggiungi bottone Cambia Password per gli utenti
     const sidebarNav = document.querySelector('.nav-menu');
-    if (sidebarNav && Auth.currentUser && !window.location.pathname.includes('/admin/')) {
+    if (sidebarNav && Auth.currentUser && (!window.location.pathname.includes('/admin/') || isUserRole)) {
         const esciBtn = Array.from(sidebarNav.querySelectorAll('a')).find(el => el.textContent.includes('Esci') || el.innerHTML.includes('fa-right-from-bracket'));
         
         const changePwdBtn = document.createElement('a');

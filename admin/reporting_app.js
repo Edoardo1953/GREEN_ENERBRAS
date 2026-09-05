@@ -205,7 +205,11 @@ function renderTable(folderKey, tableId) {
     if (!tbody) return;
     tbody.innerHTML = '';
     
-    const docs = documents[folderKey] || [];
+    const isUserRole = typeof Auth !== 'undefined' && Auth.currentUser && Auth.currentUser.role !== 'admin';
+    let docs = documents[folderKey] || [];
+    if (isUserRole) {
+        docs = docs.filter(d => d.visibleToUser);
+    }
     
     if (docs.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Nessun documento caricato.</td></tr>';
@@ -269,6 +273,7 @@ function renderTable(folderKey, tableId) {
                         <button class="btn-action" title="Leggi Documento (Preview)" onclick="openPreview('${doc.id}', '${folderKey}')" style="color: #10b981;">
                             <i class="fa-solid fa-book-open"></i>
                         </button>
+                        ${!isUserRole ? `
                         <button class="btn-action" title="Rinomina Documento" onclick="renameDocument('${folderKey}', '${doc.id}')" style="color: #3b82f6;">
                             <i class="fa-solid fa-pen"></i>
                         </button>
@@ -278,6 +283,7 @@ function renderTable(folderKey, tableId) {
                         <button class="btn-action btn-delete" title="Elimina" onclick="deleteDocument('${folderKey}', '${doc.id}')">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
+                        ` : ''}
                     </td>
                 `;
                 tbody.appendChild(tr);

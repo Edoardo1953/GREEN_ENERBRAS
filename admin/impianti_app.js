@@ -538,7 +538,11 @@ function renderDocsTable() {
     const tbody = document.getElementById('table-impianto-docs');
     tbody.innerHTML = '';
     
-    const allDocs = impiantiDocuments[currentImpiantoId] || [];
+    const isUserRole = typeof Auth !== 'undefined' && Auth.currentUser && Auth.currentUser.role !== 'admin';
+    let allDocs = impiantiDocuments[currentImpiantoId] || [];
+    if (isUserRole) {
+        allDocs = allDocs.filter(d => d.visibleToUser);
+    }
     
     const filterCheckboxes = document.querySelectorAll('.usina-filter-cb');
     let selectedUsinas = [];
@@ -606,7 +610,7 @@ function renderDocsTable() {
                 `;
 
                 let translationBtn = '';
-                if (doc.type === 'pdf' || doc.type === 'word') {
+                if (!isUserRole && (doc.type === 'pdf' || doc.type === 'word')) {
                     translationBtn = `
                         <button title="Traduci con IA (Es. per richieste pendenti)" onclick="adminTranslateDoc('${doc.id}')" style="${btnBase} color:#f59e0b;">
                             <i class="fa-solid fa-language"></i>
@@ -622,16 +626,18 @@ function renderDocsTable() {
                 }
 
                 const tr = document.createElement('tr');
-                tr.draggable = true;
-                tr.ondragstart = (e) => handleDragStart(e, doc.id);
-                tr.ondragover = (e) => handleDragOver(e);
-                tr.ondragenter = (e) => e.preventDefault();
-                tr.ondrop = (e) => handleDrop(e, doc.id);
-                tr.ondragend = (e) => handleDragEnd(e);
-                tr.style.cursor = 'grab';
+                if (!isUserRole) {
+                    tr.draggable = true;
+                    tr.ondragstart = (e) => handleDragStart(e, doc.id);
+                    tr.ondragover = (e) => handleDragOver(e);
+                    tr.ondragenter = (e) => e.preventDefault();
+                    tr.ondrop = (e) => handleDrop(e, doc.id);
+                    tr.ondragend = (e) => handleDragEnd(e);
+                    tr.style.cursor = 'grab';
+                }
 
                 tr.innerHTML = `
-                    <td style="width:44px;"><i class="fa-solid fa-grip-vertical" style="color: #6b7280; margin-right: 10px; cursor: grab;" title="Trascina per riordinare"></i>${getIconForType(doc.type)}</td>
+                    <td style="width:44px;">${!isUserRole ? '<i class="fa-solid fa-grip-vertical" style="color: #6b7280; margin-right: 10px; cursor: grab;" title="Trascina per riordinare"></i>' : ''}${getIconForType(doc.type)}</td>
                     <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${doc.name}">
                         <strong style="font-size:0.95rem; vertical-align: middle;">${doc.name}</strong> 
                     </td>
@@ -644,6 +650,7 @@ function renderDocsTable() {
                         <button title="Anteprima" onclick="openPreview('${doc.id}')" style="${btnBase} color:#10b981;">
                             <i class="fa-solid fa-book-open"></i>
                         </button>
+                        ${!isUserRole ? `
                         <button title="Rinomina" onclick="renameDocument('${doc.id}')" style="${btnBase} color:#3b82f6;">
                             <i class="fa-solid fa-pen"></i>
                         </button>
@@ -653,6 +660,7 @@ function renderDocsTable() {
                         <button title="Elimina" onclick="deleteDocument('${doc.id}')" style="${btnBase} color:#ef4444;">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
+                        ` : ''}
                     </td>
                 `;
                 tbody.appendChild(tr);
