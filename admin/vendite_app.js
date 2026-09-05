@@ -1353,14 +1353,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        let thHtml = '<tr><th style="text-align: left; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2);">Anno / Mese</th>';
+        const tAnnoMese = (typeof translations !== 'undefined' && typeof currentLang !== 'undefined' && translations[currentLang] && translations[currentLang]['comp_anno_mese']) || 'Anno / Mese';
+        const tTotale = (typeof translations !== 'undefined' && typeof currentLang !== 'undefined' && translations[currentLang] && translations[currentLang]['comp_totale']) || 'Totale';
+        const tVarYoY = (typeof translations !== 'undefined' && typeof currentLang !== 'undefined' && translations[currentLang] && translations[currentLang]['comp_var_yoy']) || 'Var. YoY';
+
+        let thHtml = `<tr><th style="text-align: left; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2);">${tAnnoMese}</th>`;
         entityKeys.forEach((k, idx) => {
             const uColor = getEntityColor(k, idx);
             const label = entityLabels[idx];
             thHtml += `<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2);"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${uColor}; margin-right:5px;"></span>${label}</th>`;
         });
-        thHtml += '<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2); color: #10b981;">Totale (R$)</th>';
-        thHtml += '<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2); color: #3b82f6;">Var. YoY</th></tr>';
+        thHtml += `<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2); color: #10b981;">${tTotale} (R$)</th>`;
+        thHtml += `<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2); color: #3b82f6;">${tVarYoY}</th></tr>`;
         thead.innerHTML = thHtml;
 
         const dataByYear = {};

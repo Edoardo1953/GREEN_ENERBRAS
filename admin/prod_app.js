@@ -1149,13 +1149,17 @@ window.renderComparatoreTable = function() {
 
     const allPlants = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
     
-    let thHtml = '<tr><th style="text-align: left; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2);">Anno / Mese</th>';
+    const tAnnoMese = (typeof translations !== 'undefined' && typeof currentLang !== 'undefined' && translations[currentLang] && translations[currentLang]['comp_anno_mese']) || 'Anno / Mese';
+    const tTotale = (typeof translations !== 'undefined' && typeof currentLang !== 'undefined' && translations[currentLang] && translations[currentLang]['comp_totale']) || 'Totale';
+    const tVarYoY = (typeof translations !== 'undefined' && typeof currentLang !== 'undefined' && translations[currentLang] && translations[currentLang]['comp_var_yoy']) || 'Var. YoY';
+
+    let thHtml = `<tr><th style="text-align: left; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2);">${tAnnoMese}</th>`;
     allPlants.forEach((p, idx) => {
         const uColor = window.getUsinaColor ? window.getUsinaColor(p, idx) : '#3b82f6';
         thHtml += `<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2);"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${uColor}; margin-right:5px;"></span>USINA ${p.padStart(3, '0')}</th>`;
     });
-    thHtml += '<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2); color: #3b82f6;">Totale</th>';
-    thHtml += '<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2); color: #10b981;">Var. YoY</th></tr>';
+    thHtml += `<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2); color: #3b82f6;">${tTotale}</th>`;
+    thHtml += `<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2); color: #10b981;">${tVarYoY}</th></tr>`;
     thead.innerHTML = thHtml;
 
     const dataByYear = {};

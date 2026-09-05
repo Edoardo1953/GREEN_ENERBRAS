@@ -128,6 +128,11 @@ const translations = {
         'comp_vista': 'Vista:',
         'comp_view_usina': 'Per Impianto (USINA)',
         'comp_view_month': 'Mese per Mese (Gen-Dic)',
+        'title_tabella_produzione': 'Dettaglio Produzione (kWh)',
+        'comp_variazione': 'Variazione:',
+        'comp_anno_mese': 'Anno / Mese',
+        'comp_totale': 'Totale',
+        'comp_var_yoy': 'Var. YoY',
         
         // --- VENDITE ---
         'title_vendite': 'Vendite Energia e Fatturato',
@@ -413,6 +418,11 @@ const translations = {
         'comp_vista': 'View:',
         'comp_view_usina': 'By Plant (USINA)',
         'comp_view_month': 'Month by Month (Jan-Dec)',
+        'title_tabella_produzione': 'Production Details (kWh)',
+        'comp_variazione': 'Variation:',
+        'comp_anno_mese': 'Year / Month',
+        'comp_totale': 'Total',
+        'comp_var_yoy': 'YoY Var.',
         
         // --- VENDITE ---
         'title_vendite': 'Energy Sales and Revenue',
@@ -693,6 +703,11 @@ const translations = {
         'comp_vista': 'Vue :',
         'comp_view_usina': 'Par Installation (USINA)',
         'comp_view_month': 'Mois par Mois (Jan-Déc)',
+        'title_tabella_produzione': 'Détail de Production (kWh)',
+        'comp_variazione': 'Variation :',
+        'comp_anno_mese': 'Année / Mois',
+        'comp_totale': 'Total',
+        'comp_var_yoy': 'Var. YoY',
         
         // --- VENDITE ---
         'title_vendite': 'Ventes d\'Énergie et Chiffre d\'Affaires',
