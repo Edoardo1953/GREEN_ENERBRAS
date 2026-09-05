@@ -71,20 +71,20 @@ function showToastNotification(pageKey, isVisible) {
         toast = document.createElement('div');
         toast.id = 'ge-toast-notification';
         toast.style.position = 'fixed';
-        toast.style.bottom = '25px';
-        toast.style.right = '25px';
-        toast.style.padding = '14px 22px';
+        toast.style.top = '30px';
+        toast.style.right = '30px';
+        toast.style.padding = '16px 24px';
         toast.style.borderRadius = '12px';
         toast.style.color = '#fff';
-        toast.style.fontWeight = '600';
-        toast.style.fontSize = '0.92rem';
-        toast.style.zIndex = '99999';
-        toast.style.boxShadow = '0 12px 30px rgba(0,0,0,0.6)';
+        toast.style.fontWeight = '700';
+        toast.style.fontSize = '1rem';
+        toast.style.zIndex = '999999';
+        toast.style.boxShadow = '0 15px 35px rgba(0,0,0,0.7)';
         toast.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
         toast.style.display = 'flex';
         toast.style.alignItems = 'center';
-        toast.style.gap = '12px';
-        toast.style.backdropFilter = 'blur(10px)';
+        toast.style.gap = '14px';
+        toast.style.pointerEvents = 'none';
         document.body.appendChild(toast);
     }
     
@@ -102,13 +102,13 @@ function showToastNotification(pageKey, isVisible) {
     const title = pageLabels[pageKey] || pageKey;
     
     if (isVisible) {
-        toast.style.background = 'linear-gradient(135deg, rgba(5, 150, 105, 0.95), rgba(16, 185, 129, 0.95))';
-        toast.style.border = '1px solid rgba(52, 211, 153, 0.5)';
-        toast.innerHTML = `<i class="fa-solid fa-eye" style="font-size: 1.2rem; color: #a7f3d0;"></i> <span><strong>${title}</strong>: Accesso USER <strong style="color: #a7f3d0;">ATTIVATO (Verde)</strong></span>`;
+        toast.style.background = '#059669';
+        toast.style.border = '2px solid #34d399';
+        toast.innerHTML = `<i class="fa-solid fa-circle-check" style="font-size: 1.4rem; color: #a7f3d0;"></i> <span>${title}: <strong style="color: #a7f3d0;">ACCESSO USER ATTIVATO (VERDE)</strong></span>`;
     } else {
-        toast.style.background = 'linear-gradient(135deg, rgba(220, 38, 38, 0.95), rgba(239, 68, 68, 0.95))';
-        toast.style.border = '1px solid rgba(248, 113, 113, 0.5)';
-        toast.innerHTML = `<i class="fa-solid fa-eye-slash" style="font-size: 1.2rem; color: #fecaca;"></i> <span><strong>${title}</strong>: Accesso USER <strong style="color: #fecaca;">DISATTIVATO (Rosso)</strong></span>`;
+        toast.style.background = '#dc2626';
+        toast.style.border = '2px solid #f87171';
+        toast.innerHTML = `<i class="fa-solid fa-circle-xmark" style="font-size: 1.4rem; color: #fecaca;"></i> <span>${title}: <strong style="color: #fecaca;">ACCESSO USER BLOCCATO (ROSSO)</strong></span>`;
     }
     
     toast.style.opacity = '1';
@@ -117,7 +117,7 @@ function showToastNotification(pageKey, isVisible) {
     clearTimeout(window._geToastTimeout);
     window._geToastTimeout = setTimeout(() => {
         toast.style.opacity = '0';
-        toast.style.transform = 'translateY(15px) scale(0.95)';
+        toast.style.transform = 'translateY(-20px) scale(0.9)';
     }, 3200);
 }
 
@@ -175,12 +175,28 @@ const Auth = {
         }
     },
 
-    async togglePageVisibility(pageKey) {
+    async togglePageVisibility(pageKey, event) {
+        if (event) {
+            try {
+                event.preventDefault();
+                event.stopPropagation();
+            } catch(e) {}
+        }
         if (!pageKey) return false;
+
+        // Anti-bounce / anti-double-click guard (prevents duplicate execution from inline onclick + document listener)
+        window._lastToggleTimes = window._lastToggleTimes || {};
+        const now = Date.now();
+        if (window._lastToggleTimes[pageKey] && (now - window._lastToggleTimes[pageKey] < 450)) {
+            console.log("Toggle ignored (debounced) for:", pageKey);
+            return false;
+        }
+        window._lastToggleTimes[pageKey] = now;
 
         const currentVal = (Auth.pageVisibility[pageKey] !== false);
         const newVal = !currentVal;
         Auth.pageVisibility[pageKey] = newVal;
+        console.log(`[Auth] Toggling ${pageKey}: ${currentVal} -> ${newVal}`);
         
         try {
             localStorage.setItem('green_enerbras_page_visibility', JSON.stringify(Auth.pageVisibility));
@@ -193,7 +209,7 @@ const Auth = {
         try {
             if (db) {
                 await db.ref('settings/pageVisibility/' + pageKey).set(newVal);
-                console.log("Firebase pageVisibility updated for", pageKey, ":", newVal);
+                console.log("Firebase pageVisibility saved for", pageKey, ":", newVal);
             }
             return true;
         } catch (e) {
@@ -348,7 +364,6 @@ const Auth = {
     },
 
     updateSidebarVisibilityUI() {
-        const isAdmin = Auth.currentUser && Auth.currentUser.role === 'admin';
         const isUser = Auth.currentUser && Auth.currentUser.role !== 'admin';
 
         // 1. Header colonna visibilità
@@ -357,7 +372,7 @@ const Auth = {
             header.style.display = isUser ? 'none' : 'flex';
         }
 
-        // 2. Icone occhio admin
+        // 2. Icone occhio admin con stili espliciti
         const eyeButtons = document.querySelectorAll('.nav-eye-btn');
         eyeButtons.forEach(btn => {
             const pageKey = btn.getAttribute('data-page') || getPageKeyFromElement(btn.closest('.nav-item-row') ? btn.closest('.nav-item-row').querySelector('a') : null);
@@ -369,13 +384,20 @@ const Auth = {
             } else {
                 btn.style.display = 'inline-flex';
                 const isVisible = (Auth.pageVisibility[pageKey] !== false);
+                btn.setAttribute('data-visible', isVisible ? 'true' : 'false');
                 if (isVisible) {
                     btn.className = 'nav-eye-btn visible';
-                    btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+                    btn.style.color = '#10b981';
+                    btn.style.borderColor = 'rgba(16, 185, 129, 0.6)';
+                    btn.style.background = 'rgba(16, 185, 129, 0.2)';
+                    btn.innerHTML = '<i class="fa-solid fa-eye" style="color: #10b981; font-size: 1.1rem;"></i>';
                     btn.title = 'Visibile a USER (Clicca per bloccare)';
                 } else {
                     btn.className = 'nav-eye-btn hidden';
-                    btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+                    btn.style.color = '#ef4444';
+                    btn.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+                    btn.style.background = 'rgba(239, 68, 68, 0.2)';
+                    btn.innerHTML = '<i class="fa-solid fa-eye-slash" style="color: #ef4444; font-size: 1.1rem;"></i>';
                     btn.title = 'Nascosto a USER (Clicca per consentire)';
                 }
             }
@@ -403,6 +425,9 @@ const Auth = {
 
 // Global export to window
 window.Auth = Auth;
+window.togglePageVisibility = function(pageKey, event) {
+    return Auth.togglePageVisibility(pageKey, event);
+};
 Auth.init();
 
 // Global click event delegation for eye toggle buttons
@@ -413,7 +438,7 @@ document.addEventListener('click', (e) => {
         e.stopPropagation();
         const pageKey = eyeBtn.getAttribute('data-page');
         if (pageKey) {
-            Auth.togglePageVisibility(pageKey);
+            Auth.togglePageVisibility(pageKey, e);
         }
     }
 });
