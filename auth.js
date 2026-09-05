@@ -146,6 +146,24 @@ const Auth = {
         this.initVisibilityListener();
     },
 
+    isUserView() {
+        if (!Auth.currentUser) return true;
+        if (Auth.currentUser.role !== 'admin') return true;
+        return sessionStorage.getItem('green_enerbras_view_mode') === 'user';
+    },
+
+    switchToUserView() {
+        sessionStorage.setItem('green_enerbras_view_mode', 'user');
+        const prefix = window.location.pathname.includes('/admin/') ? '../' : './';
+        window.location.href = prefix + 'user/dashboard.html';
+    },
+
+    switchToAdminView() {
+        sessionStorage.removeItem('green_enerbras_view_mode');
+        const prefix = window.location.pathname.includes('/user/') ? '../admin/' : './';
+        window.location.href = prefix + 'index.html';
+    },
+
     initVisibilityListener() {
         if (!db) return;
         try {
@@ -163,10 +181,10 @@ const Auth = {
                 
                 Auth.updateSidebarVisibilityUI();
                 
-                // Guard: Se un utente non-admin si trova su una pagina disabilitata, reindirizza
-                if (Auth.currentUser && Auth.currentUser.role !== 'admin') {
+                // Guard: Se un utente (o admin in user view) si trova su una pagina disabilitata, reindirizza
+                if (Auth.isUserView()) {
                     const pageKey = getCurrentPageKey();
-                    if (pageKey && Auth.pageVisibility[pageKey] === false) {
+                    if (pageKey && pageKey !== 'my_report' && Auth.pageVisibility[pageKey] === false) {
                         alert("Questa pagina non è al momento accessibile per il tuo profilo.");
                         let prefix = window.location.pathname.includes('/admin/') ? '../' : './';
                         window.location.href = prefix + 'user/dashboard.html';
@@ -297,10 +315,10 @@ const Auth = {
             return false;
         }
 
-        // Controllo dinamico visibilità per utenti non-admin
-        if (Auth.currentUser.role !== 'admin') {
+        // Controllo dinamico visibilità per utenti non-admin o admin in User View
+        if (Auth.isUserView()) {
             const pageKey = getCurrentPageKey();
-            if (pageKey) {
+            if (pageKey && pageKey !== 'my_report') {
                 const isVisible = Auth.pageVisibility ? (Auth.pageVisibility[pageKey] !== false) : (DEFAULT_PAGE_VISIBILITY[pageKey] !== false);
                 if (!isVisible) {
                     alert("Questa pagina è al momento riservata all'Amministratore.");
@@ -370,7 +388,8 @@ const Auth = {
     },
 
     updateSidebarVisibilityUI() {
-        const isUser = !Auth.currentUser || Auth.currentUser.role !== 'admin';
+        const isUser = Auth.isUserView();
+        const isRealAdmin = Auth.currentUser && Auth.currentUser.role === 'admin';
 
         if (isUser) {
             if (document.body) document.body.classList.add('is-user');
@@ -418,22 +437,27 @@ const Auth = {
         });
 
         // 3. Filtro righe per lo User
-        if (isUser) {
-            const rows = document.querySelectorAll('.nav-item-row');
-            rows.forEach(row => {
-                const pageKey = row.getAttribute('data-page') || getPageKeyFromElement(row.querySelector('a'));
-                if (pageKey && pageKey !== 'my_report') {
+        const rows = document.querySelectorAll('.nav-item-row');
+        rows.forEach(row => {
+            const pageKey = row.getAttribute('data-page') || getPageKeyFromElement(row.querySelector('a'));
+            if (pageKey && pageKey !== 'my_report') {
+                if (isUser) {
                     const isVisible = (Auth.pageVisibility[pageKey] !== false);
                     row.style.setProperty('display', isVisible ? 'flex' : 'none', 'important');
+                } else {
+                    row.style.setProperty('display', 'flex', 'important');
                 }
-            });
+            }
+        });
 
-            // Nascondi pulsanti switch riservati ad admin
-            document.querySelectorAll('a[data-i18n="nav_switch_user"], a[data-i18n="nav_switch_admin"]').forEach(el => {
-                el.style.setProperty('display', 'none', 'important');
-                if (el.closest('.nav-item-row')) el.closest('.nav-item-row').style.setProperty('display', 'none', 'important');
-            });
-        }
+        // 4. Gestione pulsanti switch
+        document.querySelectorAll('a[data-i18n="nav_switch_user"], .btn-switch-user').forEach(el => {
+            el.style.setProperty('display', (!isUser && isRealAdmin) ? 'flex' : 'none', 'important');
+        });
+
+        document.querySelectorAll('a[data-i18n="nav_switch_admin"], #switch-admin-btn, .btn-switch-admin').forEach(el => {
+            el.style.setProperty('display', (isUser && isRealAdmin) ? 'flex' : 'none', 'important');
+        });
     }
 };
 
@@ -458,24 +482,16 @@ document.addEventListener('click', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    const isAdmin = Auth.currentUser && Auth.currentUser.role === 'admin';
-    const isUser = Auth.currentUser && Auth.currentUser.role !== 'admin';
+    const isRealAdmin = Auth.currentUser && Auth.currentUser.role === 'admin';
+    const isUser = Auth.isUserView();
     const isInsideAdmin = window.location.pathname.includes('/admin/');
 
-    // Admin: Show "Switch to ADMIN" button if in user area
-    if (isAdmin) {
-        const switchBtn = document.getElementById('switch-admin-btn');
-        if (switchBtn) {
-            switchBtn.style.display = 'flex';
-        }
-    }
-
-    // User viewing shared admin page
-    if (isUser && isInsideAdmin) {
+    // User / User-View on shared pages: inject "Il Mio Report"
+    if (isUser) {
         const sidebarNav = document.querySelector('.nav-menu');
         if (sidebarNav) {
             let myReportLink = sidebarNav.querySelector('a[data-i18n="nav_my_report"]');
-            if (!myReportLink) {
+            if (!myReportLink && !window.location.pathname.includes('/user/')) {
                 const myReportRow = document.createElement('div');
                 myReportRow.className = 'nav-item-row';
                 myReportRow.setAttribute('data-page', 'my_report');
@@ -488,26 +504,55 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Update user profile badge
-        const userProfile = document.querySelector('.user-profile');
-        if (userProfile) {
-            const displayName = Auth.currentUser.partnerName || Auth.currentUser.id || 'User';
-            const roleLabel = Auth.currentUser.role === 'visitor' ? 'Ospite' : 'Investitore';
-            userProfile.innerHTML = `
-                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=10b981&color=fff" alt="${displayName}" class="avatar">
-                <span>${displayName} (${roleLabel})</span>
-            `;
-        }
-
         // Hide admin local server refresh buttons
         const refreshBtn = document.querySelector('.btn-refresh[onclick*="localhost"]');
         if (refreshBtn) refreshBtn.style.display = 'none';
         
-        // Hide upload drop zones for non-admin
+        // Hide upload drop zones for user view
         document.querySelectorAll('.drop-zone, .file-input, .upload-btn').forEach(el => {
             el.style.display = 'none';
         });
     }
+
+    // Se Admin è in User View: inietta pulsante "Torna a VISTA ADMIN" nella sidebar se non già presente
+    if (isRealAdmin && isUser) {
+        const sidebarNav = document.querySelector('.nav-menu');
+        if (sidebarNav) {
+            let switchAdmin = sidebarNav.querySelector('.btn-switch-admin');
+            if (!switchAdmin) {
+                switchAdmin = document.createElement('a');
+                switchAdmin.href = '#';
+                switchAdmin.className = 'nav-item btn-switch-admin';
+                switchAdmin.style.cssText = 'color: #f59e0b; margin-top: 1rem; border: 1px dashed #f59e0b; justify-content: center; display: flex !important;';
+                switchAdmin.innerHTML = '<i class="fa-solid fa-right-left"></i> <span data-i18n="nav_switch_admin">Torna a VISTA ADMIN</span>';
+                switchAdmin.onclick = (e) => {
+                    e.preventDefault();
+                    Auth.switchToAdminView();
+                };
+                const esciBtn = Array.from(sidebarNav.querySelectorAll('a')).find(el => el.textContent.includes('Esci') || el.innerHTML.includes('fa-right-from-bracket'));
+                if (esciBtn) {
+                    sidebarNav.insertBefore(switchAdmin, esciBtn);
+                } else {
+                    sidebarNav.appendChild(switchAdmin);
+                }
+            }
+        }
+    }
+
+    // Event listeners su tutti i link di switch
+    document.querySelectorAll('a[data-i18n="nav_switch_user"]').forEach(el => {
+        el.onclick = (e) => {
+            e.preventDefault();
+            Auth.switchToUserView();
+        };
+    });
+
+    document.querySelectorAll('a[data-i18n="nav_switch_admin"], #switch-admin-btn').forEach(el => {
+        el.onclick = (e) => {
+            e.preventDefault();
+            Auth.switchToAdminView();
+        };
+    });
 
     // Initial sidebar visibility render
     Auth.updateSidebarVisibilityUI();
