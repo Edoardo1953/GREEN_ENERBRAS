@@ -30,23 +30,50 @@
                 <img src="Loghi/Green Enerbras solo logo.png" alt="Logo" style="height: 55px; filter: grayscale(1) invert(1) brightness(10); mix-blend-mode: screen;">
                 <h2 style="margin: 0; font-size: 1.1rem;">GREEN ENERBRAS ONE</h2>
             </div>
-            <nav class="nav-menu">
-                <a href="index.html" class="nav-item" data-i18n="nav_azionariato"><i class="fa-solid fa-chart-pie"></i> Azionariato (LPs)</a>
-                <a href="#" class="nav-item active" data-i18n="nav_conto"><i class="fa-solid fa-building-columns"></i> Conto Bancario</a>
-                <a href="produzione.html" class="nav-item" data-i18n="nav_produzione"><i class="fa-solid fa-solar-panel"></i> Produzione Energia</a>
-                <a href="vendite.html" class="nav-item" data-i18n="nav_vendite"><i class="fa-solid fa-money-bill-trend-up"></i> Vendite Energia</a>
-                <a href="impianti.html" class="nav-item" data-i18n="nav_impianti"><i class="fa-solid fa-map-location-dot"></i> Impianti e Mappa</a>
-                <a href="reporting.html" class="nav-item" data-i18n="nav_reporting"><i class="fa-solid fa-file-pdf"></i> Reporting Partners</a>
-                <a href="tristar.html" class="nav-item" data-i18n="nav_tristar"><i class="fa-solid fa-file-contract"></i> TRI STAR</a>
-                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 1rem 0;"></div>
-                <a href="strumenti.html" class="nav-item" data-i18n="nav_strumenti"><i class="fa-solid fa-toolbox"></i> Strumenti</a>
-                
-                <a href="risultati.html" class="nav-item">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span data-i18n="menu_risultati">Risultati</span>
-                </a>
-                <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; margin-top: 1rem; border: 1px dashed #3b82f6; justify-content: center;" data-i18n="nav_switch_user"><i class="fa-solid fa-right-left"></i> Switch to USER</a>
-                <a href="#" onclick="Auth.logout()" class="nav-item" style="color: #ef4444; margin-top: 1rem; justify-content: center;" data-i18n="nav_logout"><i class="fa-solid fa-right-from-bracket"></i> Esci</a>
+                        <nav class="nav-menu">
+                <div class="nav-visibility-header">
+                    <span data-i18n="nav_menu_title">PAGINA</span>
+                    <span class="user-view-col-header" data-i18n="nav_col_partner_view"><i class="fa-solid fa-users-viewfinder"></i> USER VIEW</span>
+                </div>
+                <div class="nav-item-row" data-page="azionariato">
+                    <a href="index.html" class="nav-item"><i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_azionariato">Azionariato (LPs)</span></a>
+                    <button type="button" class="nav-eye-btn" data-page="azionariato" onclick="Auth.togglePageVisibility('azionariato')" title="USER VIEW"><i class="fa-solid fa-eye-slash"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="banca">
+                    <a href="banca.html" class="nav-item active"><i class="fa-solid fa-building-columns"></i> <span data-i18n="nav_conto">Conto Bancario</span></a>
+                    <button type="button" class="nav-eye-btn" data-page="banca" onclick="Auth.togglePageVisibility('banca')" title="USER VIEW"><i class="fa-solid fa-eye-slash"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="produzione">
+                    <a href="produzione.html" class="nav-item"><i class="fa-solid fa-solar-panel"></i> <span data-i18n="nav_produzione">Produzione Energia</span></a>
+                    <button type="button" class="nav-eye-btn" data-page="produzione" onclick="Auth.togglePageVisibility('produzione')" title="USER VIEW"><i class="fa-solid fa-eye"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="vendite">
+                    <a href="vendite.html" class="nav-item"><i class="fa-solid fa-money-bill-trend-up"></i> <span data-i18n="nav_vendite">Vendite Energia</span></a>
+                    <button type="button" class="nav-eye-btn" data-page="vendite" onclick="Auth.togglePageVisibility('vendite')" title="USER VIEW"><i class="fa-solid fa-eye"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="impianti">
+                    <a href="impianti.html" class="nav-item"><i class="fa-solid fa-map-location-dot"></i> <span data-i18n="nav_impianti">Impianti e Mappa</span></a>
+                    <button type="button" class="nav-eye-btn" data-page="impianti" onclick="Auth.togglePageVisibility('impianti')" title="USER VIEW"><i class="fa-solid fa-eye"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="reporting">
+                    <a href="reporting.html" class="nav-item"><i class="fa-solid fa-file-pdf"></i> <span data-i18n="nav_reporting">Reporting Partners</span></a>
+                    <button type="button" class="nav-eye-btn" data-page="reporting" onclick="Auth.togglePageVisibility('reporting')" title="USER VIEW"><i class="fa-solid fa-eye"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="tristar">
+                    <a href="tristar.html" class="nav-item"><i class="fa-solid fa-file-contract"></i> <span data-i18n="nav_tristar">TRI STAR</span></a>
+                    <button type="button" class="nav-eye-btn" data-page="tristar" onclick="Auth.togglePageVisibility('tristar')" title="USER VIEW"><i class="fa-solid fa-eye"></i></button>
+                </div>
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.8rem 0;"></div>
+                <div class="nav-item-row" data-page="strumenti">
+                    <a href="strumenti.html" class="nav-item"><i class="fa-solid fa-toolbox"></i> <span data-i18n="nav_strumenti">Strumenti</span></a>
+                    <button type="button" class="nav-eye-btn" data-page="strumenti" onclick="Auth.togglePageVisibility('strumenti')" title="USER VIEW"><i class="fa-solid fa-eye-slash"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="risultati">
+                    <a href="risultati.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> <span data-i18n="menu_risultati">Risultati</span></a>
+                    <button type="button" class="nav-eye-btn" data-page="risultati" onclick="Auth.togglePageVisibility('risultati')" title="USER VIEW"><i class="fa-solid fa-eye-slash"></i></button>
+                </div>
+                <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; margin-top: 1rem; border: 1px dashed #3b82f6; justify-content: center;"><i class="fa-solid fa-right-left"></i> <span data-i18n="nav_switch_user">Switch to USER</span></a>
+                <a href="#" onclick="Auth.logout()" class="nav-item" style="color: #ef4444; margin-top: 0.5rem; justify-content: center;"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="nav_logout">Esci</span></a>
             <div class="update-info">
                 <p data-i18n="last_updated">Ultimo aggiornamento:</p>
                 <p id="last-updated" class="text-bold">--/--/----</p>

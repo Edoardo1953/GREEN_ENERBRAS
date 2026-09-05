@@ -30,6 +30,9 @@ const DEFAULT_PAGE_VISIBILITY = {
 
 function getPageKeyFromElement(el) {
     if (!el) return null;
+    const dataPage = el.getAttribute('data-page');
+    if (dataPage) return dataPage.toLowerCase();
+
     const href = (el.getAttribute('href') || '').toLowerCase();
     const i18n = (el.getAttribute('data-i18n') || '').toLowerCase();
     const innerI18nEl = el.querySelector('[data-i18n]');
@@ -119,7 +122,6 @@ function showToastNotification(pageKey, isVisible) {
 }
 
 const Auth = {
-    // Current logged in user object
     currentUser: null,
     pageVisibility: { ...DEFAULT_PAGE_VISIBILITY },
 
@@ -164,7 +166,7 @@ const Auth = {
                 
                 this.updateSidebarVisibilityUI();
                 
-                // Guard: If non-admin user is on a disabled page, redirect to dashboard
+                // Guard: Se un utente non-admin si trova su una pagina disabilitata, reindirizza
                 if (this.currentUser && this.currentUser.role !== 'admin') {
                     const pageKey = getCurrentPageKey();
                     if (pageKey && this.pageVisibility[pageKey] === false) {
@@ -182,7 +184,7 @@ const Auth = {
     async togglePageVisibility(pageKey) {
         if (!pageKey) return false;
         
-        // Se siamo in admin, assicuriamo permessi admin
+        // Failsafe permessi admin
         if (!this.currentUser || this.currentUser.role !== 'admin') {
             if (window.location.pathname.includes('/admin/')) {
                 this.currentUser = { id: 'admin', role: 'admin' };
@@ -197,16 +199,18 @@ const Auth = {
         this.pageVisibility[pageKey] = newVal;
         localStorage.setItem('green_enerbras_page_visibility', JSON.stringify(this.pageVisibility));
         
-        // Immediate UI refresh and toast
+        // Aggiornamento immediato interfaccia e notifica toast
         this.updateSidebarVisibilityUI();
         showToastNotification(pageKey, newVal);
 
         try {
-            await db.ref('settings/pageVisibility/' + pageKey).set(newVal);
-            console.log("Firebase pageVisibility updated for", pageKey, ":", newVal);
+            if (db) {
+                await db.ref('settings/pageVisibility/' + pageKey).set(newVal);
+                console.log("Firebase pageVisibility updated for", pageKey, ":", newVal);
+            }
             return true;
         } catch (e) {
-            console.error("Errore salvataggio visibilità:", e);
+            console.error("Errore salvataggio visibilità Firebase:", e);
             return false;
         }
     },
@@ -281,7 +285,7 @@ const Auth = {
             return false;
         }
 
-        // Check page visibility for non-admin users
+        // Controllo dinamico visibilità per utenti non-admin
         if (this.currentUser.role !== 'admin') {
             const pageKey = getCurrentPageKey();
             if (pageKey) {
@@ -354,102 +358,47 @@ const Auth = {
     },
 
     updateSidebarVisibilityUI() {
-        const sidebarNav = document.querySelector('.nav-menu');
-        if (!sidebarNav) return;
-
         const isAdmin = !this.currentUser || this.currentUser.role === 'admin' || window.location.pathname.includes('/admin/');
         const isUser = this.currentUser && this.currentUser.role !== 'admin' && !window.location.pathname.includes('/admin/');
 
-        if (isAdmin) {
-            // Add column header if not present
-            let header = sidebarNav.querySelector('.nav-visibility-header');
-            if (!header) {
-                header = document.createElement('div');
-                header.className = 'nav-visibility-header';
-                header.innerHTML = `
-                    <span data-i18n="nav_menu_title">PAGINA</span>
-                    <span style="display: flex; align-items: center; gap: 5px; color: #34d399;"><i class="fa-solid fa-users-viewfinder"></i> USER VIEW</span>
-                `;
-                sidebarNav.insertBefore(header, sidebarNav.firstChild);
-            }
+        // 1. Header colonna visibilità
+        const header = document.querySelector('.nav-visibility-header');
+        if (header) {
+            header.style.display = isAdmin ? 'flex' : 'none';
+        }
 
-            // Iterate over all links in sidebar
-            const links = sidebarNav.querySelectorAll('a.nav-item');
-            links.forEach(a => {
-                const pageKey = getPageKeyFromElement(a);
-                if (!pageKey) return;
-
-                // Wrap into .nav-item-row if not already wrapped
-                let row = a.closest('.nav-item-row');
-                if (!row) {
-                    row = document.createElement('div');
-                    row.className = 'nav-item-row';
-                    row.setAttribute('data-page-key', pageKey);
-                    a.parentNode.insertBefore(row, a);
-                    row.appendChild(a);
-                }
-
-                // Eye toggle button (as sibling of a)
-                let eyeBtn = row.querySelector('.nav-eye-btn');
-                if (!eyeBtn) {
-                    eyeBtn = document.createElement('button');
-                    eyeBtn.className = 'nav-eye-btn';
-                    eyeBtn.type = 'button';
-                    eyeBtn.setAttribute('data-page', pageKey);
-                    row.appendChild(eyeBtn);
-
-                    eyeBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        Auth.togglePageVisibility(pageKey);
-                    });
-                }
-
+        // 2. Icone occhio admin
+        const eyeButtons = document.querySelectorAll('.nav-eye-btn');
+        eyeButtons.forEach(btn => {
+            const pageKey = btn.getAttribute('data-page') || getPageKeyFromElement(btn.closest('.nav-item-row') ? btn.closest('.nav-item-row').querySelector('a') : null);
+            if (!pageKey) return;
+            
+            btn.setAttribute('data-page', pageKey);
+            if (isAdmin) {
+                btn.style.display = 'inline-flex';
                 const isVisible = this.pageVisibility[pageKey] !== false;
                 if (isVisible) {
-                    eyeBtn.className = 'nav-eye-btn visible';
-                    eyeBtn.innerHTML = '<i class="fa-solid fa-eye"></i>';
-                    eyeBtn.title = 'Visibile a USER (Clicca per bloccare)';
+                    btn.className = 'nav-eye-btn visible';
+                    btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+                    btn.title = 'Visibile a USER (Clicca per bloccare)';
                 } else {
-                    eyeBtn.className = 'nav-eye-btn hidden';
-                    eyeBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
-                    eyeBtn.title = 'Nascosto a USER (Clicca per consentire)';
+                    btn.className = 'nav-eye-btn hidden';
+                    btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+                    btn.title = 'Nascosto a USER (Clicca per consentire)';
                 }
-            });
-        } else if (isUser) {
-            // Non-admin user view: hide/show according to pageVisibility
-            const header = sidebarNav.querySelector('.nav-visibility-header');
-            if (header) header.remove();
+            } else {
+                btn.style.display = 'none';
+            }
+        });
 
-            const rows = sidebarNav.querySelectorAll('.nav-item-row');
+        // 3. Filtro righe per lo User
+        if (isUser) {
+            const rows = document.querySelectorAll('.nav-item-row');
             rows.forEach(row => {
-                const pageKey = row.getAttribute('data-page-key');
-                const eyeBtn = row.querySelector('.nav-eye-btn');
-                if (eyeBtn) eyeBtn.remove();
-                if (pageKey) {
+                const pageKey = row.getAttribute('data-page') || getPageKeyFromElement(row.querySelector('a'));
+                if (pageKey && pageKey !== 'my_report') {
                     const isVisible = this.pageVisibility[pageKey] !== false;
                     row.style.display = isVisible ? 'flex' : 'none';
-                }
-            });
-
-            const links = sidebarNav.querySelectorAll('a.nav-item');
-            links.forEach(a => {
-                const pageKey = getPageKeyFromElement(a);
-                const i18n = a.getAttribute('data-i18n') || '';
-
-                const eyeBtn = a.querySelector('.nav-eye-btn');
-                if (eyeBtn) eyeBtn.remove();
-
-                if (i18n === 'nav_switch_user' || i18n === 'nav_switch_admin') {
-                    a.style.display = 'none';
-                    if (a.closest('.nav-item-row')) a.closest('.nav-item-row').style.display = 'none';
-                    return;
-                }
-
-                if (pageKey) {
-                    const isVisible = this.pageVisibility[pageKey] !== false;
-                    a.style.display = isVisible ? 'flex' : 'none';
-                    if (a.closest('.nav-item-row')) a.closest('.nav-item-row').style.display = isVisible ? 'flex' : 'none';
                 }
             });
         }
@@ -474,17 +423,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isUserRole && isInsideAdmin) {
         const sidebarNav = document.querySelector('.nav-menu');
         if (sidebarNav) {
-            // Add "Il Mio Report" link at top of sidebar if not already present
             let myReportLink = sidebarNav.querySelector('a[data-i18n="nav_my_report"]');
             if (!myReportLink) {
-                myReportLink = document.createElement('a');
-                myReportLink.href = '../user/dashboard.html';
-                myReportLink.className = 'nav-item';
-                myReportLink.setAttribute('data-i18n', 'nav_my_report');
-                myReportLink.style.color = '#3b82f6';
-                myReportLink.style.fontWeight = 'bold';
-                myReportLink.innerHTML = '<i class="fa-solid fa-chart-pie"></i> <span>Il Mio Report</span>';
-                sidebarNav.insertBefore(myReportLink, sidebarNav.firstChild);
+                const myReportRow = document.createElement('div');
+                myReportRow.className = 'nav-item-row';
+                myReportRow.setAttribute('data-page', 'my_report');
+                myReportRow.innerHTML = `
+                    <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; font-weight: bold;">
+                        <i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_my_report">Il Mio Report</span>
+                    </a>
+                `;
+                sidebarNav.insertBefore(myReportRow, sidebarNav.firstChild);
             }
         }
 

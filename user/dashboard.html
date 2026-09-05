@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -30,19 +30,39 @@
                 </div>
             </div>
             <nav class="nav-menu">
-                <a href="#" class="nav-item active" data-i18n="nav_my_report"><i class="fa-solid fa-chart-pie"></i> Il Mio Report</a>
-                <a href="../admin/produzione.html" class="nav-item" data-i18n="nav_produzione"><i class="fa-solid fa-solar-panel"></i> Produzione Energia</a>
-                <a href="../admin/vendite.html" class="nav-item" data-i18n="nav_vendite"><i class="fa-solid fa-money-bill-trend-up"></i> Vendite Energia</a>
-                <a href="../admin/impianti.html" class="nav-item" data-i18n="nav_impianti"><i class="fa-solid fa-map-location-dot"></i> Impianti e Mappa</a>
-                <a href="../admin/reporting.html" class="nav-item" data-i18n="nav_reporting"><i class="fa-solid fa-file-pdf"></i> Reporting Partners</a>
-                <a href="../admin/tristar.html" class="nav-item" data-i18n="nav_tristar"><i class="fa-solid fa-file-contract"></i> TRI STAR</a>
-                <a href="../admin/index.html" class="nav-item" data-i18n="nav_azionariato"><i class="fa-solid fa-chart-pie"></i> Azionariato (LPs)</a>
-                <a href="../admin/banca.html" class="nav-item" data-i18n="nav_conto"><i class="fa-solid fa-building-columns"></i> Conto Bancario</a>
-                <a href="../admin/strumenti.html" class="nav-item" data-i18n="nav_strumenti"><i class="fa-solid fa-toolbox"></i> Strumenti</a>
-                <a href="../admin/risultati.html" class="nav-item" data-i18n="menu_risultati"><i class="fa-solid fa-chart-line"></i> Risultati</a>
+                <div class="nav-item-row" data-page="my_report">
+                    <a href="#" class="nav-item active"><i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_my_report">Il Mio Report</span></a>
+                </div>
+                <div class="nav-item-row" data-page="produzione">
+                    <a href="../admin/produzione.html" class="nav-item"><i class="fa-solid fa-solar-panel"></i> <span data-i18n="nav_produzione">Produzione Energia</span></a>
+                </div>
+                <div class="nav-item-row" data-page="vendite">
+                    <a href="../admin/vendite.html" class="nav-item"><i class="fa-solid fa-money-bill-trend-up"></i> <span data-i18n="nav_vendite">Vendite Energia</span></a>
+                </div>
+                <div class="nav-item-row" data-page="impianti">
+                    <a href="../admin/impianti.html" class="nav-item"><i class="fa-solid fa-map-location-dot"></i> <span data-i18n="nav_impianti">Impianti e Mappa</span></a>
+                </div>
+                <div class="nav-item-row" data-page="reporting">
+                    <a href="../admin/reporting.html" class="nav-item"><i class="fa-solid fa-file-pdf"></i> <span data-i18n="nav_reporting">Reporting Partners</span></a>
+                </div>
+                <div class="nav-item-row" data-page="tristar">
+                    <a href="../admin/tristar.html" class="nav-item"><i class="fa-solid fa-file-contract"></i> <span data-i18n="nav_tristar">TRI STAR</span></a>
+                </div>
+                <div class="nav-item-row" data-page="azionariato">
+                    <a href="../admin/index.html" class="nav-item"><i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_azionariato">Azionariato (LPs)</span></a>
+                </div>
+                <div class="nav-item-row" data-page="banca">
+                    <a href="../admin/banca.html" class="nav-item"><i class="fa-solid fa-building-columns"></i> <span data-i18n="nav_conto">Conto Bancario</span></a>
+                </div>
+                <div class="nav-item-row" data-page="strumenti">
+                    <a href="../admin/strumenti.html" class="nav-item"><i class="fa-solid fa-toolbox"></i> <span data-i18n="nav_strumenti">Strumenti</span></a>
+                </div>
+                <div class="nav-item-row" data-page="risultati">
+                    <a href="../admin/risultati.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> <span data-i18n="menu_risultati">Risultati</span></a>
+                </div>
                 
-                <a id="switch-admin-btn" href="../admin/index.html" class="nav-item" style="display: none; color: #f59e0b; margin-top: 1rem; border: 1px dashed #f59e0b; justify-content: center;" data-i18n="nav_switch_admin"><i class="fa-solid fa-right-left"></i> Switch to ADMIN</a>
-                <a href="#" onclick="Auth.logout()" class="nav-item text-bold" style="color: #ef4444; margin-top: 1rem;" data-i18n="nav_logout"><i class="fa-solid fa-right-from-bracket"></i> Esci</a>
+                <a id="switch-admin-btn" href="../admin/index.html" class="nav-item" style="display: none; color: #f59e0b; margin-top: 1rem; border: 1px dashed #f59e0b; justify-content: center;"><i class="fa-solid fa-right-left"></i> <span data-i18n="nav_switch_admin">Switch to ADMIN</span></a>
+                <a href="#" onclick="Auth.logout()" class="nav-item text-bold" style="color: #ef4444; margin-top: 1rem;"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="nav_logout">Esci</span></a>
             <div class="update-info" style="margin-top: 1rem;">
                 <p data-i18n="last_updated">Ultimo aggiornamento:</p>
                 <p id="last-updated" class="text-bold">--/--/----</p>

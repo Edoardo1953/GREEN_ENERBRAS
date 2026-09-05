@@ -38,6 +38,7 @@ const translations = {
         'nav_logout': 'Esci',
         'nav_change_pwd': 'Cambia Password',
         'nav_col_partner_view': 'USER VIEW',
+        'nav_menu_title': 'PAGINA',
 
         'title_risultati': 'Risultati',
         'tab_ricavi_costi': 'Costi e Ricavi',
@@ -322,6 +323,7 @@ const translations = {
         'nav_logout': 'Log Out',
         'nav_change_pwd': 'Change Password',
         'nav_col_partner_view': 'USER VIEW',
+        'nav_menu_title': 'PAGE',
 
         'title_risultati': 'Results',
         'tab_ricavi_costi': 'Costs & Revenues',
@@ -601,6 +603,7 @@ const translations = {
         'nav_logout': 'Déconnexion',
         'nav_change_pwd': 'Changer le mot de passe',
         'nav_col_partner_view': 'VUE USER',
+        'nav_menu_title': 'PAGE',
 
         'title_risultati': 'Résultats',
         'tab_ricavi_costi': 'Coûts et Revenus',
