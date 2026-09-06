@@ -10,14 +10,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <link rel="preload" as="image" href="../uploads/slide1.jpg" fetchpriority="high">
     <link rel="preload" as="image" href="../uploads/slide2.jpg">
-    <link rel="stylesheet" href="../style.css?v=190">
+    <link rel="stylesheet" href="../style.css?v=200">
 
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="../admin/Loghi/Green Enerbras solo logo.png">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="../auth.js?v=190"></script>
-    <script src="../i18n.js?v=190"></script>
+    <script src="../auth.js?v=200"></script>
+    <script src="../i18n.js?v=200"></script>
     <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
 </head>
 <body>
@@ -366,20 +366,28 @@
 
 
             <!-- Personal KPIs -->
-            <h2 style="margin-top: 1rem;"><i class="fa-solid fa-wallet text-green"></i> <span data-i18n="kpi_tuo_capitale">La Tua Posizione</span></h2>
+            <h2 style="margin-top: 1rem;"><i class="fa-solid fa-wallet text-green"></i> <span data-i18n="title_la_tua_posizione">La Tua Posizione</span></h2>
             <section class="kpi-grid">
-                <div class="kpi-card glass-panel">
-                    <div class="kpi-icon bg-blue"><i class="fa-solid fa-piggy-bank"></i></div>
-                    <div class="kpi-data">
-                        <h3 data-i18n="kpi_tuo_capitale">Il tuo Capitale Versato</h3>
-                        <p id="kpi-personal-paid" class="kpi-value text-green">&euro; 0</p>
+                <div class="kpi-card glass-panel kpi-target-card" onclick="openSchemaSocietarioModal()" title="Schema Societario Lussemburgo/Brasile" style="display: flex; align-items: center; gap: 1.2rem; cursor: pointer; border: 1px solid rgba(16, 185, 129, 0.35);">
+                    <div class="kpi-icon bg-green" style="font-size: 1.6rem; min-width: 52px; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-sitemap"></i></div>
+                    <div class="kpi-data" style="display: flex; flex-direction: column; justify-content: center; gap: 0.35rem;">
+                        <h3 data-i18n="kpi_schema_societario" style="margin: 0; font-size: 1.15rem; font-weight: 700; line-height: 1.35; color: var(--text-main);">Schema Societario Lussemburgo/Brasile</h3>
+                        <div class="schema-societario-badge" style="margin-top: 0.1rem; width: fit-content;">
+                            <i class="fa-solid fa-file-pdf"></i> <span data-i18n="badge_visualizza_pdf">Visualizza PDF</span> <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.72rem; opacity: 0.85;"></i>
+                        </div>
                     </div>
                 </div>
-                <div class="kpi-card glass-panel">
-                    <div class="kpi-icon bg-purple"><i class="fa-solid fa-chart-pie"></i></div>
-                    <div class="kpi-data">
-                        <h3 data-i18n="kpi_tua_quota">La tua Quota (Detention)</h3>
-                        <p id="kpi-personal-detention" class="kpi-value">0%</p>
+                <div class="kpi-card glass-panel" style="padding: 1.25rem;">
+                    <div class="kpi-icon bg-blue"><i class="fa-solid fa-piggy-bank"></i></div>
+                    <div class="kpi-data" style="width: 100%;">
+                        <div style="margin-bottom: 0.5rem;">
+                            <h3 data-i18n="kpi_tuo_capitale">Il tuo Capitale Versato</h3>
+                            <p id="kpi-personal-paid" class="kpi-value text-green" style="font-size: 1.6rem; margin: 0.15rem 0;">&euro; 0</p>
+                        </div>
+                        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.5rem; display: flex; justify-content: space-between; align-items: baseline;">
+                            <h3 style="margin: 0; font-size: 0.95rem; color: var(--text-muted);" data-i18n="kpi_tua_quota">La tua Quota (Detention)</h3>
+                            <p id="kpi-personal-detention" class="text-bold text-green" style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #10b981;">0%</p>
+                        </div>
                     </div>
                 </div>
                 <div class="kpi-card glass-panel" style="padding: 1rem; display: flex; flex-direction: column; align-items: stretch; justify-content: center;">
@@ -425,12 +433,7 @@
             </section>
 
             <!-- Charts & Tables (Anonymous) MOVED BELOW STATO GLOBALE -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 3rem; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 1rem;">
-                <h2 style="margin: 0;"><i class="fa-solid fa-users text-purple"></i> <span data-i18n="section_azionariato_anonimo">Azionariato (Anonimo)</span></h2>
-                <button type="button" onclick="openSchemaSocietarioModal()" class="kpi-target-card" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1.1rem; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; font-family: inherit;">
-                    <i class="fa-solid fa-sitemap"></i> <span data-i18n="kpi_schema_societario">Schema Societario</span> <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.75rem; opacity: 0.85;"></i>
-                </button>
-            </div>
+            <h2 style="margin-top: 3rem;"><i class="fa-solid fa-users text-purple"></i> <span data-i18n="section_azionariato_anonimo">Azionariato (Anonimo)</span></h2>
             <section class="dashboard-grid" style="grid-template-columns: 1fr;">
                 <div class="glass-panel" style="display: flex; flex-direction: row; justify-content: space-between; align-items: flex-start; padding: 2rem; gap: 2rem; flex-wrap: wrap;">
                     
