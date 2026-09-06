@@ -72,18 +72,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateExchangeDisplay(avgExchangeRate, currentExchangeRate);
 
-    // Fetch live EUR/BRL exchange rate asynchronously
-    fetch('https://open.er-api.com/v6/latest/EUR')
-        .then(res => res.json())
-        .then(data => {
-            if (data && data.rates && data.rates.BRL) {
-                currentExchangeRate = data.rates.BRL;
+    async function fetchLiveEurBrlRate() {
+        // 1. AwesomeAPI (Real-time live quotation from financial markets)
+        try {
+            const res = await fetch('https://economia.awesomeapi.com.br/last/EUR-BRL');
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.EURBRL) {
+                    const bid = parseFloat(data.EURBRL.bid);
+                    const ask = parseFloat(data.EURBRL.ask);
+                    const rate = (bid && ask) ? ((bid + ask) / 2) : (bid || ask);
+                    if (rate && !isNaN(rate) && rate > 0) return rate;
+                }
+            }
+        } catch (e) {
+            console.warn("AwesomeAPI fallback:", e);
+        }
+
+        // 2. Frankfurter (European Central Bank reference rates)
+        try {
+            const res = await fetch('https://api.frankfurter.app/latest?from=EUR&to=BRL');
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.rates && data.rates.BRL) return parseFloat(data.rates.BRL);
+            }
+        } catch (e) {
+            console.warn("Frankfurter fallback:", e);
+        }
+
+        // 3. Open Exchange Rates
+        try {
+            const res = await fetch('https://open.er-api.com/v6/latest/EUR');
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.rates && data.rates.BRL) return parseFloat(data.rates.BRL);
+            }
+        } catch (e) {
+            console.warn("Open.er-api fallback:", e);
+        }
+
+        return currentExchangeRate;
+    }
+
+    fetchLiveEurBrlRate().then(liveRate => {
+        if (liveRate && !isNaN(liveRate)) {
+            currentExchangeRate = liveRate;
+            updateExchangeDisplay(avgExchangeRate, currentExchangeRate);
+        }
+    });
+
+    // Aggiornamento periodico ogni 60 secondi
+    setInterval(() => {
+        fetchLiveEurBrlRate().then(liveRate => {
+            if (liveRate && !isNaN(liveRate)) {
+                currentExchangeRate = liveRate;
                 updateExchangeDisplay(avgExchangeRate, currentExchangeRate);
             }
-        })
-        .catch(err => {
-            console.warn("Live exchange rate fetch fallback to local data:", err);
         });
+    }, 60000);
 
     // 5. Global Project Status
     let activePlantsCount = 0;
