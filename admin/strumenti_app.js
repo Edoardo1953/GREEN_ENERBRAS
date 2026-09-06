@@ -213,16 +213,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     // LOGICA GESTIONE SLIDESHOW
     // ============================================
     const slidesContainer = document.getElementById('slides-container');
-    const dbSlideshowRef = firebase.database().ref('settings/slideshow');
+    const dbSlideshowRef = (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length) ? firebase.database().ref('settings/slideshow') : null;
 
-    let slideshowConfig = {
+    const DEFAULT_SLIDESHOW_CONFIG = {
         interval: 5000,
         slides: [
-            { imageUrl: '../uploads/slide1.jpg', texts: [] },
-            { imageUrl: '../uploads/slide2.jpg', texts: [] },
-            { imageUrl: '../uploads/slide3.jpg', texts: [] }
+            { 
+                imageUrl: '../uploads/slide1.jpg', 
+                texts: [
+                    { content: 'Tecnologia di punta', content_en: 'Cutting-edge Technology', content_fr: 'Technologie de pointe', x: 50, y: 40 },
+                    { content: 'Massima efficienza', content_en: 'Maximum efficiency', content_fr: 'Efficacité maximale', x: 50, y: 55 }
+                ] 
+            },
+            { 
+                imageUrl: '../uploads/slide2.jpg', 
+                texts: [
+                    { content: 'Energia solare per un futuro sostenibile', content_en: 'Solar energy for a sustainable future', content_fr: 'L\'énergie solaire pour un avenir durable', x: 50, y: 40 },
+                    { content: 'Impianti fotovoltaici in Brasile', content_en: 'Photovoltaic plants in Brazil', content_fr: 'Centrales photovoltaïques au Brésil', x: 50, y: 55 }
+                ] 
+            },
+            { 
+                imageUrl: '../uploads/slide3.jpg', 
+                texts: [
+                    { content: 'Assistenza puntuale', content_en: 'Prompt Assistance', content_fr: 'Assistance ponctuelle', x: 50, y: 50 }
+                ] 
+            }
         ]
     };
+
+    function getMergedConfig() {
+        let cfg = JSON.parse(JSON.stringify(DEFAULT_SLIDESHOW_CONFIG));
+        try {
+            const raw = localStorage.getItem('green_enerbras_slideshow_config');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed.interval) cfg.interval = parsed.interval;
+                if (parsed.slides && Array.isArray(parsed.slides)) {
+                    parsed.slides.forEach((s, idx) => {
+                        if (s && idx < 3) {
+                            if (s.imageUrl && s.imageUrl.trim() !== '') cfg.slides[idx].imageUrl = s.imageUrl;
+                            if (s.texts && Array.isArray(s.texts)) {
+                                cfg.slides[idx].texts = s.texts;
+                            }
+                        }
+                    });
+                }
+            }
+        } catch(e) {}
+        return cfg;
+    }
+
+    let slideshowConfig = getMergedConfig();
+
+    function saveToLocalStorage() {
+        try {
+            localStorage.setItem('green_enerbras_slideshow_config', JSON.stringify(slideshowConfig));
+        } catch(e) {}
+    }
 
     function compressImageFile(file, maxWidth = 1920, quality = 0.82) {
         return new Promise((resolve, reject) => {
@@ -252,24 +299,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Load da Firebase
-    dbSlideshowRef.once('value').then(snap => {
-        if(snap.exists()) {
-            slideshowConfig = snap.val();
-            try { localStorage.setItem('green_enerbras_slideshow_config', JSON.stringify(slideshowConfig)); } catch(e) {}
-        }
-        document.getElementById('slideshow-interval').value = slideshowConfig.interval || 5000;
-        renderSlidesEditors();
-    });
+    // Load iniziale immediato dal merged config
+    const intervalSelect = document.getElementById('slideshow-interval');
+    if (intervalSelect) {
+        intervalSelect.value = slideshowConfig.interval || 5000;
+        intervalSelect.addEventListener('change', (e) => {
+            slideshowConfig.interval = parseInt(e.target.value) || 5000;
+            saveToLocalStorage();
+        });
+    }
+    renderSlidesEditors();
+
+    // Sincronizzazione in background da Firebase (senza cancellare testi esistenti)
+    if (dbSlideshowRef) {
+        dbSlideshowRef.once('value').then(snap => {
+            if (snap.exists()) {
+                const fbVal = snap.val();
+                if (fbVal) {
+                    if (fbVal.interval) slideshowConfig.interval = fbVal.interval;
+                    if (fbVal.slides) {
+                        const fbSlides = Array.isArray(fbVal.slides) ? fbVal.slides : Object.values(fbVal.slides);
+                        fbSlides.forEach((s, idx) => {
+                            if (s && idx < 3) {
+                                if (s.imageUrl && s.imageUrl.trim() !== '') slideshowConfig.slides[idx].imageUrl = s.imageUrl;
+                                if (s.texts && Array.isArray(s.texts) && s.texts.length > 0) {
+                                    slideshowConfig.slides[idx].texts = s.texts;
+                                }
+                            }
+                        });
+                    }
+                    saveToLocalStorage();
+                    if (intervalSelect) intervalSelect.value = slideshowConfig.interval || 5000;
+                    renderSlidesEditors();
+                }
+            }
+        }).catch(err => {
+            console.warn("Lettura Firebase slideshow:", err);
+        });
+    }
 
     function renderSlidesEditors() {
+        if (!slidesContainer) return;
         slidesContainer.innerHTML = '';
         for (let i = 0; i < 3; i++) {
-            if(!slideshowConfig.slides[i]) {
+            if (!slideshowConfig.slides[i]) {
                 slideshowConfig.slides[i] = { imageUrl: '../uploads/slide' + (i+1) + '.jpg', texts: [] };
             }
             if (!slideshowConfig.slides[i].imageUrl || slideshowConfig.slides[i].imageUrl.trim() === '') {
                 slideshowConfig.slides[i].imageUrl = '../uploads/slide' + (i+1) + '.jpg';
+            }
+            if (!slideshowConfig.slides[i].texts) {
+                slideshowConfig.slides[i].texts = [];
             }
             createSlideEditor(i, slideshowConfig.slides[i]);
         }
@@ -307,7 +387,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const addTextBtn = document.getElementById('add-text-' + slideId);
         const imgElement = document.getElementById('img-' + slideId);
 
-        // Handle Image Upload with Auto-compression to JPEG Full-HD
+        // Modifica solo immagine: I TESTI RIMANGONO INVARIATI E INDIPENDENTI
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if(file) {
@@ -316,7 +396,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const compressed = await compressImageFile(file, 1920, 0.82);
                     imgElement.src = compressed;
                     imgElement.style.opacity = '1';
-                    slideData.imageUrl = compressed; // update data
+                    slideData.imageUrl = compressed; // Aggiorna solo la foto
+                    saveToLocalStorage();
                 } catch(err) {
                     console.error("Errore compressione immagine:", err);
                     const reader = new FileReader();
@@ -324,6 +405,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         imgElement.src = ev.target.result;
                         imgElement.style.opacity = '1';
                         slideData.imageUrl = ev.target.result;
+                        saveToLocalStorage();
                     };
                     reader.readAsDataURL(file);
                 }
@@ -337,6 +419,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             slideData.texts.push(newTextData);
             renderTextOnPreview(newTextData, slideData.texts.length - 1, previewContainer, slideData);
             renderTextListRow(newTextData, slideData.texts.length - 1, slideId, slideData, previewContainer);
+            saveToLocalStorage();
         });
 
         // Render existing texts
@@ -387,7 +470,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         document.addEventListener('mouseup', () => {
-            isDragging = false;
+            if (isDragging) {
+                isDragging = false;
+                saveToLocalStorage();
+            }
         });
 
         previewContainer.appendChild(textDiv);
@@ -431,6 +517,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Update preview text
             const previewTextDiv = previewContainer.querySelector('.draggable-text[data-t-index="' + tIndex + '"]');
             if(previewTextDiv) previewTextDiv.textContent = e.target.value;
+            saveToLocalStorage();
         });
 
         input.addEventListener('change', async (e) => {
@@ -444,15 +531,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                     textObj.content_en = translations.en;
                     inputFr.value = translations.fr;
                     textObj.content_fr = translations.fr;
+                    saveToLocalStorage();
                 }
             }
         });
 
         const inputEn = document.getElementById('input-en-' + slideId + '-' + tIndex);
-        inputEn.addEventListener('input', (e) => { textObj.content_en = e.target.value; });
+        inputEn.addEventListener('input', (e) => { 
+            textObj.content_en = e.target.value; 
+            saveToLocalStorage();
+        });
 
         const inputFr = document.getElementById('input-fr-' + slideId + '-' + tIndex);
-        inputFr.addEventListener('input', (e) => { textObj.content_fr = e.target.value; });
+        inputFr.addEventListener('input', (e) => { 
+            textObj.content_fr = e.target.value; 
+            saveToLocalStorage();
+        });
 
         const delBtn = document.getElementById('del-' + slideId + '-' + tIndex);
         delBtn.addEventListener('click', () => {
@@ -466,6 +560,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     renderTextListRow(tObj, nIndex, slideId, slideData, previewContainer);
                 });
             }
+            saveToLocalStorage();
         });
 
         if(textObj.content && (!textObj.content_en || !textObj.content_fr)) {
@@ -475,6 +570,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const inpFr = document.getElementById('input-fr-' + slideId + '-' + tIndex);
                     if(inpEn && !inpEn.value) { inpEn.value = translations.en; textObj.content_en = translations.en; }
                     if(inpFr && !inpFr.value) { inpFr.value = translations.fr; textObj.content_fr = translations.fr; }
+                    saveToLocalStorage();
                 }
             });
         }
