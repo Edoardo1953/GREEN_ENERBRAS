@@ -686,3 +686,110 @@ body.theme-light .badge-lp {
     color: #047857 !important;
 }
 
+/* Specific overrides for all text elements, headers & comparatore in light mode */
+body.theme-light h1:not(.landing-title):not(#welcome-title-container),
+body.theme-light h2,
+body.theme-light h3,
+body.theme-light h4,
+body.theme-light h5,
+body.theme-light h6 {
+    color: #0f172a !important;
+}
+
+body.theme-light label {
+    color: #1e293b !important;
+}
+
+body.theme-light .tab-btn {
+    color: #475569 !important;
+}
+
+body.theme-light .tab-btn.active {
+    color: #059669 !important;
+}
+
+body.theme-light table,
+body.theme-light thead,
+body.theme-light tbody,
+body.theme-light tr,
+body.theme-light th,
+body.theme-light td {
+    color: #1e293b !important;
+}
+
+body.theme-light .kpi-value {
+    color: #0f172a !important;
+}
+
+body.theme-light .kpi-data h3 {
+    color: #64748b !important;
+}
+
+/* Comparatore card and modal overrides */
+body.theme-light .kpi-card h3 {
+    color: #0f172a !important;
+}
+
+body.theme-light .kpi-card[onclick*="openComparatoreModal"] {
+    background: rgba(59, 130, 246, 0.12) !important;
+    border: 1px solid rgba(59, 130, 246, 0.35) !important;
+}
+
+body.theme-light .kpi-card[onclick*="openComparatoreModal"] h3 {
+    color: #1d4ed8 !important;
+}
+
+body.theme-light .modal-overlay,
+body.theme-light #comparatoreModal {
+    background: rgba(15, 23, 42, 0.55) !important;
+}
+
+body.theme-light .modal-overlay .glass-panel,
+body.theme-light #comparatoreModal .glass-panel {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid rgba(15, 23, 42, 0.15) !important;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.18) !important;
+}
+
+body.theme-light .modal-overlay h2,
+body.theme-light .modal-overlay h3,
+body.theme-light #comparatoreModal h2,
+body.theme-light #comparatoreModal h3 {
+    color: #0f172a !important;
+}
+
+body.theme-light .modal-overlay button[onclick*="close"],
+body.theme-light #comparatoreModal button[onclick*="close"] {
+    color: #64748b !important;
+}
+
+body.theme-light .modal-overlay button[onclick*="close"]:hover,
+body.theme-light #comparatoreModal button[onclick*="close"]:hover {
+    color: #0f172a !important;
+}
+
+body.theme-light #comparatore-summary-kpi {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light .multi-select-dropdown,
+body.theme-light .dropdown-content {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12) !important;
+}
+
+body.theme-light .multi-select-dropdown label,
+body.theme-light .dropdown-content label {
+    color: #1e293b !important;
+}
+
+body.theme-light .multi-select-dropdown label:hover,
+body.theme-light .dropdown-content label:hover {
+    background: #f1f5f9 !important;
+}
+
+
