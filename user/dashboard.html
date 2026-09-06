@@ -10,13 +10,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <link rel="preload" as="image" href="../uploads/slide1.jpg" fetchpriority="high">
     <link rel="preload" as="image" href="../uploads/slide2.jpg">
-    <link rel="stylesheet" href="../style.css?v=140">
+    <link rel="stylesheet" href="../style.css?v=150">
 
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="../admin/Loghi/Green Enerbras solo logo.png">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="../auth.js?v=140"></script>
+    <script src="../auth.js?v=150"></script>
     <script src="../i18n.js?v=90"></script>
     <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
 </head>
@@ -389,11 +389,11 @@
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 5px; margin-bottom: 0.3rem;">
                         <span style="font-size: 0.85rem; color: var(--text-muted);" data-i18n="kpi_roi_in_corso">In corso 2025/2026</span>
-                        <span id="kpi-roi-user-current" style="font-weight: bold; font-size: 1.1rem; color: #fff;">12.5%</span>
+                        <span id="kpi-roi-user-current" style="font-weight: bold; font-size: 1.1rem; color: var(--text-main);">12.5%</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 5px;">
                         <span style="font-size: 0.85rem; color: var(--text-muted);" data-i18n="kpi_roi_a_regime">A regime</span>
-                        <span id="kpi-roi-user-future" style="font-weight: bold; font-size: 1.1rem; color: #fff;">12.5%</span>
+                        <span id="kpi-roi-user-future" style="font-weight: bold; font-size: 1.1rem; color: var(--text-main);">12.5%</span>
                     </div>
                 </div>
             </section>

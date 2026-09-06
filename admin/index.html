@@ -12,13 +12,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="../style.css?v=140">
+    <link rel="stylesheet" href="../style.css?v=150">
 
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="../auth.js?v=140"></script>
+    <script src="../auth.js?v=150"></script>
     <script src="../i18n.js?v=90"></script>
     <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
 </head>
@@ -120,7 +120,7 @@
                             <p id="kpi-collected" class="kpi-value">&euro; 0</p>
                         </div>
                         <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.5rem;">
-                            <h3 style="margin-bottom: 0.2rem; font-size: 0.95rem; color: #f3f4f6;" data-i18n="kpi_investimenti">Investimenti (Immobilisations)</h3>
+                            <h3 style="margin-bottom: 0.2rem; font-size: 0.95rem; color: var(--text-muted);" data-i18n="kpi_investimenti">Investimenti (Immobilisations)</h3>
                             <p id="kpi-investments" class="text-bold text-green" style="margin: 0; font-size: 1.2rem; color: #10b981;">&euro; 190.000,00</p>
                         </div>
                     </div>
@@ -133,14 +133,14 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 5px; margin-bottom: 0.3rem;">
                         <span style="font-size: 0.85rem; color: var(--text-muted);" data-i18n="kpi_roi_in_corso">In corso 2025/2026</span>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span id="kpi-roi-current" style="font-weight: bold; font-size: 1.1rem; color: #fff;">12.5%</span>
+                            <span id="kpi-roi-current" style="font-weight: bold; font-size: 1.1rem; color: var(--text-main);">12.5%</span>
                             <button id="edit-roi-current-btn" style="background: none; border: none; color: #10b981; cursor: pointer;" title="Modifica ROI in corso"><i class="fa-solid fa-pencil"></i></button>
                         </div>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); padding: 0.5rem; border-radius: 5px;">
                         <span style="font-size: 0.85rem; color: var(--text-muted);" data-i18n="kpi_roi_a_regime">A regime</span>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span id="kpi-roi-future" style="font-weight: bold; font-size: 1.1rem; color: #fff;">12.5%</span>
+                            <span id="kpi-roi-future" style="font-weight: bold; font-size: 1.1rem; color: var(--text-main);">12.5%</span>
                             <button id="edit-roi-future-btn" style="background: none; border: none; color: #10b981; cursor: pointer;" title="Modifica ROI a regime"><i class="fa-solid fa-pencil"></i></button>
                         </div>
                     </div>

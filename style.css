@@ -792,4 +792,17 @@ body.theme-light .dropdown-content label:hover {
     background: #f1f5f9 !important;
 }
 
+/* ROI Card styling in Light Theme */
+body.theme-light #kpi-roi-current,
+body.theme-light #kpi-roi-future,
+body.theme-light #kpi-roi-user-current,
+body.theme-light #kpi-roi-user-future {
+    color: #0f172a !important;
+}
+
+body.theme-light .kpi-card div[style*="justify-content: space-between"] {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
 
