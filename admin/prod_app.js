@@ -453,11 +453,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Impianti Scrollable List
                 let impList = `<div style="flex: 1; max-height: 200px; overflow-y: auto; padding-right: 10px;">
-                    <div style="display: flex; justify-content: space-between; position: sticky; top: 0; background: #1e293b; padding-bottom: 5px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 10;">
-                        <span data-i18n="word_impianti" style="font-weight: bold; font-size: 0.85rem; color: #94a3b8;"><span data-i18n="word_impianti">IMPIANTI</span></span>
-                        <div>
-                            <span onclick="window.toggleAllChart('impianti', true)" style="cursor:pointer; font-size: 0.8rem; color:#3b82f6; margin-right: 8px;"><span data-i18n="filter_tutti">+ Tutti</span></span>
-                            <span onclick="window.toggleAllChart('impianti', false)" style="cursor:pointer; font-size: 0.8rem; color:#ef4444;"><span data-i18n="filter_nessuno">- Nessuno</span></span>
+                    <div class="filter-header-sticky" style="display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; padding: 4px 6px; margin-bottom: 8px; border-radius: 6px; z-index: 10;">
+                        <span style="font-weight: 700; font-size: 0.8rem; letter-spacing: 0.5px;"><span data-i18n="word_impianti">IMPIANTI</span></span>
+                        <div style="display: flex; gap: 4px;">
+                            <span onclick="window.toggleAllChart('impianti', true)" class="filter-toggle-btn filter-toggle-all"><span data-i18n="filter_tutti">+ Tutti</span></span>
+                            <span onclick="window.toggleAllChart('impianti', false)" class="filter-toggle-btn filter-toggle-none"><span data-i18n="filter_nessuno">- Nessuno</span></span>
                         </div>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 0.4rem;">`;

@@ -833,4 +833,119 @@ body.theme-light #kpi-rev-year {
     border: 1px solid rgba(59, 130, 246, 0.35) !important;
 }
 
+/* ==========================================================================
+   MODERN FILTER & CHECKBOX CONTROLS
+   ========================================================================== */
+
+.filter-header-sticky {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+}
+
+body.theme-light .filter-header-sticky {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #334155 !important;
+}
+
+body.theme-light .filter-header-sticky span {
+    color: #1e293b !important;
+}
+
+.filter-toggle-btn {
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1.2;
+}
+
+.filter-toggle-all {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.filter-toggle-all:hover {
+    background: rgba(59, 130, 246, 0.3);
+    color: #93c5fd;
+}
+
+.filter-toggle-none {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.filter-toggle-none:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+}
+
+body.theme-light .filter-toggle-all {
+    color: #1d4ed8 !important;
+    background: rgba(59, 130, 246, 0.12) !important;
+    border: 1px solid rgba(59, 130, 246, 0.35) !important;
+}
+
+body.theme-light .filter-toggle-all:hover {
+    background: rgba(59, 130, 246, 0.22) !important;
+    color: #1e40af !important;
+}
+
+body.theme-light .filter-toggle-none {
+    color: #dc2626 !important;
+    background: rgba(239, 68, 68, 0.12) !important;
+    border: 1px solid rgba(239, 68, 68, 0.35) !important;
+}
+
+body.theme-light .filter-toggle-none:hover {
+    background: rgba(239, 68, 68, 0.22) !important;
+    color: #b91c1c !important;
+}
+
+/* Multi-select Dropdown styling */
+.multi-select-dropdown {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+body.theme-light .multi-select-dropdown {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-light .multi-select-dropdown > div:first-child {
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+/* Custom styled modern checkboxes */
+input[type="checkbox"] {
+    accent-color: #10b981;
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
+}
+
+body.theme-light div[style*="background: rgba(0,0,0,0.2)"],
+body.theme-light div[style*="background: rgba(0, 0, 0, 0.2)"] {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light .export-actions {
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
 
