@@ -805,4 +805,32 @@ body.theme-light .kpi-card div[style*="justify-content: space-between"] {
     border: 1px solid #e2e8f0 !important;
 }
 
+/* Sublists and amount items in KPI cards in Light Theme */
+body.theme-light #kpi-plants-production-list,
+body.theme-light #kpi-clients-sales-list,
+body.theme-light #kpi-plants-list {
+    color: #475569 !important;
+}
+
+body.theme-light #kpi-plants-production-list div,
+body.theme-light #kpi-clients-sales-list div,
+body.theme-light #kpi-plants-list div {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    padding: 2px 0;
+}
+
+body.theme-light #kpi-plants-production-list span,
+body.theme-light #kpi-clients-sales-list span,
+body.theme-light #kpi-plants-list span {
+    color: #0f172a !important;
+}
+
+body.theme-light #kpi-total-kwh-year,
+body.theme-light #kpi-clients-sales-year,
+body.theme-light #kpi-rev-year {
+    color: #1d4ed8 !important;
+    background: rgba(59, 130, 246, 0.14) !important;
+    border: 1px solid rgba(59, 130, 246, 0.35) !important;
+}
+
 

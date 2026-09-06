@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let statoLabel = stato;
                 if (stato.toUpperCase() === 'ATTIVO') statoLabel = 'ATTIVI';
                 let i18nStato = `stato_${stato.replace(/\s+/g, '_')}`;
-                html += `<div><span style="color: white; font-weight: bold; font-size: 1.1rem;">${count}</span> <span data-i18n="word_impianti">Impianti</span> <span data-i18n="${i18nStato}">${statoLabel}</span></div>`;
+                html += `<div><span style="color: var(--text-main); font-weight: bold; font-size: 1.1rem;">${count}</span> <span data-i18n="word_impianti">Impianti</span> <span data-i18n="${i18nStato}">${statoLabel}</span></div>`;
             }
             kpiList.innerHTML = html;
             if(typeof applyTranslations === 'function') applyTranslations();
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let listHtml = '';
             const sortedPlantIds = Object.keys(plantTotalsYear).sort((a,b) => Number(a) - Number(b));
             sortedPlantIds.forEach(id => {
-                listHtml += `<div style="display: flex; justify-content: space-between;"><span>USINA ${String(id).padStart(3, '0')}</span> <span style="color: white; font-weight: 600; margin-left: 0.5rem;">${formatNumber(plantTotalsYear[id])} kWh</span></div>`;
+                listHtml += `<div style="display: flex; justify-content: space-between;"><span>USINA ${String(id).padStart(3, '0')}</span> <span style="color: var(--text-main); font-weight: 600; margin-left: 0.5rem;">${formatNumber(plantTotalsYear[id])} kWh</span></div>`;
             });
             kpiPlantsList.innerHTML = listHtml;
         }
