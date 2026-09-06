@@ -100,27 +100,50 @@
                 .landing-flag { height: 50px; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
                 .slideshow-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
                 
-                .mySlides { width: 100%; height: 100%; position: absolute; top: 0; left: 0; opacity: 0; transition: opacity 1.5s ease-in-out; }
+                .mySlides { width: 100%; height: 100%; position: absolute; top: 0; left: 0; opacity: 0; transition: opacity 1.2s ease-in-out; }
                 .mySlides.active { opacity: 1; }
                 .mySlides img { width: 100%; height: 100%; object-fit: cover; animation: zoomEffect 15s infinite alternate; }
-                .mySlides::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); }
+                .mySlides::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.45); }
                 
                 .slide-text-overlay {
                     position: absolute;
-                    color: white;
-                    font-size: 3rem;
-                    font-weight: bold;
-                    text-shadow: 2px 2px 8px rgba(0,0,0,1);
+                    color: #ffffff;
+                    font-size: 2.8rem;
+                    font-weight: 800;
+                    text-shadow: 0 4px 18px rgba(0,0,0,0.9), 0 2px 6px rgba(0,0,0,0.8);
                     transform: translate(-50%, -50%);
                     z-index: 5;
                     text-align: center;
                     white-space: nowrap;
+                    opacity: 0;
+                    pointer-events: none;
+                    letter-spacing: 0.5px;
+                }
+
+                .mySlides.active .slide-text-overlay {
+                    opacity: 1;
+                    animation: slideTextEntrance 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                }
+
+                @keyframes slideTextEntrance {
+                    0% {
+                        opacity: 0;
+                        transform: translate(-50%, calc(-50% + 30px)) scale(0.96);
+                    }
+                    60% {
+                        opacity: 1;
+                    }
+                    100% {
+                        opacity: 1;
+                        transform: translate(-50%, -50%) scale(1);
+                    }
                 }
 
                 @keyframes zoomEffect {
                     0% { transform: scale(1); }
-                    100% { transform: scale(1.2); }
-                }.scroll-indicator { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); z-index: 10; text-align: center; color: white; cursor: pointer; animation: bounce 2s infinite; }
+                    100% { transform: scale(1.15); }
+                }
+                .scroll-indicator { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); z-index: 10; text-align: center; color: white; cursor: pointer; animation: bounce 2s infinite; }
                 @keyframes bounce { 0%, 20%, 50%, 80%, 100% {transform: translateY(0) translateX(-50%);} 40% {transform: translateY(-20px) translateX(-50%);} 60% {transform: translateY(-10px) translateX(-50%);} }
             </style>
             

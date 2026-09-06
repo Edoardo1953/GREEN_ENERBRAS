@@ -481,21 +481,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
 
-    // Save All Data to Firebase
+    // Save All Data to Firebase & Local Storage
     document.getElementById('btn-save-slideshow').addEventListener('click', async () => {
         const interval = document.getElementById('slideshow-interval').value;
-        slideshowConfig.interval = parseInt(interval);
+        slideshowConfig.interval = parseInt(interval) || 5000;
         
-        try {
-            const btn = document.getElementById('btn-save-slideshow');
-            btn.textContent = "Salvataggio...";
-            await dbSlideshowRef.set(slideshowConfig);
-            try { localStorage.setItem('green_enerbras_slideshow_config', JSON.stringify(slideshowConfig)); } catch(e) {}
-            alert("Configurazione salvata con successo!");
-            btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salva Configurazione su Database';
+        const btn = document.getElementById('btn-save-slideshow');
+        btn.textContent = "Salvataggio...";
+        
+        // 1. Salva SEMPRE in locale per rendere subito attivi timing e testi su questo browser
+        try { 
+            localStorage.setItem('green_enerbras_slideshow_config', JSON.stringify(slideshowConfig)); 
         } catch(e) {
-            console.error(e);
-            alert("Errore salvataggio: " + e.message);
+            console.warn("Errore salvataggio localStorage:", e);
+        }
+
+        // 2. Tenta il salvataggio su Firebase Cloud Database
+        try {
+            if (dbSlideshowRef) {
+                await dbSlideshowRef.set(slideshowConfig);
+                alert("Configurazione salvata con successo sia in locale che sul database cloud!");
+            } else {
+                alert("Configurazione salvata in locale con successo!");
+            }
+        } catch(e) {
+            console.warn("Avviso sincronizzazione Firebase:", e);
+            if (e.message && e.message.includes('PERMISSION_DENIED')) {
+                alert("Configurazione salvata e attiva con successo!\n\n(I testi e i tempi sono stati applicati localmente. Per sincronizzarli anche con gli altri utenti sul cloud, le regole di Firebase Realtime Database richiedono il permesso di scrittura sul nodo 'settings/slideshow'.)");
+            } else {
+                alert("Configurazione salvata localmente!\n(Nota cloud: " + e.message + ")");
+            }
+        } finally {
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salva Configurazione su Database';
         }
     });
 
