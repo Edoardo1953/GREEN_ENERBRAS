@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <link rel="preload" as="image" href="../uploads/slide1.jpg" fetchpriority="high">
+    <link rel="preload" as="image" href="../uploads/slide2.jpg">
     <link rel="stylesheet" href="../style.css?v=90">
 
     <link rel="manifest" href="../manifest.json">
@@ -132,10 +134,10 @@
                 </div>
                 
                 <div class="slideshow-container" id="slideshow-container-dynamic">
-                    <!-- Default Slides Fallback (in caso JS fallisca) -->
-                    <div class="mySlides active"><img src="../uploads/slide1.jpg" alt="Slide 1"></div>
-                    <div class="mySlides"><img src="../uploads/slide2.jpg" alt="Slide 2"></div>
-                    <div class="mySlides"><img src="../uploads/slide3.jpg" alt="Slide 3"></div>
+                    <!-- High-Priority Instant Local Slides -->
+                    <div class="mySlides active"><img src="../uploads/slide1.jpg" alt="Slide 1" fetchpriority="high" loading="eager"></div>
+                    <div class="mySlides"><img src="../uploads/slide2.jpg" alt="Slide 2" loading="eager"></div>
+                    <div class="mySlides"><img src="../uploads/slide3.jpg" alt="Slide 3" loading="eager"></div>
                 </div>
 
                 <div class="scroll-indicator" onclick="document.getElementById('main-dashboard-content').scrollIntoView({behavior: 'smooth'})">
@@ -145,117 +147,130 @@
             </div>
 
             <script>
-                document.addEventListener('DOMContentLoaded', () => {
-                    if (typeof firebase === 'undefined' || typeof db === 'undefined') {
-                        console.error("Firebase non inizializzato");
-                        return;
+                (function() {
+                    const CACHE_KEY = 'green_enerbras_slideshow_config';
+                    const container = document.getElementById('slideshow-container-dynamic');
+                    if (!container) return;
+
+                    let slideTimer = null;
+                    let slideIndex = 0;
+                    let currentRenderedHtml = '';
+
+                    function getSavedConfig() {
+                        try {
+                            const raw = localStorage.getItem(CACHE_KEY);
+                            if (raw) return JSON.parse(raw);
+                        } catch(e) {}
+                        return null;
                     }
-                    
-                    db.ref('settings/slideshow').once('value').then(snap => {
-                        let config = snap.val();
-                        // Default fallback
-                        if (!config) {
-                            config = { interval: 5000 };
-                        }
-                        if (!config.slides || config.slides.length === 0) {
-                            config.slides = [
-                                { imageUrl: '../uploads/slide1.jpg' },
-                                { imageUrl: '../uploads/slide2.jpg' },
-                                { imageUrl: '../uploads/slide3.jpg' }
-                            ];
+
+                    function saveConfig(cfg) {
+                        try {
+                            localStorage.setItem(CACHE_KEY, JSON.stringify(cfg));
+                        } catch(e) {}
+                    }
+
+                    function buildSlidesHtml(config) {
+                        if (!config || !config.slides) return '';
+                        let slidesArray = Array.isArray(config.slides) ? config.slides : Object.values(config.slides);
+                        if (!slidesArray.length) return '';
+
+                        while (slidesArray.length < 3) {
+                            slidesArray.push({ imageUrl: '../uploads/slide' + (slidesArray.length + 1) + '.jpg', texts: [] });
                         }
 
-                        const container = document.getElementById('slideshow-container-dynamic');
-                        let slidesArray = [];
-                        if (config && config.slides) {
-                            slidesArray = Array.isArray(config.slides) ? config.slides : Object.values(config.slides);
-                        }
-                        
-                        if(slidesArray.length > 0) {
-                            // Ensure we always have exactly 3 slides
-                            while (slidesArray.length < 3) {
-                                slidesArray.push({ imageUrl: '../uploads/slide' + (slidesArray.length+1) + '.jpg', texts: [] });
+                        const lang = typeof currentLang !== 'undefined' ? currentLang : (localStorage.getItem('appLang') || 'it');
+                        const defaultTrans = {
+                            'Tecnologia di punta': { en: 'Cutting-edge Technology', fr: 'Technologie de pointe' },
+                            'Energia solare per un futuro sostenibile': { en: 'Solar energy for a sustainable future', fr: 'L\'énergie solaire pour un avenir durable' },
+                            'Impianti fotovoltaici in Brasile': { en: 'Photovoltaic plants in Brazil', fr: 'Centrales photovoltaïques au Brésil' },
+                            'Assistenza puntuale': { en: 'Prompt Assistance', fr: 'Assistance ponctuelle' },
+                            'Massima efficienza': { en: 'Maximum efficiency', fr: 'Efficacité maximale' }
+                        };
+
+                        let htmlStr = '';
+                        slidesArray.forEach((slide, idx) => {
+                            if (!slide) slide = {};
+                            const defaultUrl = '../uploads/slide' + (idx + 1) + '.jpg';
+                            const finalUrl = (slide.imageUrl && slide.imageUrl.trim() !== '') ? slide.imageUrl : defaultUrl;
+                            const isActive = idx === 0 ? ' active' : '';
+                            const priority = idx === 0 ? ' fetchpriority="high" loading="eager"' : ' loading="eager"';
+
+                            let overlayHtml = '';
+                            let textsArray = [];
+                            if (slide.texts) {
+                                textsArray = Array.isArray(slide.texts) ? slide.texts : Object.values(slide.texts);
                             }
-                            // Firebase has slides, overwrite fallback
-                            container.innerHTML = '';
-                            slidesArray.forEach((slide, idx) => {
-                                if(!slide) slide = {};
-                                const defaultUrl = '../uploads/slide' + (idx+1) + '.jpg';
-                                const finalUrl = (slide.imageUrl && slide.imageUrl.trim() !== '') ? slide.imageUrl : defaultUrl;
-                                
-                                const slideDiv = document.createElement('div');
-                                slideDiv.className = 'mySlides';
-                                
-                                let htmlStr = '<img src="' + finalUrl + '" alt="Slide ' + idx + '">';
-                                
-                                // Render texts safely
-                                let textsArray = [];
-                                if(slide.texts) {
-                                    textsArray = Array.isArray(slide.texts) ? slide.texts : Object.values(slide.texts);
-                                }
-                                if(textsArray.length > 0) {
-                                    textsArray.forEach(txt => {
-                                        if(!txt || !txt.content) return;
-                                        const lang = typeof currentLang !== 'undefined' ? currentLang : (localStorage.getItem('appLang') || 'it');
-                                        
-                                        // Fallback translations for default slide texts
-                                        const defaultTrans = {
-                                            'Tecnologia di punta': { en: 'Cutting-edge Technology', fr: 'Technologie de pointe' },
-                                            'Energia solare per un futuro sostenibile': { en: 'Solar energy for a sustainable future', fr: 'L\'énergie solaire pour un avenir durable' },
-                                            'Impianti fotovoltaici in Brasile': { en: 'Photovoltaic plants in Brazil', fr: 'Centrales photovoltaïques au Brésil' },
-                                            'Assistenza puntuale': { en: 'Prompt Assistance', fr: 'Assistance ponctuelle' },
-                                            'Massima efficienza': { en: 'Maximum efficiency', fr: 'Efficacité maximale' }
-                                        };
-                                        
-                                        let textIt = txt.content || '';
-                                        let textEn = (txt.content_en && txt.content_en.trim() !== '') ? txt.content_en : (defaultTrans[textIt] ? defaultTrans[textIt].en : textIt);
-                                        let textFr = (txt.content_fr && txt.content_fr.trim() !== '') ? txt.content_fr : (defaultTrans[textIt] ? defaultTrans[textIt].fr : textIt);
-                                        
-                                        let currentText = textIt;
-                                        if (lang === 'en') currentText = textEn;
-                                        else if (lang === 'fr') currentText = textFr;
+                            textsArray.forEach(txt => {
+                                if (!txt || !txt.content) return;
+                                let textIt = txt.content || '';
+                                let textEn = (txt.content_en && txt.content_en.trim() !== '') ? txt.content_en : (defaultTrans[textIt] ? defaultTrans[textIt].en : textIt);
+                                let textFr = (txt.content_fr && txt.content_fr.trim() !== '') ? txt.content_fr : (defaultTrans[textIt] ? defaultTrans[textIt].fr : textIt);
+                                let currentText = textIt;
+                                if (lang === 'en') currentText = textEn;
+                                else if (lang === 'fr') currentText = textFr;
 
-                                        htmlStr += `<div class="slide-text-overlay" data-slide-text="true" data-text-it="${textIt}" data-text-en="${textEn}" data-text-fr="${textFr}" style="left: ${txt.x}%; top: ${txt.y}%;">${currentText}</div>`;
-                                    });
+                                overlayHtml += `<div class="slide-text-overlay" data-slide-text="true" data-text-it="${textIt}" data-text-en="${textEn}" data-text-fr="${textFr}" style="left: ${txt.x}%; top: ${txt.y}%;">${currentText}</div>`;
+                            });
+
+                            htmlStr += `<div class="mySlides${isActive}"><img src="${finalUrl}" alt="Slide ${idx + 1}"${priority}>${overlayHtml}</div>`;
+                        });
+                        return htmlStr;
+                    }
+
+                    function renderSlides(config) {
+                        const newHtml = buildSlidesHtml(config);
+                        if (!newHtml) return;
+
+                        // Se l'HTML è identico a quanto già visibile, non ricreiamo il DOM per evitare sfarfallii
+                        if (container.innerHTML.trim() !== newHtml.trim()) {
+                            container.innerHTML = newHtml;
+                            slideIndex = 0;
+                        }
+
+                        startSlideshow((config && config.interval) ? config.interval : 5000);
+                    }
+
+                    function startSlideshow(interval) {
+                        if (slideTimer) clearTimeout(slideTimer);
+                        const slides = container.getElementsByClassName("mySlides");
+                        if (!slides.length) return;
+
+                        function step() {
+                            const currentSlides = container.getElementsByClassName("mySlides");
+                            if (!currentSlides.length) return;
+                            currentSlides[slideIndex].classList.remove("active");
+                            slideIndex = (slideIndex + 1) % currentSlides.length;
+                            currentSlides[slideIndex].classList.add("active");
+                            slideTimer = setTimeout(step, interval);
+                        }
+
+                        slideTimer = setTimeout(step, interval);
+                    }
+
+                    // 1. CARICAMENTO ISTANTANEO (0ms) da cache locale o fallback precaricato
+                    const cached = getSavedConfig();
+                    if (cached) {
+                        renderSlides(cached);
+                    } else {
+                        startSlideshow(5000);
+                    }
+
+                    // 2. SINCRONIZZAZIONE ASINCRONA IN BACKGROUND da Firebase (senza bloccare la UI)
+                    document.addEventListener('DOMContentLoaded', () => {
+                        if (typeof firebase !== 'undefined' && typeof db !== 'undefined' && db) {
+                            db.ref('settings/slideshow').once('value').then(snap => {
+                                if (snap.exists()) {
+                                    const freshConfig = snap.val();
+                                    saveConfig(freshConfig);
+                                    renderSlides(freshConfig);
                                 }
-                                
-                                slideDiv.innerHTML = htmlStr;
-                                container.appendChild(slideDiv);
+                            }).catch(err => {
+                                console.warn("Slideshow sync:", err);
                             });
                         }
-
-                        // Start slideshow
-                        let slideIndex = 0;
-                        let slidesElements = container.getElementsByClassName("mySlides");
-                        if (slidesElements.length > 0) {
-                            slidesElements[0].classList.add("active");
-                        }
-
-                        function showNextSlide() {
-                            if (!slidesElements.length) return;
-                            slidesElements[slideIndex].classList.remove("active");
-                            slideIndex = (slideIndex + 1) % slidesElements.length;
-                            slidesElements[slideIndex].classList.add("active");
-                            setTimeout(showNextSlide, (config && config.interval) ? config.interval : 5000);
-                        }
-                        
-                        setTimeout(showNextSlide, (config && config.interval) ? config.interval : 5000);
-                    }).catch(err => {
-                        console.error("Errore caricamento slideshow da Firebase (Timeout o Rete):", err);
-                        // Avvia lo slideshow di fallback giÃ  presente nell'HTML
-                        const container = document.getElementById('slideshow-container-dynamic');
-                        let slidesElements = container.getElementsByClassName("mySlides");
-                        let slideIndex = 0;
-                        function showNextSlide() {
-                            if (!slidesElements.length) return;
-                            slidesElements[slideIndex].classList.remove("active");
-                            slideIndex = (slideIndex + 1) % slidesElements.length;
-                            slidesElements[slideIndex].classList.add("active");
-                            setTimeout(showNextSlide, 5000);
-                        }
-                        setTimeout(showNextSlide, 5000);
                     });
-                });
+                })();
             </script>
             <div id="main-dashboard-content" style="scroll-margin-top: 2rem;"></div>
             <!-- FINE SLIDESHOW LANDING PAGE -->

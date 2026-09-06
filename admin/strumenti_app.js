@@ -224,10 +224,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         ]
     };
 
+    function compressImageFile(file, maxWidth = 1920, quality = 0.82) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    resolve(dataUrl);
+                };
+                img.onerror = reject;
+                img.src = e.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
     // Load da Firebase
     dbSlideshowRef.once('value').then(snap => {
         if(snap.exists()) {
             slideshowConfig = snap.val();
+            try { localStorage.setItem('green_enerbras_slideshow_config', JSON.stringify(slideshowConfig)); } catch(e) {}
         }
         document.getElementById('slideshow-interval').value = slideshowConfig.interval || 5000;
         renderSlidesEditors();
@@ -278,16 +307,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         const addTextBtn = document.getElementById('add-text-' + slideId);
         const imgElement = document.getElementById('img-' + slideId);
 
-        // Handle Image Upload to Base64
-        fileInput.addEventListener('change', (e) => {
+        // Handle Image Upload with Auto-compression to JPEG Full-HD
+        fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if(file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    imgElement.src = ev.target.result;
-                    slideData.imageUrl = ev.target.result; // update data
-                };
-                reader.readAsDataURL(file);
+                try {
+                    imgElement.style.opacity = '0.5';
+                    const compressed = await compressImageFile(file, 1920, 0.82);
+                    imgElement.src = compressed;
+                    imgElement.style.opacity = '1';
+                    slideData.imageUrl = compressed; // update data
+                } catch(err) {
+                    console.error("Errore compressione immagine:", err);
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        imgElement.src = ev.target.result;
+                        imgElement.style.opacity = '1';
+                        slideData.imageUrl = ev.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
             }
         });
 
@@ -451,6 +490,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const btn = document.getElementById('btn-save-slideshow');
             btn.textContent = "Salvataggio...";
             await dbSlideshowRef.set(slideshowConfig);
+            try { localStorage.setItem('green_enerbras_slideshow_config', JSON.stringify(slideshowConfig)); } catch(e) {}
             alert("Configurazione salvata con successo!");
             btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salva Configurazione su Database';
         } catch(e) {
