@@ -12,14 +12,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="../style.css?v=180">
+    <link rel="stylesheet" href="../style.css?v=190">
 
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="../auth.js?v=180"></script>
-    <script src="../i18n.js?v=180"></script>
+    <script src="../auth.js?v=190"></script>
+    <script src="../i18n.js?v=190"></script>
     <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
 </head>
 <body>
@@ -105,13 +105,12 @@
 
             <!-- KPI Cards -->
             <section class="kpi-grid">
-                <div class="kpi-card glass-panel kpi-target-card" onclick="openSchemaSocietarioModal()" title="Schema Societario">
-                    <div class="kpi-icon bg-green"><i class="fa-solid fa-bullseye"></i></div>
-                    <div class="kpi-data">
-                        <h3 data-i18n="kpi_target_apporti">Target Apporti</h3>
-                        <p id="kpi-target" class="kpi-value">&euro; 0</p>
-                        <div class="schema-societario-badge">
-                            <i class="fa-solid fa-sitemap"></i> <span data-i18n="kpi_schema_societario">Schema Societario</span> <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.72rem; opacity: 0.85;"></i>
+                <div class="kpi-card glass-panel kpi-target-card" onclick="openSchemaSocietarioModal()" title="Schema Societario Lussemburgo/Brasile" style="display: flex; align-items: center; gap: 1.2rem; cursor: pointer; border: 1px solid rgba(16, 185, 129, 0.35);">
+                    <div class="kpi-icon bg-green" style="font-size: 1.6rem; min-width: 52px; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-sitemap"></i></div>
+                    <div class="kpi-data" style="display: flex; flex-direction: column; justify-content: center; gap: 0.35rem;">
+                        <h3 data-i18n="kpi_schema_societario" style="margin: 0; font-size: 1.15rem; font-weight: 700; line-height: 1.35; color: var(--text-main);">Schema Societario Lussemburgo/Brasile</h3>
+                        <div class="schema-societario-badge" style="margin-top: 0.1rem; width: fit-content;">
+                            <i class="fa-solid fa-file-pdf"></i> <span data-i18n="badge_visualizza_pdf">Visualizza PDF</span> <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.72rem; opacity: 0.85;"></i>
                         </div>
                     </div>
                 </div>
@@ -218,7 +217,7 @@
     <!-- Data script -->
     <script src="../data.js"></script>
     <!-- App logic -->
-    <script src="app.js?v=180"></script>
+    <script src="app.js?v=190"></script>
 </body>
 </html>
 

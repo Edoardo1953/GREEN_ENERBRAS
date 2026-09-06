@@ -21,8 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 2. Popola KPIs
-    document.getElementById('kpi-target').textContent = formatCurrency(401000);
-    document.getElementById('kpi-collected').textContent = formatCurrency(APP_DATA.totalCollected);
+    const kpiTargetEl = document.getElementById('kpi-target');
+    if (kpiTargetEl) kpiTargetEl.textContent = formatCurrency(401000);
+    const kpiCollectedEl = document.getElementById('kpi-collected');
+    if (kpiCollectedEl) kpiCollectedEl.textContent = formatCurrency(APP_DATA.totalCollected);
     
     const balanceKpi = document.getElementById('kpi-balance');
     if(balanceKpi) {
