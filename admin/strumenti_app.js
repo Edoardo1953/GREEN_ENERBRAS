@@ -24,10 +24,11 @@ async function loadUsers() {
         console.log("Dati utenti dal server:", usersObj);
         window.allUsersData = usersObj || {};
         
+        if (usersObj && typeof usersObj === 'object' && Object.keys(usersObj).length > 0) {
             // Convert object to array and sort: ADMIN always first in top position, then by order
             const usersArray = Object.keys(usersObj).map(key => {
                 let u = usersObj[key];
-                if (typeof u !== 'object') u = {};
+                if (typeof u !== 'object' || !u) u = {};
                 return {
                     username: key,
                     ...u
