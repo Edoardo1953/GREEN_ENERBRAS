@@ -43,6 +43,50 @@ document.addEventListener('DOMContentLoaded', () => {
         lastUpdatedEl.textContent = APP_DATA.lastUpdated;
     }
 
+    // 2.1 Exchange Rate & FX Performance
+    const avgExchangeRate = (APP_DATA && APP_DATA.avgExchangeRate) ? APP_DATA.avgExchangeRate : 6.0164;
+    let currentExchangeRate = (APP_DATA && APP_DATA.currentExchangeRate) ? APP_DATA.currentExchangeRate : 5.8823;
+
+    const elExchangeAvg = document.getElementById('kpi-exchange-avg');
+    const elExchangeCurrent = document.getElementById('kpi-exchange-current');
+    const elExchangePerf = document.getElementById('kpi-exchange-perf');
+
+    function updateExchangeDisplay(avgRate, currRate) {
+        if (elExchangeAvg) {
+            elExchangeAvg.textContent = `R$ ${avgRate.toFixed(2).replace('.', ',')}`;
+            elExchangeAvg.title = `Cambio esatto: ${avgRate.toFixed(4)}`;
+        }
+        if (elExchangeCurrent) {
+            elExchangeCurrent.textContent = currRate.toFixed(2).replace('.', ',');
+            elExchangeCurrent.title = `Cambio esatto: ${currRate.toFixed(4)}`;
+        }
+        if (elExchangePerf && avgRate > 0 && currRate > 0) {
+            const perfPct = ((avgRate / currRate) - 1) * 100;
+            const sign = perfPct >= 0 ? '+' : '';
+            elExchangePerf.textContent = `${sign}${perfPct.toFixed(2)}%`;
+            if (perfPct >= 0) {
+                elExchangePerf.style.color = '#10b981';
+            } else {
+                elExchangePerf.style.color = '#ef4444';
+            }
+        }
+    }
+
+    updateExchangeDisplay(avgExchangeRate, currentExchangeRate);
+
+    // Fetch live EUR/BRL exchange rate asynchronously
+    fetch('https://open.er-api.com/v6/latest/EUR')
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.rates && data.rates.BRL) {
+                currentExchangeRate = data.rates.BRL;
+                updateExchangeDisplay(avgExchangeRate, currentExchangeRate);
+            }
+        })
+        .catch(err => {
+            console.warn("Live exchange rate fetch fallback to local data:", err);
+        });
+
     // 3. Sort Partners (GP first, then LPs by detention DESC)
     const validPartners = APP_DATA.partners ? APP_DATA.partners : [];
     
