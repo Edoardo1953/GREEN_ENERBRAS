@@ -713,8 +713,15 @@ body.theme-light thead,
 body.theme-light tbody,
 body.theme-light tr,
 body.theme-light th,
-body.theme-light td {
-    color: #1e293b !important;
+body.theme-light td,
+body.theme-light table strong,
+body.theme-light table span:not(.badge):not(.text-green):not(.text-red) {
+    color: #0f172a !important;
+}
+
+body.theme-light #table-body-capitale tr td strong,
+body.theme-light #table-body-conto tr td strong {
+    color: #0f172a !important;
 }
 
 body.theme-light .kpi-value {

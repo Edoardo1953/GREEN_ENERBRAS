@@ -11,7 +11,7 @@
                              "date":  "29/08/2025",
                              "category":  "Capital Contribution",
                              "description":  "Paiement Capital Contribution",
-                             "partner":  "New Life Sarl",
+                             "partner":  "New Life Sarl (General Partner)",
                              "amount":  1000
                          },
                          {
@@ -312,7 +312,7 @@
                              "date":  "26/01/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Total Entry fees sur L.P. Contributions verses",
-                             "partner":  "NEW LIFE Sarl",
+                             "partner":  "New Life Sarl (General Partner)",
                              "amount":  4000
                          },
                          {
@@ -403,7 +403,7 @@
                              "date":  "17/07/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Total Entry fees sur L.P. Contributions verses",
-                             "partner":  "NEW LIFE Sarl",
+                             "partner":  "New Life Sarl (General Partner)",
                              "amount":  1200
                          },
                          {
@@ -640,7 +640,7 @@
                         "superficie":  "200/800 mq"
                     }
                 ],
-    "lastUpdated":  "06/09/2026 21:31",
+    "lastUpdated":  "06/09/2026 21:34",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
