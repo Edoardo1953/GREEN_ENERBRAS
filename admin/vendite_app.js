@@ -676,6 +676,34 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 5. COMPARATORE VENDITE LOGIC
     // ==========================================
+    if (typeof db !== 'undefined') {
+        db.ref('settings/comparatoreVendite').on('value', snap => {
+            const isVisible = !!snap.val();
+            const icon = document.getElementById('comparatore-vendite-eye-icon');
+            const toggleBtn = document.getElementById('toggle-comparatore-vendite-btn');
+            const card = document.getElementById('comparatore-vendite-kpi-card');
+            const isUser = (typeof Auth !== 'undefined' && typeof Auth.isUserView === 'function') ? Auth.isUserView() : (typeof Auth !== 'undefined' && Auth.currentUser && Auth.currentUser.role !== 'admin');
+
+            if (icon) {
+                icon.className = isVisible ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+                icon.style.color = isVisible ? '#10b981' : '#ef4444';
+            }
+            if (toggleBtn) {
+                toggleBtn.style.display = isUser ? 'none' : 'block';
+            }
+            if (card) {
+                card.style.display = (isUser && !isVisible) ? 'none' : 'flex';
+            }
+        });
+    }
+
+    window.toggleComparatoreVenditeVisibility = function() {
+        if (typeof db === 'undefined') return;
+        db.ref('settings/comparatoreVendite').once('value').then(snap => {
+            const current = !!snap.val();
+            db.ref('settings/comparatoreVendite').set(!current);
+        });
+    };
     window.openComparatoreModal = function() {
         const modal = document.getElementById('comparatoreModal');
         if (modal) {

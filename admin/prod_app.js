@@ -491,9 +491,19 @@ if (typeof db !== 'undefined') {
     db.ref('settings/comparatoreProduzione').on('value', snap => {
         const isVisible = !!snap.val();
         const icon = document.getElementById('comparatore-eye-icon');
+        const toggleBtn = document.getElementById('toggle-comparatore-btn');
+        const card = document.getElementById('comparatore-kpi-card');
+        const isUser = (typeof Auth !== 'undefined' && typeof Auth.isUserView === 'function') ? Auth.isUserView() : (typeof Auth !== 'undefined' && Auth.currentUser && Auth.currentUser.role !== 'admin');
+
         if (icon) {
             icon.className = isVisible ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
             icon.style.color = isVisible ? '#10b981' : '#ef4444';
+        }
+        if (toggleBtn) {
+            toggleBtn.style.display = isUser ? 'none' : 'block';
+        }
+        if (card) {
+            card.style.display = (isUser && !isVisible) ? 'none' : 'flex';
         }
     });
 }
