@@ -20,11 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Set User Profile UI
-    const navNameElem = document.getElementById('user-name-nav');
-    if (navNameElem) navNameElem.textContent = currentUserName;
-    
-    const avatarElem = document.getElementById('user-avatar');
-    if (avatarElem) avatarElem.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserName)}&background=10b981&color=fff`;
+    if (typeof Auth !== 'undefined' && typeof Auth.updateUserProfileUI === 'function') {
+        Auth.updateUserProfileUI();
+    }
 
     const formatNumber = (num) => new Intl.NumberFormat('it-IT').format(num);
     const formatBRL = (num) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(num);

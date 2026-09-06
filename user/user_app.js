@@ -10,11 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     
-    let currentUserName = "Visitatore";
-    if (Auth.currentUser.role === 'partner' && Auth.currentUser.partnerName) {
+    let currentUserName = "Investitore";
+    if (Auth.currentUser.partnerName) {
         currentUserName = Auth.currentUser.partnerName;
+    } else if (Auth.currentUser.role === 'partner') {
+        currentUserName = Auth.currentUser.partnerName || "Investitore Partner";
     } else if (Auth.currentUser.role === 'visitor') {
         currentUserName = "Investitore Anonimo";
+    } else if (Auth.currentUser.role === 'admin') {
+        currentUserName = "Edoardo Tubia";
     }
 
     // 2. Formatters
@@ -23,7 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Populate Topbar
     document.getElementById('user-name-title').textContent = currentUserName;
     document.getElementById('user-name-nav').textContent = currentUserName;
-    document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUserName)}&background=10b981&color=fff`;
+    const cleanAvatarName = currentUserName.replace(/[()\[\]{}]/g, '').trim() || "User";
+    document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanAvatarName)}&background=10b981&color=fff`;
     
     const lastUpdatedEl = document.getElementById('last-updated');
     if (lastUpdatedEl && APP_DATA.lastUpdated) {

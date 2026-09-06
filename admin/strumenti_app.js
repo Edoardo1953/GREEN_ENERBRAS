@@ -112,7 +112,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // LOGICA GESTIONE UTENTI (Ereditata)
     // ============================================
     if(Auth.currentUser) {
-        document.getElementById('current-username').textContent = Auth.currentUser.id;
+        if (typeof Auth.updateUserProfileUI === 'function') {
+            Auth.updateUserProfileUI();
+        }
     }
 
     const partnerSelect = document.getElementById('form-partner');

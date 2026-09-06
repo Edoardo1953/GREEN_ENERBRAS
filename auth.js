@@ -656,26 +656,35 @@ const Auth = {
         const isRealAdmin = (Auth.currentUser && Auth.currentUser.role === 'admin');
 
         let displayName = "Utente";
+        let avatarName = "Utente";
         let avatarBg = "10b981"; // green for user
 
         if (isRealAdmin && !isUser) {
-            displayName = (Auth.currentUser.partnerName || "Edoardo Tubia") + " (Admin)";
+            const adminBaseName = (Auth.currentUser.partnerName && Auth.currentUser.partnerName.toLowerCase() !== 'admin') 
+                ? Auth.currentUser.partnerName 
+                : "Edoardo Tubia";
+            displayName = adminBaseName + " (Admin)";
+            avatarName = adminBaseName;
             avatarBg = "3b82f6"; // blue for admin
         } else {
-            if (Auth.currentUser.role === 'partner' && Auth.currentUser.partnerName) {
+            if (Auth.currentUser.partnerName && Auth.currentUser.partnerName.toLowerCase() !== 'user' && Auth.currentUser.partnerName.toLowerCase() !== 'admin') {
                 displayName = Auth.currentUser.partnerName;
-            } else if (Auth.currentUser.partnerName) {
+            } else if (Auth.currentUser.role === 'partner' && Auth.currentUser.partnerName) {
                 displayName = Auth.currentUser.partnerName;
             } else if (Auth.currentUser.role === 'visitor') {
                 displayName = Auth.currentUser.partnerName || "Investitore Anonimo";
-            } else if (Auth.currentUser.id && Auth.currentUser.id !== 'admin') {
+            } else if (Auth.currentUser.id && Auth.currentUser.id.toLowerCase() !== 'admin' && Auth.currentUser.id.toLowerCase() !== 'user') {
                 displayName = Auth.currentUser.id;
             } else {
                 displayName = "Investitore";
             }
+            avatarName = displayName;
+            avatarBg = "10b981"; // green for user
         }
 
-        const avatarUrl = "https://ui-avatars.com/api/?name=" + encodeURIComponent(displayName) + "&background=" + avatarBg + "&color=fff";
+        // Clean avatarName from any parentheses, brackets or special characters to ensure clean 2-letter initials (e.g. ET)
+        const cleanAvatarName = avatarName.replace(/[()\[\]{}]/g, '').trim() || "User";
+        const avatarUrl = "https://ui-avatars.com/api/?name=" + encodeURIComponent(cleanAvatarName) + "&background=" + avatarBg + "&color=fff";
 
         // Aggiorna tutti i contenitori .user-profile
         document.querySelectorAll('.user-profile').forEach(profile => {
@@ -704,7 +713,7 @@ const Auth = {
         }
 
         const currentUsernameEl = document.getElementById('current-username');
-        if (currentUsernameEl) currentUsernameEl.textContent = (isRealAdmin && !isUser) ? "Admin" : displayName;
+        if (currentUsernameEl) currentUsernameEl.textContent = displayName;
     }
 };
 
