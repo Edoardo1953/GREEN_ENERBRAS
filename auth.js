@@ -645,6 +645,66 @@ const Auth = {
         document.querySelectorAll('a[data-i18n="nav_switch_admin"], #switch-admin-btn, .btn-switch-admin').forEach(el => {
             el.style.setProperty('display', (isUser && isRealAdmin) ? 'flex' : 'none', 'important');
         });
+
+        // 5. Aggiorna profilo utente (Nome e Avatar) nella topbar
+        Auth.updateUserProfileUI();
+    },
+
+    updateUserProfileUI() {
+        if (!Auth.currentUser) return;
+        const isUser = Auth.isUserView();
+        const isRealAdmin = (Auth.currentUser && Auth.currentUser.role === 'admin');
+
+        let displayName = "Utente";
+        let avatarBg = "10b981"; // green for user
+
+        if (isRealAdmin && !isUser) {
+            displayName = (Auth.currentUser.partnerName || "Edoardo Tubia") + " (Admin)";
+            avatarBg = "3b82f6"; // blue for admin
+        } else {
+            if (Auth.currentUser.role === 'partner' && Auth.currentUser.partnerName) {
+                displayName = Auth.currentUser.partnerName;
+            } else if (Auth.currentUser.partnerName) {
+                displayName = Auth.currentUser.partnerName;
+            } else if (Auth.currentUser.role === 'visitor') {
+                displayName = Auth.currentUser.partnerName || "Investitore Anonimo";
+            } else if (Auth.currentUser.id && Auth.currentUser.id !== 'admin') {
+                displayName = Auth.currentUser.id;
+            } else {
+                displayName = "Investitore";
+            }
+        }
+
+        const avatarUrl = "https://ui-avatars.com/api/?name=" + encodeURIComponent(displayName) + "&background=" + avatarBg + "&color=fff";
+
+        // Aggiorna tutti i contenitori .user-profile
+        document.querySelectorAll('.user-profile').forEach(profile => {
+            const span = profile.querySelector('span');
+            if (span && span.id !== 'welcome-title-container') {
+                span.textContent = displayName;
+            }
+            const img = profile.querySelector('img.avatar, img');
+            if (img) {
+                img.src = avatarUrl;
+                img.alt = displayName;
+            }
+        });
+
+        // Aggiorna elementi specifici per ID se presenti
+        const userNameNav = document.getElementById('user-name-nav');
+        if (userNameNav) userNameNav.textContent = displayName;
+
+        const userNameTitle = document.getElementById('user-name-title');
+        if (userNameTitle) userNameTitle.textContent = displayName;
+
+        const userAvatar = document.getElementById('user-avatar');
+        if (userAvatar) {
+            userAvatar.src = avatarUrl;
+            userAvatar.alt = displayName;
+        }
+
+        const currentUsernameEl = document.getElementById('current-username');
+        if (currentUsernameEl) currentUsernameEl.textContent = (isRealAdmin && !isUser) ? "Admin" : displayName;
     }
 };
 
@@ -669,6 +729,7 @@ document.addEventListener('click', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    Auth.updateUserProfileUI();
     const isRealAdmin = Auth.currentUser && Auth.currentUser.role === 'admin';
     const isUser = Auth.isUserView();
     const isInsideAdmin = window.location.pathname.includes('/admin/');
