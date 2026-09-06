@@ -28,6 +28,94 @@ function NumToCol([int]$num) {
     return $col
 }
 
+function Get-TransfertsExchangeData {
+    param([string]$projectDir = "C:\Users\Utilisateur\Desktop\Documents\GitHub\GREEN_ENERBRAS")
+    
+    $transfertsPath = Join-Path $projectDir "uploads\TRANSFERTS.xlsx"
+    if (!(Test-Path $transfertsPath)) {
+        return @{ avgExchangeRate = 6.0164; currentExchangeRate = 5.8823 }
+    }
+
+    $tempCopy = Join-Path $projectDir "scratch_temp_transferts.xlsx"
+    try {
+        Copy-Item -Path $transfertsPath -Destination $tempCopy -Force
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($tempCopy)
+
+        $ssEntry = $zip.GetEntry("xl/sharedStrings.xml")
+        $sharedStrings = @()
+        if ($ssEntry) {
+            $reader = New-Object System.IO.StreamReader($ssEntry.Open())
+            $ssXml = [xml]$reader.ReadToEnd()
+            $reader.Close()
+            foreach ($si in $ssXml.sst.si) {
+                if ($si.t) { $sharedStrings += $si.t.InnerText }
+                elseif ($si.r) { $sharedStrings += ($si.r | ForEach-Object { $_.t.InnerText }) -join '' }
+                else { $sharedStrings += "" }
+            }
+        }
+
+        $sheetEntry = $zip.GetEntry("xl/worksheets/sheet1.xml")
+        $reader = New-Object System.IO.StreamReader($sheetEntry.Open())
+        $sheetXml = [xml]$reader.ReadToEnd()
+        $reader.Close()
+        $zip.Dispose()
+        if (Test-Path $tempCopy) { Remove-Item $tempCopy -Force }
+
+        $sheetRows = @{}
+        foreach ($row in $sheetXml.worksheet.sheetData.row) {
+            $rNum = [int]$row.r
+            $rowDict = @{}
+            foreach ($c in $row.c) {
+                $colLetter = $c.r -replace '[0-9]', ''
+                $val = ""
+                if ($c.v) {
+                    if ($c.t -eq "s") { $val = $sharedStrings[[int]$c.v] }
+                    else { $val = $c.v }
+                }
+                $rowDict[$colLetter] = $val
+            }
+            $sheetRows[$rNum] = $rowDict
+        }
+
+        $avgRate = 0.0
+        $currentRate = 0.0
+
+        # Current rate in H1
+        if ($sheetRows[1] -and $sheetRows[1]['H']) {
+            $currentRate = [double]::Parse($sheetRows[1]['H'].Replace(',', '.'), [System.Globalization.CultureInfo]::InvariantCulture)
+        }
+
+        # Look for "Cambio medio" in column G
+        foreach ($rNum in $sheetRows.Keys) {
+            $rDict = $sheetRows[$rNum]
+            if ($rDict['G'] -and $rDict['G'] -like "*Cambio medio*") {
+                $valRow = $rNum - 1
+                if ($sheetRows[$valRow] -and $sheetRows[$valRow]['G']) {
+                    $avgRate = [double]::Parse($sheetRows[$valRow]['G'].Replace(',', '.'), [System.Globalization.CultureInfo]::InvariantCulture)
+                }
+                break
+            }
+        }
+
+        # Fallback to G48 if not found by label
+        if ($avgRate -eq 0.0 -and $sheetRows[48] -and $sheetRows[48]['G']) {
+            $avgRate = [double]::Parse($sheetRows[48]['G'].Replace(',', '.'), [System.Globalization.CultureInfo]::InvariantCulture)
+        }
+
+        if ($avgRate -eq 0.0) { $avgRate = 6.0164 }
+        if ($currentRate -eq 0.0) { $currentRate = 5.8823 }
+
+        return @{
+            avgExchangeRate = $avgRate
+            currentExchangeRate = $currentRate
+        }
+    } catch {
+        Write-Host "Error parsing TRANSFERTS: $($_.Exception.Message)"
+        if (Test-Path $tempCopy) { Remove-Item $tempCopy -Force }
+        return @{ avgExchangeRate = 6.0164; currentExchangeRate = 5.8823 }
+    }
+}
+
 function Update-GreenEnerbrasData {
     $projectDir = "C:\Users\Utilisateur\Desktop\Documents\GitHub\GREEN_ENERBRAS"
     $searchPaths = @(
@@ -233,12 +321,30 @@ function Update-GreenEnerbrasData {
     # 5. Read and update data.js
     $dataPath = Join-Path $projectDir "data.js"
     $jsContent = Get-Content -Path $dataPath -Raw
-    $jsonStr = $jsContent -replace '^const APP_DATA =\s*', '' -replace ';\s*window[\s\S]*$', '' -replace ';\s*$', ''
+    $idxStart = $jsContent.IndexOf('{')
+    $idxEnd = $jsContent.IndexOf("`r`nwindow.")
+    if ($idxEnd -eq -1) { $idxEnd = $jsContent.IndexOf("`nwindow.") }
+    if ($idxEnd -eq -1) { $idxEnd = $jsContent.LastIndexOf('}') + 1 }
+    $jsonStr = $jsContent.Substring($idxStart, $idxEnd - $idxStart).Trim().TrimEnd(';')
     $appData = $jsonStr | ConvertFrom-Json
 
     # Replace production
     $appData.production = $newProduction
     $appData.lastUpdated = (Get-Date).ToString("dd/MM/yyyy HH:mm")
+
+    # Extract exchange rates from TRANSFERTS.xlsx
+    $fxData = Get-TransfertsExchangeData -projectDir $projectDir
+    if ($appData.psobject.Properties['avgExchangeRate']) {
+        $appData.avgExchangeRate = $fxData.avgExchangeRate
+    } else {
+        $appData | Add-Member -NotePropertyName 'avgExchangeRate' -NotePropertyValue $fxData.avgExchangeRate
+    }
+    if ($appData.psobject.Properties['currentExchangeRate']) {
+        $appData.currentExchangeRate = $fxData.currentExchangeRate
+    } else {
+        $appData | Add-Member -NotePropertyName 'currentExchangeRate' -NotePropertyValue $fxData.currentExchangeRate
+    }
+    Write-Host "Tassi di cambio estratti: Avg = $($fxData.avgExchangeRate), Current = $($fxData.currentExchangeRate)"
 
     # Save data.js with unified color helpers
     $updatedJson = $appData | ConvertTo-Json -Depth 10

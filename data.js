@@ -619,7 +619,7 @@
                         "superficie":  "200/800 mq"
                     }
                 ],
-    "lastUpdated":  "06/09/2026 13:37",
+    "lastUpdated":  "06/09/2026 14:13",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
@@ -1167,7 +1167,9 @@
                        "status":  "Attivo"
                    }
                ],
-    "totalCollected":  261000
+    "totalCollected":  261000,
+    "avgExchangeRate":  6.0164208204166663,
+    "currentExchangeRate":  5.882283
 };
 
 window.USINA_COLORS = ['#3b82f6', '#06b6d4', '#10b981', '#14b8a6', '#6366f1', '#0ea5e9', '#2dd4bf', '#2563eb', '#059669', '#4f46e5', '#0891b2', '#15803d'];
