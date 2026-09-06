@@ -226,3 +226,44 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ==========================================
+// Schema Societario Modal Functions
+// ==========================================
+window.openSchemaSocietarioModal = function() {
+    const modal = document.getElementById('schemaSocietarioModal');
+    const iframe = document.getElementById('schema-societario-iframe');
+    const newTabLink = document.getElementById('schema-societario-newtab');
+    if (!modal || !iframe) return;
+
+    const isUser = (typeof Auth !== 'undefined' && Auth.currentUser) ? 
+        (Auth.currentUser.role !== 'admin' || (typeof Auth.isUserView === 'function' && Auth.isUserView())) : 
+        false;
+
+    const pdfFilename = isUser ? 'Schema societario GE - Tri Star anonimo.pdf' : 'Schema societario GE - Tri Star.pdf';
+    const pdfUrl = `../uploads/${encodeURI(pdfFilename)}`;
+
+    iframe.src = pdfUrl;
+    if (newTabLink) newTabLink.href = pdfUrl;
+    modal.style.display = 'flex';
+};
+
+window.closeSchemaSocietarioModal = function() {
+    const modal = document.getElementById('schemaSocietarioModal');
+    const iframe = document.getElementById('schema-societario-iframe');
+    if (iframe) iframe.src = '';
+    if (modal) modal.style.display = 'none';
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('schemaSocietarioModal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeSchemaSocietarioModal();
+        });
+    }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeSchemaSocietarioModal();
+    });
+});
+

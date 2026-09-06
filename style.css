@@ -948,4 +948,52 @@ body.theme-light .export-actions {
     border: 1px solid #e2e8f0 !important;
 }
 
+/* Schema Societario KPI Card & Modal Styles */
+.kpi-target-card {
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.kpi-target-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.25) !important;
+    border-color: rgba(16, 185, 129, 0.5) !important;
+}
+
+.schema-societario-badge {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #10b981;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(16, 185, 129, 0.12);
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.kpi-target-card:hover .schema-societario-badge {
+    background: #10b981;
+    color: #ffffff;
+    border-color: #10b981;
+}
+
+body.theme-light #schemaSocietarioModal {
+    background: rgba(15, 23, 42, 0.65) !important;
+}
+
+body.theme-light .schema-modal-content {
+    background: #ffffff !important;
+    border: 1px solid rgba(15, 23, 42, 0.15) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25) !important;
+}
+
+body.theme-light .schema-modal-content h2 {
+    color: #0f172a !important;
+}
+
+
 
