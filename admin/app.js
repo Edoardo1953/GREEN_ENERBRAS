@@ -7,19 +7,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const formatCurrency = (num) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(num);
     const formatBRL = (num) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(num);
     
-    // 1. Calculate Bank Balances & Immobilisations
+    // Helper to normalize names for matching
+    function normalizeName(name) {
+        if (!name) return '';
+        return name.toLowerCase()
+            .replace(/[^a-z0-9]/g, ' ')
+            .split(/\s+/)
+            .filter(w => w && w !== 'sarl' && w !== 'luxembourg' && w !== 'scp')
+            .sort()
+            .join(' ');
+    }
+
+    // 1. Calculate Bank Balances, Immobilisations & Capital Contributions from Bank Transactions
     let currentBalance = 0;
     let totalExpenses = 0;
     let totalInvestments = 0;
+    let totalCapitaleVersato = 0;
+    const bankCapByPartner = {};
     
     if (APP_DATA.transactions && APP_DATA.transactions.length > 0) {
         APP_DATA.transactions.forEach(t => {
             currentBalance += t.amount;
-            if (t.amount < 0 && t.category && t.category.includes('Frais')) {
+            const cat = (t.category || '').toLowerCase();
+            const desc = (t.description || '').toLowerCase();
+
+            if (t.amount < 0 && cat.includes('frais')) {
                 totalExpenses += Math.abs(t.amount);
             }
-            if (t.amount < 0 && t.category && t.category.toLowerCase().includes('immobilisat')) {
+            if (cat.includes('immobilisat') || desc.includes('participation')) {
                 totalInvestments += Math.abs(t.amount);
+            }
+            if (cat.includes('capital contribution') || cat.includes('capital')) {
+                totalCapitaleVersato += t.amount;
+                const pNorm = normalizeName(t.partner);
+                if (pNorm) {
+                    bankCapByPartner[pNorm] = (bankCapByPartner[pNorm] || 0) + t.amount;
+                }
             }
         });
     }
@@ -28,11 +51,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const kpiTargetEl = document.getElementById('kpi-target');
     if (kpiTargetEl) kpiTargetEl.textContent = formatCurrency(401000);
     const kpiCollectedEl = document.getElementById('kpi-collected');
-    if (kpiCollectedEl) kpiCollectedEl.textContent = formatCurrency(APP_DATA.totalCollected);
+    if (kpiCollectedEl) {
+        const valCapitale = totalCapitaleVersato > 0 ? totalCapitaleVersato : (APP_DATA.totalCollected || 261000);
+        kpiCollectedEl.textContent = formatCurrency(valCapitale);
+    }
     
     const kpiInvestmentsEl = document.getElementById('kpi-investments');
     if (kpiInvestmentsEl) {
-        const valToDisplay = totalInvestments > 0 ? totalInvestments : 190000;
+        const valToDisplay = totalInvestments > 0 ? totalInvestments : 240000;
         kpiInvestmentsEl.textContent = formatCurrency(valToDisplay);
     }
     
@@ -144,8 +170,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 60000);
 
     // 3. Sort Partners (GP first, then LPs by detention DESC)
-    const validPartners = APP_DATA.partners ? APP_DATA.partners : [];
+    const validPartners = APP_DATA.partners ? JSON.parse(JSON.stringify(APP_DATA.partners)) : [];
     
+    // Sync partner paid amounts directly with bank transactions if recorded
+    validPartners.forEach(p => {
+        const pNorm = normalizeName(p.name);
+        if (pNorm && bankCapByPartner[pNorm] !== undefined) {
+            p.paid = bankCapByPartner[pNorm];
+        }
+    });
+
     validPartners.sort((a, b) => {
         if (a.type === 'General Partner' && b.type !== 'General Partner') return -1;
         if (b.type === 'General Partner' && a.type !== 'General Partner') return 1;

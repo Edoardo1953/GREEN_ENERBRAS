@@ -35,11 +35,37 @@ document.addEventListener('DOMContentLoaded', () => {
         lastUpdatedEl.textContent = APP_DATA.lastUpdated;
     }
 
+    // Helper to normalize names for matching
+    function normalizeName(name) {
+        if (!name) return '';
+        return name.toLowerCase()
+            .replace(/[^a-z0-9]/g, ' ')
+            .split(/\s+/)
+            .filter(w => w && w !== 'sarl' && w !== 'luxembourg' && w !== 'scp')
+            .sort()
+            .join(' ');
+    }
+
+    const bankCapByPartner = {};
+    if (APP_DATA.transactions && APP_DATA.transactions.length > 0) {
+        APP_DATA.transactions.forEach(t => {
+            const cat = (t.category || '').toLowerCase();
+            if (cat.includes('capital contribution') || cat.includes('capital')) {
+                const pNorm = normalizeName(t.partner);
+                if (pNorm) {
+                    bankCapByPartner[pNorm] = (bankCapByPartner[pNorm] || 0) + t.amount;
+                }
+            }
+        });
+    }
+
     // 4. Find User Data
-    const userData = APP_DATA.partners.find(p => p.name === currentUserName);
+    const currentNorm = normalizeName(currentUserName);
+    const userData = APP_DATA.partners ? APP_DATA.partners.find(p => normalizeName(p.name) === currentNorm || p.name === currentUserName) : null;
     
     if (userData) {
-        document.getElementById('kpi-personal-paid').textContent = formatCurrency(userData.paid);
+        const userPaid = (bankCapByPartner[currentNorm] !== undefined) ? bankCapByPartner[currentNorm] : userData.paid;
+        document.getElementById('kpi-personal-paid').textContent = formatCurrency(userPaid);
         document.getElementById('kpi-personal-detention').textContent = userData.detention.toFixed(2) + "%";
     } else {
         document.getElementById('kpi-personal-paid').textContent = "€ 0";
@@ -205,8 +231,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Anonymous Table and Chart ---
-    const validPartners = APP_DATA.partners ? [...APP_DATA.partners] : [];
+    const validPartners = APP_DATA.partners ? JSON.parse(JSON.stringify(APP_DATA.partners)) : [];
     
+    // Sync partner paid amounts directly with bank transactions if recorded
+    validPartners.forEach(p => {
+        const pNorm = normalizeName(p.name);
+        if (pNorm && bankCapByPartner[pNorm] !== undefined) {
+            p.paid = bankCapByPartner[pNorm];
+        }
+    });
+
     validPartners.sort((a, b) => {
         if (a.type === 'General Partner' && b.type !== 'General Partner') return -1;
         if (b.type === 'General Partner' && a.type !== 'General Partner') return 1;

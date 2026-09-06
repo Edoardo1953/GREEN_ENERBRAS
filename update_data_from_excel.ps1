@@ -508,7 +508,16 @@ function Update-GreenEnerbrasData {
     $bankTxs = Get-ContabilitaBankTransactions -projectDir $projectDir
     if ($bankTxs -and $bankTxs.Count -gt 0) {
         $appData.transactions = $bankTxs
-        Write-Host "Movimenti Conto Bancario aggiornati da Excel: $($bankTxs.Count) operazioni."
+        $totalCap = 0.0
+        foreach ($tx in $bankTxs) {
+            if ($tx.category -and ($tx.category -like "*Capital Contribution*" -or $tx.category -like "*Capital*")) {
+                $totalCap += $tx.amount
+            }
+        }
+        if ($totalCap -gt 0) {
+            $appData.totalCollected = [Math]::Round($totalCap, 2)
+        }
+        Write-Host "Movimenti Conto Bancario aggiornati da Excel: $($bankTxs.Count) operazioni (Totale Capitale: $($appData.totalCollected) €)."
     } else {
         Write-Host "Movimenti Conto Bancario invariati (nessun nuovo file o dati non disponibili)."
     }
