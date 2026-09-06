@@ -7,15 +7,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const formatCurrency = (num) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(num);
     const formatBRL = (num) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(num);
     
-    // 1. Calculate Bank Balances
+    // 1. Calculate Bank Balances & Immobilisations
     let currentBalance = 0;
     let totalExpenses = 0;
+    let totalInvestments = 0;
     
     if (APP_DATA.transactions && APP_DATA.transactions.length > 0) {
         APP_DATA.transactions.forEach(t => {
             currentBalance += t.amount;
-            if (t.amount < 0 && t.category.includes('Frais')) {
+            if (t.amount < 0 && t.category && t.category.includes('Frais')) {
                 totalExpenses += Math.abs(t.amount);
+            }
+            if (t.amount < 0 && t.category && t.category.toLowerCase().includes('immobilisat')) {
+                totalInvestments += Math.abs(t.amount);
             }
         });
     }
@@ -25,6 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (kpiTargetEl) kpiTargetEl.textContent = formatCurrency(401000);
     const kpiCollectedEl = document.getElementById('kpi-collected');
     if (kpiCollectedEl) kpiCollectedEl.textContent = formatCurrency(APP_DATA.totalCollected);
+    
+    const kpiInvestmentsEl = document.getElementById('kpi-investments');
+    if (kpiInvestmentsEl) {
+        const valToDisplay = totalInvestments > 0 ? totalInvestments : 190000;
+        kpiInvestmentsEl.textContent = formatCurrency(valToDisplay);
+    }
     
     const balanceKpi = document.getElementById('kpi-balance');
     if(balanceKpi) {
