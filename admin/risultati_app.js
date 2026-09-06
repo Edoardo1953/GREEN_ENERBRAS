@@ -245,10 +245,10 @@ function renderCapitaleImmobilizzazioni(txs) {
     let totalCap = 0;
     let totalImm = 0;
 
-    // 1. CAPITAUX PROPRES ET PASSIF (Capitale Versato)
+    // 1. PATRIMONIO NETTO E PASSIVO (Capitale Versato)
     const trC = document.createElement('tr');
     trC.style.background = 'rgba(59, 130, 246, 0.2)';
-    trC.innerHTML = `<td colspan="2" style="padding: 1rem; font-weight: bold;" data-i18n="section_capitaux">CAPITAUX PROPRES ET PASSIF</td>`;
+    trC.innerHTML = `<td colspan="2" style="padding: 1rem; font-weight: bold;" data-i18n="section_capitaux">PATRIMONIO NETTO E PASSIVO</td>`;
     tbody.appendChild(trC);
 
     const capTxs = txs.filter(t => t.category && (t.category.toLowerCase().includes('capital contribution') || t.category.toLowerCase().includes('capitale versato')));
@@ -310,15 +310,15 @@ function renderCapitaleImmobilizzazioni(txs) {
 
     const trTotCap = document.createElement('tr');
     trTotCap.innerHTML = `
-        <td style="padding: 1rem; text-align: right; font-weight: bold;" data-i18n="totale_capitaux">Totale Capitaux:</td>
+        <td style="padding: 1rem; text-align: right; font-weight: bold;" data-i18n="totale_capitaux">Totale Patrimonio Netto:</td>
         <td style="padding: 1rem; text-align: right; font-weight: bold; color: #3b82f6; font-size: 1.05rem;">${formatEur(totalCap)}</td>
     `;
     tbody.appendChild(trTotCap);
 
-    // 2. IMMOBILISATIONS (Investimenti / Partecipazioni)
+    // 2. IMMOBILIZZAZIONI (Investimenti / Partecipazioni)
     const trI = document.createElement('tr');
     trI.style.background = 'rgba(245, 158, 11, 0.2)';
-    trI.innerHTML = `<td colspan="2" style="padding: 1rem; font-weight: bold;" data-i18n="section_immobili">IMMOBILISATIONS (Partecipazioni)</td>`;
+    trI.innerHTML = `<td colspan="2" style="padding: 1rem; font-weight: bold;" data-i18n="section_immobili">IMMOBILIZZAZIONI</td>`;
     tbody.appendChild(trI);
 
     const immTxs = txs.filter(t => {
@@ -357,7 +357,7 @@ function renderCapitaleImmobilizzazioni(txs) {
 
     const trTotImm = document.createElement('tr');
     trTotImm.innerHTML = `
-        <td style="padding: 1rem; text-align: right; font-weight: bold;" data-i18n="totale_immobili">Totale Immobilisations:</td>
+        <td style="padding: 1rem; text-align: right; font-weight: bold;" data-i18n="totale_immobili">Totale Immobilizzazioni:</td>
         <td style="padding: 1rem; text-align: right; font-weight: bold; color: #d97706; font-size: 1.05rem;">${formatEur(totalImm)}</td>
     `;
     tbody.appendChild(trTotImm);

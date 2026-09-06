@@ -161,8 +161,8 @@ function showToastNotification(pageKey, isVisible) {
         'produzione': 'Produzione Energia',
         'vendite': 'Vendite Energia',
         'impianti': 'Impianti e Mappa',
-        'reporting': 'Documentation Green Enerbras',
-        'tristar': 'Documentation TRI STAR',
+        'reporting': 'Documentazione Green Enerbras',
+        'tristar': 'Documentazione TRI STAR',
         'strumenti': 'Strumenti',
         'risultati': 'Risultati'
     };
