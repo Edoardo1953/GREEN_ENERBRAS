@@ -688,7 +688,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const prefix = window.location.pathname.includes('/admin/') || window.location.pathname.includes('/user/') ? '../' : './';
         const mobileBrand = document.createElement('div');
         mobileBrand.className = 'mobile-brand';
-        mobileBrand.innerHTML = `<img src="${prefix}admin/Loghi/Green Enerbras solo logo.png" alt="Logo"> <span>GREEN ENERBRAS</span>`;
+        mobileBrand.innerHTML = `<img src="${prefix}admin/Loghi/Logo Green Enerbras 01.png" alt="GREEN ENERBRAS">`;
         document.body.appendChild(mobileBrand);
 
         hamburgerBtn.addEventListener('click', () => {

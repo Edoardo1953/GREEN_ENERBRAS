@@ -451,9 +451,9 @@ h2 {
         height: 50px;
     }
     .mobile-brand img {
-        height: 45px;
-        filter: grayscale(1) invert(1) brightness(10);
-        mix-blend-mode: screen;
+        height: 40px;
+        max-width: 220px;
+        object-fit: contain;
     }
     .app-container { flex-direction: column; }
     .sidebar { 
