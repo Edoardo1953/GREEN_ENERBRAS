@@ -995,5 +995,179 @@ body.theme-light .schema-modal-content h2 {
     color: #0f172a !important;
 }
 
+/* ==========================================================================
+   DOCUMENT MODALS & ACTION BUTTONS (DARK & LIGHT THEME)
+   ========================================================================== */
+
+.doc-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.doc-modal-content {
+    background: #0f172a;
+    color: var(--text-main);
+    width: 90%; max-width: 1000px;
+    max-height: 90vh;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+}
+
+.doc-modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--text-main);
+}
+
+.doc-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.btn-doc-action {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #e2e8f0;
+    border-radius: 7px;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    margin-left: 4px;
+    transition: all 0.2s ease;
+}
+
+.btn-doc-action:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+/* Light theme overrides for Doc Modal & Preview */
+body.theme-light .doc-modal-overlay,
+body.theme-light #preview-modal,
+body.theme-light #upload-overlay {
+    background: rgba(15, 23, 42, 0.65) !important;
+}
+
+body.theme-light .doc-modal-content,
+body.theme-light #preview-modal > div,
+body.theme-light .upload-progress-box {
+    background: #ffffff !important;
+    border: 1px solid rgba(15, 23, 42, 0.15) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25) !important;
+    color: #0f172a !important;
+}
+
+body.theme-light .doc-modal-header,
+body.theme-light #preview-modal > div > div:first-child {
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+body.theme-light .doc-modal-header h2,
+body.theme-light .doc-modal-header h3,
+body.theme-light #docs-modal-title,
+body.theme-light #preview-title {
+    color: #0f172a !important;
+}
+
+body.theme-light .doc-modal-header button,
+body.theme-light #preview-modal button {
+    color: #64748b !important;
+}
+
+body.theme-light .doc-modal-header button:hover,
+body.theme-light #preview-modal button:hover {
+    color: #0f172a !important;
+}
+
+body.theme-light .drop-zone {
+    border: 2px dashed #cbd5e1 !important;
+    background: #f8fafc !important;
+}
+
+body.theme-light .drop-zone:hover,
+body.theme-light .drop-zone.dragover {
+    border-color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.08) !important;
+}
+
+body.theme-light .drop-zone h3 {
+    color: #0f172a !important;
+}
+
+body.theme-light .drop-zone p {
+    color: #64748b !important;
+}
+
+body.theme-light #usina-filter-container {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-light #usina-filter-container label {
+    color: #1e293b !important;
+}
+
+body.theme-light #table-impianto-docs tr {
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.theme-light #table-impianto-docs tr.category-header-row {
+    background: #f8fafc !important;
+}
+
+body.theme-light #table-impianto-docs tr:hover {
+    background: rgba(16, 185, 129, 0.06) !important;
+}
+
+body.theme-light #table-impianto-docs strong {
+    color: #0f172a !important;
+}
+
+body.theme-light #table-impianto-docs td {
+    color: #334155 !important;
+}
+
+body.theme-light .btn-doc-action {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #1e293b !important;
+}
+
+body.theme-light .btn-doc-action:hover {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+body.theme-light .upload-progress-box h3 {
+    color: #0f172a !important;
+}
+
+body.theme-light .upload-progress-box p {
+    color: #64748b !important;
+}
+
+body.theme-light .progress-bar-track {
+    background: #e2e8f0 !important;
+}
+
+
 
 

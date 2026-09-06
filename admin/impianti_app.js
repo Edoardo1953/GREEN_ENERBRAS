@@ -401,8 +401,8 @@ window.openDocsModal = function(impiantoId) {
     if (filterContainer) {
         const usinas = APP_DATA.modules.filter(m => (m.gruppo && m.gruppo.trim() === impiantoId) || (!m.gruppo && impiantoId === 'Gruppo Generale')).map(m => m.impianto);
         let filterHtml = `
-            <label style="color: #e2e8f0; font-weight: bold; margin-right: 0.5rem;"><i class="fa-solid fa-filter"></i> <span data-i18n="filter_impianto">Filtra per Impianto:</span></label>
-            <label style="color: #cbd5e1; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;">
+            <label style="font-weight: bold; margin-right: 0.5rem; color: var(--text-main);"><i class="fa-solid fa-filter"></i> <span data-i18n="filter_impianto">Filtra per Impianto:</span></label>
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 0.3rem; color: var(--text-muted);">
                 <input type="checkbox" class="usina-filter-cb" value="generico" checked onchange="renderDocsTable()"> <span data-i18n="filter_generici">Generici Gruppo</span>
             </label>
         `;
@@ -410,7 +410,7 @@ window.openDocsModal = function(impiantoId) {
             const num = u.replace(/\D/g, '');
             const labelStr = num ? `<span data-i18n="table_impianto">Impianto</span> ${num}` : u;
             filterHtml += `
-            <label style="color: #cbd5e1; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;">
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 0.3rem; color: var(--text-muted);">
                 <input type="checkbox" class="usina-filter-cb" value="${u}" checked onchange="renderDocsTable()"> ${labelStr}
             </label>`;
         });
@@ -458,8 +458,6 @@ function setupDragAndDrop(zoneId, inputId) {
 async function handleFiles(fileList) {
     if (!fileList || !fileList.length || !currentImpiantoId) return;
     
-    if (!fileList || !fileList.length || !currentImpiantoId) return;
-    
     if (typeof firebase === 'undefined' || !firebase.storage) {
         alert("Firebase non inizializzato correttamente. Riprova tra qualche secondo.");
         return;
@@ -478,55 +476,55 @@ async function handleFiles(fileList) {
         overlay.classList.add('active');
         progressFill.style.width = '0%';
         progressText.textContent = '0%';
-        fileNameEl.textContent = `File ${i+1}/${files.length}: ${file.name}`;
+        if (fileNameEl) fileNameEl.textContent = file.name;
 
         try {
-            let doc = {};
-            // FLUSSO STANDARD (L'AI è stata spostata nella fase successiva)
-            const safeName = Date.now() + "_" + file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-            const storageRef = firebase.storage().ref().child('uploads/impianti/' + safeName);
+            // Genera percorso unico su Storage
+            const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const storagePath = `impianti_docs/${currentImpiantoId}/${Date.now()}_${cleanFileName}`;
+            const storageRef = firebase.storage().ref(storagePath);
+            
+            // Upload con monitoraggio progresso
+            const uploadTask = storageRef.put(file);
             
             await new Promise((resolve, reject) => {
-                const uploadTask = storageRef.put(file);
-                uploadTask.on('state_changed',
+                uploadTask.on('state_changed', 
                     (snapshot) => {
-                        const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                        progressFill.style.width = pct + '%';
-                        progressText.textContent = 'Upload in corso: ' + pct + '%';
+                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        progressFill.style.width = progress + '%';
+                        progressText.textContent = progress + '%';
                     },
-                    (error) => { reject(error); },
-                    async () => { resolve(); }
+                    (error) => reject(error),
+                    () => resolve()
                 );
             });
-            
-            let downloadURL = '';
-            try {
-                downloadURL = await storageRef.getDownloadURL();
-            } catch(e) {
-                const bucket = 'green-enerbras.firebasestorage.app';
-                const path = encodeURIComponent('uploads/impianti/' + safeName);
-                downloadURL = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${path}?alt=media`;
-            }
-            
-            doc = {
-                id: Date.now() + Math.random().toString(36).substr(2, 9),
+
+            const downloadUrl = await uploadTask.snapshot.ref.getDownloadURL();
+
+            // Rileva tipo
+            let type = 'default';
+            if (file.type.includes('pdf')) type = 'pdf';
+            else if (file.type.includes('word') || file.type.includes('document')) type = 'word';
+            else if (file.type.includes('image')) type = 'image';
+            else if (file.type.includes('video')) type = 'video';
+
+            const newDoc = {
+                id: 'doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                 name: file.name,
-                size: formatBytes(file.size),
-                type: getFileType(file.name),
+                url: downloadUrl,
+                storagePath: storagePath,
+                type: type,
                 date: new Date().toLocaleDateString('it-IT'),
-                visibleToUser: false,
-                dataUrl: downloadURL,
-                storagePath: 'uploads/impianti/' + safeName
+                size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
+                visibleToUser: true
             };
 
-            if(!impiantiDocuments[currentImpiantoId]) impiantiDocuments[currentImpiantoId] = [];
-            impiantiDocuments[currentImpiantoId].push(doc);
-            saveImpiantiDocuments();
-        } catch(err) {
-            overlay.classList.remove('active');
-            console.error("Upload error per " + file.name, err);
-            alert("❌ Errore caricamento " + file.name + ": " + err.message);
-            return;
+            impiantiDocuments[currentImpiantoId].push(newDoc);
+            await saveImpiantiDocuments();
+
+        } catch (error) {
+            console.error("Errore upload file:", error);
+            alert(`Errore nel caricamento di ${file.name}: ${error.message}`);
         }
     }
 
@@ -576,7 +574,7 @@ function renderDocsTable() {
     });
     
     if (docs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:2rem;">Nessun documento trovato.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem;">Nessun documento trovato.</td></tr>`;
         return;
     }
 
@@ -590,7 +588,7 @@ function renderDocsTable() {
         const catDocs = docs.filter(d => cat.types.includes(d.type));
         if (catDocs.length > 0) {
             const headerTr = document.createElement('tr');
-            headerTr.style.background = 'rgba(255, 255, 255, 0.03)';
+            headerTr.className = 'category-header-row';
             headerTr.innerHTML = `<td colspan="5" style="padding: 0.8rem; font-weight: bold; color: ${cat.color}; border-bottom: 1px solid var(--border-color);"><i class="fa-solid ${cat.icon}"></i> &nbsp;<span data-i18n="cat_${cat.id.toLowerCase()}">${cat.id}</span></td>`;
             tbody.appendChild(headerTr);
 
@@ -599,23 +597,10 @@ function renderDocsTable() {
                 const eyeIcon   = doc.visibleToUser ? 'fa-eye' : 'fa-eye-slash';
                 const eyeColor  = doc.visibleToUser ? '#10b981' : '#64748b';
 
-                const btnBase = `
-                    background: rgba(255,255,255,0.07);
-                    border: 1px solid rgba(255,255,255,0.12);
-                    color: #e2e8f0;
-                    border-radius: 7px;
-                    width: 34px; height: 34px;
-                    cursor: pointer;
-                    display: inline-flex; align-items: center; justify-content: center;
-                    font-size: 0.85rem;
-                    margin-left: 4px;
-                    transition: background 0.2s, color 0.2s;
-                `;
-
                 let translationBtn = '';
                 if (!isUserRole && (doc.type === 'pdf' || doc.type === 'word')) {
                     translationBtn = `
-                        <button title="Traduci con IA (Es. per richieste pendenti)" onclick="adminTranslateDoc('${doc.id}')" style="${btnBase} color:#f59e0b;">
+                        <button class="btn-doc-action" title="Traduci con IA (Es. per richieste pendenti)" onclick="adminTranslateDoc('${doc.id}')" style="color:#f59e0b;">
                             <i class="fa-solid fa-language"></i>
                         </button>
                     `;
@@ -642,25 +627,25 @@ function renderDocsTable() {
                 tr.innerHTML = `
                     <td style="width:44px;">${!isUserRole ? '<i class="fa-solid fa-grip-vertical" style="color: #6b7280; margin-right: 10px; cursor: grab;" title="Trascina per riordinare"></i>' : ''}${getIconForType(doc.type)}</td>
                     <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${doc.name}">
-                        <strong style="font-size:0.95rem; vertical-align: middle;">${doc.name}</strong> 
+                        <strong style="font-size:0.95rem; vertical-align: middle; color: var(--text-main);">${doc.name}</strong> 
                     </td>
-                    <td style="color:#94a3b8; font-size:0.85rem; white-space:nowrap;">${doc.date}</td>
-                    <td style="color:#94a3b8; font-size:0.85rem; white-space:nowrap;">${doc.size}</td>
+                    <td style="color: var(--text-muted); font-size:0.85rem; white-space:nowrap;">${doc.date}</td>
+                    <td style="color: var(--text-muted); font-size:0.85rem; white-space:nowrap;">${doc.size}</td>
                     <td style="text-align:right; white-space:nowrap; padding-right:0.5rem;">
                         ${doc.isAiTranslated ? '<span style="font-size: 0.7rem; background: var(--accent-green); color: white; padding: 2px 5px; border-radius: 4px; margin-right: 5px; vertical-align: middle;">AI</span>' : ''}
                         ${translationLinks}
                         ${translationBtn}
-                        <button title="Anteprima" onclick="openPreview('${doc.id}')" style="${btnBase} color:#10b981;">
+                        <button class="btn-doc-action" title="Anteprima" onclick="openPreview('${doc.id}')" style="color:#10b981;">
                             <i class="fa-solid fa-book-open"></i>
                         </button>
                         ${!isUserRole ? `
-                        <button title="Rinomina" onclick="renameDocument('${doc.id}')" style="${btnBase} color:#3b82f6;">
+                        <button class="btn-doc-action" title="Rinomina" onclick="renameDocument('${doc.id}')" style="color:#3b82f6;">
                             <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button title="${eyeTitle}" onclick="toggleVisibility('${doc.id}')" style="${btnBase} color:${eyeColor};">
+                        <button class="btn-doc-action" title="${eyeTitle}" onclick="toggleVisibility('${doc.id}')" style="color:${eyeColor};">
                             <i class="fa-solid ${eyeIcon}"></i>
                         </button>
-                        <button title="Elimina" onclick="deleteDocument('${doc.id}')" style="${btnBase} color:#ef4444;">
+                        <button class="btn-doc-action" title="Elimina" onclick="deleteDocument('${doc.id}')" style="color:#ef4444;">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                         ` : ''}
