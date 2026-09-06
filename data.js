@@ -250,77 +250,77 @@
                              "category":  "Entry fee (2,00%)",
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "Tubia Edoardo",
-                             "amount":  -399.9996
+                             "amount":  -400
                          },
                          {
                              "date":  "26/01/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "Tubia Silvia",
-                             "amount":  -399.9996
+                             "amount":  -400
                          },
                          {
                              "date":  "26/01/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "Tubia Edoardo",
-                             "amount":  -399.9996
+                             "amount":  -400
                          },
                          {
                              "date":  "26/01/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "Bertozzi Stefano",
-                             "amount":  -399.9996
+                             "amount":  -400
                          },
                          {
                              "date":  "26/01/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "De Miguel Bellvis Maria",
-                             "amount":  -399.9996
+                             "amount":  -400
                          },
                          {
                              "date":  "26/01/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "Desiderio Salvatore",
-                             "amount":  -799.9992
+                             "amount":  -800
                          },
                          {
                              "date":  "26/01/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "Tubia Enrico",
-                             "amount":  -399.9996
+                             "amount":  -400
                          },
                          {
                              "date":  "26/01/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "Zaniboni Elisa",
-                             "amount":  -399.9996
+                             "amount":  -400
                          },
                          {
                              "date":  "26/01/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "Zaniboni Greta",
-                             "amount":  -399.9996
+                             "amount":  -400
                          },
                          {
                              "date":  "26/01/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Total Entry fees sur L.P. Contributions verses",
                              "partner":  "NEW LIFE Sarl",
-                             "amount":  3999.996
+                             "amount":  4000
                          },
                          {
                              "date":  "26/01/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Paiement de GEO SCSp au G.P. New Life Sarl des Entry Fees",
                              "partner":  "Green Enerbras One SCSp",
-                             "amount":  -3999.996
+                             "amount":  -4000
                          },
                          {
                              "date":  "17/04/2026",
@@ -390,28 +390,28 @@
                              "category":  "Entry fee (2,00%)",
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "Sterzi Marco",
-                             "amount":  -799.9992
+                             "amount":  -800
                          },
                          {
                              "date":  "17/07/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "Miletti Giovanni",
-                             "amount":  -399.9996
+                             "amount":  -400
                          },
                          {
                              "date":  "17/07/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Total Entry fees sur L.P. Contributions verses",
                              "partner":  "NEW LIFE Sarl",
-                             "amount":  1199.9988
+                             "amount":  1200
                          },
                          {
                              "date":  "17/07/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Paiement de GEO SCSp au G.P. New Life Sarl des Entry Fees",
                              "partner":  "Green Enerbras One SCSp",
-                             "amount":  -1199.9988
+                             "amount":  -1200
                          },
                          {
                              "date":  "21/07/2026",
@@ -640,7 +640,7 @@
                         "superficie":  "200/800 mq"
                     }
                 ],
-    "lastUpdated":  "06/09/2026 21:06",
+    "lastUpdated":  "06/09/2026 21:14",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
