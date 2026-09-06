@@ -64,7 +64,20 @@ body {
 }
 
 .logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 2rem;
+    padding: 0.5rem 0.25rem;
+    text-align: center;
+}
+
+.logo img {
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    max-height: 80px;
+    object-fit: contain;
 }
 
 .logo h2 {
