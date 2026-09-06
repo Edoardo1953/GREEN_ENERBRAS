@@ -9,7 +9,7 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="../style.css?v=120">
+    <link rel="stylesheet" href="../style.css?v=130">
     
     <!-- LocalForage per IndexedDB -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
@@ -139,7 +139,7 @@
 
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
-    <script src="../auth.js?v=120"></script>
+    <script src="../auth.js?v=130"></script>
     <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
     <script src="../i18n.js?v=90"></script>
 </head>
@@ -147,8 +147,8 @@
     <div class="app-container">
         <!-- Sidebar -->
         <aside class="sidebar glass-panel">
-            <div class="logo" style="display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; padding: 0.4rem 0;">
-                <img src="Loghi/Logo Green Enerbras 01.png" alt="GREEN ENERBRAS" style="max-width: 100%; height: auto; max-height: 78px; object-fit: contain;">
+            <div class="logo" style="display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; padding: 0.5rem 0.25rem;">
+                <img src="Loghi/Logo Green Enerbras 01.png" alt="GREEN ENERBRAS" style="max-width: 100%; height: auto; max-height: 105px; object-fit: contain;">
             </div>
                                     <nav class="nav-menu">
                 <div class="nav-visibility-header">
@@ -208,10 +208,15 @@
                 <h1 data-i18n="title_reporting_doc">Gestione Documentale (Reporting Partners)</h1>
                 
                 <div style="display: flex; align-items: center; gap: 1.5rem;">
-                    <div class="lang-selector" style="display: flex; gap: 0.5rem; align-items: center;">
-                        <img src="https://flagcdn.com/w40/it.png" alt="IT" data-lang="it" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
-                        <img src="https://flagcdn.com/w40/gb.png" alt="EN" data-lang="en" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
-                        <img src="https://flagcdn.com/w40/fr.png" alt="FR" data-lang="fr" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                    <div class="lang-tools-wrapper">
+                        <div class="lang-selector" style="display: flex; gap: 0.5rem; align-items: center;">
+                            <img src="https://flagcdn.com/w40/it.png" alt="IT" data-lang="it" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                            <img src="https://flagcdn.com/w40/gb.png" alt="EN" data-lang="en" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                            <img src="https://flagcdn.com/w40/fr.png" alt="FR" data-lang="fr" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        </div>
+                        <button type="button" class="btn-theme-toggle" onclick="ThemeManager.toggle()" title="Cambia tema: Scuro / Grigio chiaro">
+                            <i class="fa-solid fa-wrench"></i> <span class="theme-toggle-text">TOOLS</span>
+                        </button>
                     </div>
                     <div class="user-profile">
                     <img src="https://ui-avatars.com/api/?name=Admin&background=3b82f6&color=fff" alt="Admin" class="avatar">

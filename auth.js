@@ -16,6 +16,73 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
 
 const db = (typeof firebase !== 'undefined' && firebase.apps.length) ? firebase.database() : null;
 
+// ==========================================
+// Theme Manager (Dark / Light Grey Theme)
+// ==========================================
+const ThemeManager = {
+    STORAGE_KEY: 'green_enerbras_theme',
+    getTheme() {
+        try {
+            return localStorage.getItem(this.STORAGE_KEY) || 'dark';
+        } catch(e) {
+            return 'dark';
+        }
+    },
+    init() {
+        const theme = this.getTheme();
+        this.apply(theme);
+        this.updateButtons(theme);
+    },
+    toggle() {
+        const current = this.getTheme();
+        const next = current === 'dark' ? 'light' : 'dark';
+        this.apply(next);
+        this.updateButtons(next);
+        try {
+            localStorage.setItem(this.STORAGE_KEY, next);
+        } catch(e) {}
+    },
+    apply(theme) {
+        if (theme === 'light') {
+            document.body.classList.add('theme-light');
+            document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+            document.body.classList.remove('theme-light');
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    },
+    updateButtons(theme) {
+        const isLight = (theme === 'light');
+        document.querySelectorAll('.btn-theme-toggle').forEach(btn => {
+            const textEl = btn.querySelector('.theme-toggle-text');
+            if (isLight) {
+                btn.title = "Tema attivo: Grigio Chiaro (Clicca per Tema Scuro)";
+                if (textEl) textEl.textContent = "TOOLS • Grigio";
+            } else {
+                btn.title = "Tema attivo: Scuro (Clicca per Tema Grigio Chiaro)";
+                if (textEl) textEl.textContent = "TOOLS • Scuro";
+            }
+        });
+    }
+};
+
+// Immediate early theme execution before DOM load
+(function() {
+    try {
+        const saved = localStorage.getItem('green_enerbras_theme');
+        if (saved === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+            if (document.body) {
+                document.body.classList.add('theme-light');
+            } else {
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.body.classList.add('theme-light');
+                });
+            }
+        }
+    } catch(e) {}
+})();
+
 const DEFAULT_PAGE_VISIBILITY = {
     produzione: true,
     vendite: true,
@@ -676,6 +743,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial sidebar visibility render
     Auth.updateSidebarVisibilityUI();
+
+    // Initialize Theme Manager & Tools Button
+    ThemeManager.init();
 
     // Mobile menu toggle
     const sidebar = document.querySelector('.sidebar');
