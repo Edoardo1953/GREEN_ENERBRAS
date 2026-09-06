@@ -262,16 +262,28 @@ function renderCapitaleImmobilizzazioni(txs) {
         capGroups[partnerName].items.push(t);
     });
 
-    Object.keys(capGroups).sort().forEach((partnerName, idx) => {
+    // New Life (General Partner) ALWAYS FIRST by default
+    const sortedPartnerKeys = Object.keys(capGroups).sort((a, b) => {
+        const isGpa = a.toLowerCase().includes('new life') || a.toLowerCase().includes('general partner');
+        const isGpb = b.toLowerCase().includes('new life') || b.toLowerCase().includes('general partner');
+        if (isGpa && !isGpb) return -1;
+        if (!isGpa && isGpb) return 1;
+        return a.localeCompare(b);
+    });
+
+    sortedPartnerKeys.forEach((partnerName, idx) => {
         const group = capGroups[partnerName];
         totalCap += group.total;
         const rowId = 'detail-cap-' + idx;
+        const isGP = partnerName.toLowerCase().includes('new life') || partnerName.toLowerCase().includes('general partner');
+        const badgeHtml = isGP ? ` <span class="badge badge-gp" style="margin-left: 8px; font-size: 0.75rem;">General Partner</span>` : '';
+
         const tr = document.createElement('tr');
         tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
         tr.style.cursor = 'pointer';
         tr.onclick = () => toggleRowDetail(rowId);
         tr.innerHTML = `
-            <td style="padding: 1rem;"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em; margin-right: 5px;"></i> ${partnerName}</td>
+            <td style="padding: 1rem;"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em; margin-right: 5px;"></i> ${partnerName}${badgeHtml}</td>
             <td style="padding: 1rem; text-align: right; color: #3b82f6; font-weight: 600;">${formatEur(group.total)}</td>
         `;
         tbody.appendChild(tr);
@@ -299,65 +311,54 @@ function renderCapitaleImmobilizzazioni(txs) {
     const trTotCap = document.createElement('tr');
     trTotCap.innerHTML = `
         <td style="padding: 1rem; text-align: right; font-weight: bold;" data-i18n="totale_capitaux">Totale Capitaux:</td>
-        <td style="padding: 1rem; text-align: right; font-weight: bold; color: #3b82f6;">${formatEur(totalCap)}</td>
+        <td style="padding: 1rem; text-align: right; font-weight: bold; color: #3b82f6; font-size: 1.05rem;">${formatEur(totalCap)}</td>
     `;
     tbody.appendChild(trTotCap);
 
-    // 2. IMMOBILISATIONS (Investimenti)
+    // 2. IMMOBILISATIONS (Investimenti / Partecipazioni)
     const trI = document.createElement('tr');
     trI.style.background = 'rgba(245, 158, 11, 0.2)';
-    trI.innerHTML = `<td colspan="2" style="padding: 1rem; font-weight: bold;" data-i18n="section_immobili">IMMOBILISATIONS</td>`;
+    trI.innerHTML = `<td colspan="2" style="padding: 1rem; font-weight: bold;" data-i18n="section_immobili">IMMOBILISATIONS (Partecipazioni)</td>`;
     tbody.appendChild(trI);
 
-    const immTxs = txs.filter(t => t.category && t.category.toLowerCase().includes('immobilisat'));
-    
-    // Group immobilisations by Description / Entity
-    const immGroups = {};
-    immTxs.forEach(t => {
-        const key = t.description ? t.description.trim() : 'Achat de participation';
-        if (!immGroups[key]) immGroups[key] = { total: 0, items: [] };
-        immGroups[key].total += Math.abs(t.amount);
-        immGroups[key].items.push(t);
+    const immTxs = txs.filter(t => {
+        const cat = (t.category || '').toLowerCase();
+        const desc = (t.description || '').toLowerCase();
+        return cat.includes('immobilisat') || desc.includes('participation');
     });
 
-    Object.keys(immGroups).sort().forEach((key, idx) => {
-        const group = immGroups[key];
-        totalImm += group.total;
-        const rowId = 'detail-imm-' + idx;
-        const tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-        tr.style.cursor = 'pointer';
-        tr.onclick = () => toggleRowDetail(rowId);
-        tr.innerHTML = `
-            <td style="padding: 1rem;"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em; margin-right: 5px;"></i> ${key}</td>
-            <td style="padding: 1rem; text-align: right; color: #f59e0b; font-weight: 600;">${formatEur(group.total)}</td>
-        `;
-        tbody.appendChild(tr);
+    if (immTxs.length === 0) {
+        const emptyTr = document.createElement('tr');
+        emptyTr.innerHTML = `<td colspan="2" style="padding: 1rem; color: #9ca3af; font-style: italic;">Nessun investimento nel periodo selezionato</td>`;
+        tbody.appendChild(emptyTr);
+    } else {
+        immTxs.forEach((t, idx) => {
+            const amt = Math.abs(t.amount);
+            totalImm += amt;
+            const dest = t.partner ? t.partner : 'TRI STAR ENERBRAS ONE SCP';
+            const desc = t.description || 'Achat de participation';
+            const dateBadge = t.date ? `<span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 600; font-size: 0.85rem; margin-right: 0.75rem;"><i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>${t.date}</span>` : '';
 
-        // Detail row
-        const detailTr = document.createElement('tr');
-        detailTr.id = rowId;
-        detailTr.style.display = 'none';
-        detailTr.style.background = 'rgba(0,0,0,0.2)';
-        let detailHtml = '<td colspan="2" style="padding: 0;"><table style="width:100%; border-collapse:collapse; margin-bottom:1rem;">';
-        detailHtml += '<tr><th style="padding:0.5rem 1rem 0.5rem 2rem; text-align:left; font-size:0.85rem; color:#9ca3af; border-bottom:1px solid rgba(255,255,255,0.05);">Data</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:#9ca3af; border-bottom:1px solid rgba(255,255,255,0.05);">Destinatario / Partner</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:#9ca3af; border-bottom:1px solid rgba(255,255,255,0.05);">Descrizione</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:#9ca3af; border-bottom:1px solid rgba(255,255,255,0.05);">Importo</th></tr>';
-        group.items.forEach(item => {
-            detailHtml += `<tr>
-                <td style="padding:0.5rem 1rem 0.5rem 2rem; font-size:0.85rem; color:#d1d5db; border-bottom:1px solid rgba(255,255,255,0.02);">${item.date || '-'}</td>
-                <td style="padding:0.5rem 1rem; font-size:0.85rem; color:#d1d5db; border-bottom:1px solid rgba(255,255,255,0.02);">${item.partner || 'TRI STAR ENERBRAS ONE SCP'}</td>
-                <td style="padding:0.5rem 1rem; font-size:0.85rem; color:#d1d5db; border-bottom:1px solid rgba(255,255,255,0.02);">${item.description || '-'}</td>
-                <td style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:#f59e0b; border-bottom:1px solid rgba(255,255,255,0.02);">${formatEur(Math.abs(item.amount))}</td>
-            </tr>`;
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+            tr.innerHTML = `
+                <td style="padding: 0.9rem 1rem;">
+                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem;">
+                        ${dateBadge}
+                        <strong style="color: #f3f4f6;">${desc}</strong>
+                        <span style="color: #9ca3af; font-size: 0.85rem;">- ${dest}</span>
+                    </div>
+                </td>
+                <td style="padding: 0.9rem 1rem; text-align: right; color: #f59e0b; font-weight: 700; font-size: 1rem;">${formatEur(amt)}</td>
+            `;
+            tbody.appendChild(tr);
         });
-        detailHtml += '</table></td>';
-        detailTr.innerHTML = detailHtml;
-        tbody.appendChild(detailTr);
-    });
+    }
 
     const trTotImm = document.createElement('tr');
     trTotImm.innerHTML = `
         <td style="padding: 1rem; text-align: right; font-weight: bold;" data-i18n="totale_immobili">Totale Immobilisations:</td>
-        <td style="padding: 1rem; text-align: right; font-weight: bold; color: #f59e0b;">${formatEur(totalImm)}</td>
+        <td style="padding: 1rem; text-align: right; font-weight: bold; color: #f59e0b; font-size: 1.05rem;">${formatEur(totalImm)}</td>
     `;
     tbody.appendChild(trTotImm);
 }
