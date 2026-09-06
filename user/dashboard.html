@@ -157,10 +157,23 @@
                 </div>
                 
                 <div class="slideshow-container" id="slideshow-container-dynamic">
-                    <!-- High-Priority Instant Local Slides -->
-                    <div class="mySlides active"><img src="../uploads/slide1.jpg" alt="Slide 1" fetchpriority="high" loading="eager"></div>
-                    <div class="mySlides"><img src="../uploads/slide2.jpg" alt="Slide 2" loading="eager"></div>
-                    <div class="mySlides"><img src="../uploads/slide3.jpg" alt="Slide 3" loading="eager"></div>
+                    <!-- Slide 1 -->
+                    <div class="mySlides active">
+                        <img src="../uploads/slide1.jpg" alt="Slide 1" fetchpriority="high" loading="eager">
+                        <div class="slide-text-overlay" data-slide-text="true" data-text-it="Tecnologia di punta" data-text-en="Cutting-edge Technology" data-text-fr="Technologie de pointe" style="left: 50%; top: 40%;">Tecnologia di punta</div>
+                        <div class="slide-text-overlay" data-slide-text="true" data-text-it="Massima efficienza" data-text-en="Maximum efficiency" data-text-fr="Efficacité maximale" style="left: 50%; top: 55%;">Massima efficienza</div>
+                    </div>
+                    <!-- Slide 2 -->
+                    <div class="mySlides">
+                        <img src="../uploads/slide2.jpg" alt="Slide 2" loading="eager">
+                        <div class="slide-text-overlay" data-slide-text="true" data-text-it="Energia solare per un futuro sostenibile" data-text-en="Solar energy for a sustainable future" data-text-fr="L'énergie solaire pour un avenir durable" style="left: 50%; top: 40%;">Energia solare per un futuro sostenibile</div>
+                        <div class="slide-text-overlay" data-slide-text="true" data-text-it="Impianti fotovoltaici in Brasile" data-text-en="Photovoltaic plants in Brazil" data-text-fr="Centrales photovoltaïques au Brésil" style="left: 50%; top: 55%;">Impianti fotovoltaici in Brasile</div>
+                    </div>
+                    <!-- Slide 3 -->
+                    <div class="mySlides">
+                        <img src="../uploads/slide3.jpg" alt="Slide 3" loading="eager">
+                        <div class="slide-text-overlay" data-slide-text="true" data-text-it="Assistenza puntuale" data-text-en="Prompt Assistance" data-text-fr="Assistance ponctuelle" style="left: 50%; top: 50%;">Assistenza puntuale</div>
+                    </div>
                 </div>
 
                 <div class="scroll-indicator" onclick="document.getElementById('main-dashboard-content').scrollIntoView({behavior: 'smooth'})">
@@ -175,16 +188,61 @@
                     const container = document.getElementById('slideshow-container-dynamic');
                     if (!container) return;
 
+                    const DEFAULT_SLIDESHOW_CONFIG = {
+                        interval: 5000,
+                        slides: [
+                            { 
+                                imageUrl: '../uploads/slide1.jpg', 
+                                texts: [
+                                    { content: 'Tecnologia di punta', content_en: 'Cutting-edge Technology', content_fr: 'Technologie de pointe', x: 50, y: 40 },
+                                    { content: 'Massima efficienza', content_en: 'Maximum efficiency', content_fr: 'Efficacité maximale', x: 50, y: 55 }
+                                ] 
+                            },
+                            { 
+                                imageUrl: '../uploads/slide2.jpg', 
+                                texts: [
+                                    { content: 'Energia solare per un futuro sostenibile', content_en: 'Solar energy for a sustainable future', content_fr: 'L\'énergie solaire pour un avenir durable', x: 50, y: 40 },
+                                    { content: 'Impianti fotovoltaici in Brasile', content_en: 'Photovoltaic plants in Brazil', content_fr: 'Centrales photovoltaïques au Brésil', x: 50, y: 55 }
+                                ] 
+                            },
+                            { 
+                                imageUrl: '../uploads/slide3.jpg', 
+                                texts: [
+                                    { content: 'Assistenza puntuale', content_en: 'Prompt Assistance', content_fr: 'Assistance ponctuelle', x: 50, y: 50 }
+                                ] 
+                            }
+                        ]
+                    };
+
                     let slideTimer = null;
                     let slideIndex = 0;
-                    let currentRenderedHtml = '';
+
+                    function mergeWithDefaults(customConfig) {
+                        let cfg = JSON.parse(JSON.stringify(DEFAULT_SLIDESHOW_CONFIG));
+                        if (!customConfig) return cfg;
+                        if (customConfig.interval) cfg.interval = customConfig.interval;
+                        if (customConfig.slides) {
+                            let slidesArray = Array.isArray(customConfig.slides) ? customConfig.slides : Object.values(customConfig.slides);
+                            slidesArray.forEach((s, idx) => {
+                                if (s && idx < 3) {
+                                    if (s.imageUrl && s.imageUrl.trim() !== '') cfg.slides[idx].imageUrl = s.imageUrl;
+                                    if (s.texts && Array.isArray(s.texts) && s.texts.length > 0) {
+                                        cfg.slides[idx].texts = s.texts;
+                                    } else if (s.texts && typeof s.texts === 'object' && Object.values(s.texts).length > 0) {
+                                        cfg.slides[idx].texts = Object.values(s.texts);
+                                    }
+                                }
+                            });
+                        }
+                        return cfg;
+                    }
 
                     function getSavedConfig() {
                         try {
                             const raw = localStorage.getItem(CACHE_KEY);
-                            if (raw) return JSON.parse(raw);
+                            if (raw) return mergeWithDefaults(JSON.parse(raw));
                         } catch(e) {}
-                        return null;
+                        return mergeWithDefaults(null);
                     }
 
                     function saveConfig(cfg) {
@@ -194,14 +252,7 @@
                     }
 
                     function buildSlidesHtml(config) {
-                        if (!config || !config.slides) return '';
-                        let slidesArray = Array.isArray(config.slides) ? config.slides : Object.values(config.slides);
-                        if (!slidesArray.length) return '';
-
-                        while (slidesArray.length < 3) {
-                            slidesArray.push({ imageUrl: '../uploads/slide' + (slidesArray.length + 1) + '.jpg', texts: [] });
-                        }
-
+                        const merged = mergeWithDefaults(config);
                         const lang = typeof currentLang !== 'undefined' ? currentLang : (localStorage.getItem('appLang') || 'it');
                         const defaultTrans = {
                             'Tecnologia di punta': { en: 'Cutting-edge Technology', fr: 'Technologie de pointe' },
@@ -212,18 +263,14 @@
                         };
 
                         let htmlStr = '';
-                        slidesArray.forEach((slide, idx) => {
-                            if (!slide) slide = {};
+                        merged.slides.forEach((slide, idx) => {
                             const defaultUrl = '../uploads/slide' + (idx + 1) + '.jpg';
                             const finalUrl = (slide.imageUrl && slide.imageUrl.trim() !== '') ? slide.imageUrl : defaultUrl;
                             const isActive = idx === 0 ? ' active' : '';
                             const priority = idx === 0 ? ' fetchpriority="high" loading="eager"' : ' loading="eager"';
 
                             let overlayHtml = '';
-                            let textsArray = [];
-                            if (slide.texts) {
-                                textsArray = Array.isArray(slide.texts) ? slide.texts : Object.values(slide.texts);
-                            }
+                            let textsArray = slide.texts || [];
                             textsArray.forEach(txt => {
                                 if (!txt || !txt.content) return;
                                 let textIt = txt.content || '';
@@ -245,13 +292,17 @@
                         const newHtml = buildSlidesHtml(config);
                         if (!newHtml) return;
 
-                        // Se l'HTML è identico a quanto già visibile, non ricreiamo il DOM per evitare sfarfallii
                         if (container.innerHTML.trim() !== newHtml.trim()) {
                             container.innerHTML = newHtml;
                             slideIndex = 0;
                         }
 
-                        startSlideshow((config && config.interval) ? config.interval : 5000);
+                        if (typeof applyTranslations === 'function') {
+                            applyTranslations();
+                        }
+
+                        const merged = mergeWithDefaults(config);
+                        startSlideshow(merged.interval || 5000);
                     }
 
                     function startSlideshow(interval) {
@@ -271,22 +322,19 @@
                         slideTimer = setTimeout(step, interval);
                     }
 
-                    // 1. CARICAMENTO ISTANTANEO (0ms) da cache locale o fallback precaricato
-                    const cached = getSavedConfig();
-                    if (cached) {
-                        renderSlides(cached);
-                    } else {
-                        startSlideshow(5000);
-                    }
+                    // 1. CARICAMENTO ISTANTANEO (0ms)
+                    const initialConfig = getSavedConfig();
+                    renderSlides(initialConfig);
 
-                    // 2. SINCRONIZZAZIONE ASINCRONA IN BACKGROUND da Firebase (senza bloccare la UI)
+                    // 2. SINCRONIZZAZIONE ASINCRONA IN BACKGROUND da Firebase (se presente)
                     document.addEventListener('DOMContentLoaded', () => {
                         if (typeof firebase !== 'undefined' && typeof db !== 'undefined' && db) {
                             db.ref('settings/slideshow').once('value').then(snap => {
                                 if (snap.exists()) {
                                     const freshConfig = snap.val();
-                                    saveConfig(freshConfig);
-                                    renderSlides(freshConfig);
+                                    const merged = mergeWithDefaults(freshConfig);
+                                    saveConfig(merged);
+                                    renderSlides(merged);
                                 }
                             }).catch(err => {
                                 console.warn("Slideshow sync:", err);
