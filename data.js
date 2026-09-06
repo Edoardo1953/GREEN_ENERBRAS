@@ -68,7 +68,7 @@
                              "category":  "Frais Administratives",
                              "description":  "Legalisation documentation",
                              "partner":  "",
-                             "amount":  -29.998800000000003
+                             "amount":  -29.9988
                          },
                          {
                              "date":  "19/05/2025",
@@ -90,13 +90,6 @@
                              "description":  "Inscription au RBE des Beneficiaires effectifs",
                              "partner":  "",
                              "amount":  -17.55
-                         },
-                         {
-                             "date":  "02/09/2025",
-                             "category":  "Frais Administratives",
-                             "description":  "Total frais avances",
-                             "partner":  "",
-                             "amount":  499.483
                          },
                          {
                              "date":  "02/09/2025",
@@ -311,13 +304,6 @@
                          {
                              "date":  "26/01/2026",
                              "category":  "Entry fee (2,00%)",
-                             "description":  "Total Entry fees sur L.P. Contributions verses",
-                             "partner":  "NEW LIFE Sarl",
-                             "amount":  3999.996
-                         },
-                         {
-                             "date":  "26/01/2026",
-                             "category":  "Entry fee (2,00%)",
                              "description":  "Paiement de GEO SCSp au G.P. New Life Sarl des Entry Fees",
                              "partner":  "Green Enerbras One SCSp",
                              "amount":  -3999.996
@@ -335,13 +321,6 @@
                              "description":  "Inscription au RBE des Beneficiaires effectifs",
                              "partner":  "",
                              "amount":  -17.55
-                         },
-                         {
-                             "date":  "27/04/2026",
-                             "category":  "Frais Administratives",
-                             "description":  "Total frais avances",
-                             "partner":  "",
-                             "amount":  17.55
                          },
                          {
                              "date":  "27/04/2026",
@@ -390,28 +369,42 @@
                              "category":  "Entry fee (2,00%)",
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "Sterzi Marco",
-                             "amount":  -800.00154
+                             "amount":  -799.9992
                          },
                          {
                              "date":  "17/07/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "Miletti Giovanni",
-                             "amount":  -400.00194
-                         },
-                         {
-                             "date":  "17/07/2026",
-                             "category":  "Entry fee (2,00%)",
-                             "description":  "Total Entry fees sur L.P. Contributions verses",
-                             "partner":  "NEW LIFE Sarl",
-                             "amount":  1200.00348
+                             "amount":  -399.9996
                          },
                          {
                              "date":  "17/07/2026",
                              "category":  "Entry fee (2,00%)",
                              "description":  "Paiement de GEO SCSp au G.P. New Life Sarl des Entry Fees",
                              "partner":  "Green Enerbras One SCSp",
-                             "amount":  -1200.00348
+                             "amount":  -1199.9988
+                         },
+                         {
+                             "date":  "21/07/2026",
+                             "category":  "Frais bancaires",
+                             "description":  "Frais de tenue de compte",
+                             "partner":  "",
+                             "amount":  -250
+                         },
+                         {
+                             "date":  "27/07/2026",
+                             "category":  "Immobilisations",
+                             "description":  "Achat de participation",
+                             "partner":  "",
+                             "amount":  -50000
+                         },
+                         {
+                             "date":  "27/07/2026",
+                             "category":  "Frais bancaires",
+                             "description":  "Frais sur transfert",
+                             "partner":  "",
+                             "amount":  -25
                          }
                      ],
     "production":  [
@@ -619,7 +612,7 @@
                         "superficie":  "200/800 mq"
                     }
                 ],
-    "lastUpdated":  "06/09/2026 20:33",
+    "lastUpdated":  "06/09/2026 20:55",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,

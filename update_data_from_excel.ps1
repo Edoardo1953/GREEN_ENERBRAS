@@ -116,6 +116,165 @@ function Get-TransfertsExchangeData {
     }
 }
 
+function Get-ContabilitaBankTransactions {
+    param([string]$projectDir = "C:\Users\Utilisateur\Desktop\Documents\GitHub\GREEN_ENERBRAS")
+    
+    $searchPaths = @(
+        (Join-Path $projectDir "uploads\CONTABILITA Green Enerbras One SCSp.xlsx"),
+        "C:\Users\Utilisateur\Desktop\CONTABILITA Green Enerbras One SCSp.xlsx",
+        "C:\Users\Utilisateur\OneDrive\Desktop\CONTABILITA Green Enerbras One SCSp.xlsx",
+        (Join-Path $projectDir "CONTABILITA Green Enerbras One SCSp.xlsx")
+    )
+    
+    $xlsxPath = ""
+    foreach ($p in $searchPaths) {
+        if (Test-Path $p) {
+            $xlsxPath = $p
+            break
+        }
+    }
+    
+    if (!$xlsxPath) {
+        return $null
+    }
+    
+    Write-Host "Trovato file CONTABILITA: $xlsxPath"
+    $tempCopy = Join-Path $projectDir "scratch_temp_contabilita.xlsx"
+    
+    try {
+        Copy-Item -Path $xlsxPath -Destination $tempCopy -Force
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($tempCopy)
+        
+        # 1. Read shared strings
+        $ssEntry = $zip.GetEntry('xl/sharedStrings.xml')
+        $sharedStrings = @()
+        if ($ssEntry) {
+            $reader = New-Object System.IO.StreamReader($ssEntry.Open())
+            $sXml = [xml]$reader.ReadToEnd()
+            $reader.Close()
+            foreach ($si in $sXml.sst.si) {
+                $sharedStrings += $si.InnerText
+            }
+        }
+        
+        # 2. Find Compte Banque worksheet
+        $wbEntry = $zip.GetEntry("xl/workbook.xml")
+        $reader = New-Object System.IO.StreamReader($wbEntry.Open())
+        $wbXml = [xml]$reader.ReadToEnd()
+        $reader.Close()
+        
+        $sheetObj = $wbXml.workbook.sheets.sheet | Where-Object { $_.name -like "*Compte*Banque*" -or $_.name -like "*Banque*" } | Select-Object -First 1
+        if (!$sheetObj) {
+            Write-Host "Foglio 'Compte Banque' non trovato in CONTABILITA!"
+            $zip.Dispose()
+            if (Test-Path $tempCopy) { Remove-Item $tempCopy -Force }
+            return $null
+        }
+        
+        $rId = $sheetObj.GetAttribute("id", "http://schemas.openxmlformats.org/officeDocument/2006/relationships")
+        $relsEntry = $zip.GetEntry("xl/_rels/workbook.xml.rels")
+        $reader = New-Object System.IO.StreamReader($relsEntry.Open())
+        $relsXml = [xml]$reader.ReadToEnd()
+        $reader.Close()
+        
+        $rel = $relsXml.Relationships.Relationship | Where-Object { $_.Id -eq $rId }
+        $target = $rel.Target
+        if ($target.StartsWith("/")) { $target = $target.Substring(1) } else { $target = "xl/" + $target }
+        
+        $sheetEntry = $zip.GetEntry($target)
+        $reader = New-Object System.IO.StreamReader($sheetEntry.Open())
+        $shXml = [xml]$reader.ReadToEnd()
+        $reader.Close()
+        $zip.Dispose()
+        if (Test-Path $tempCopy) { Remove-Item $tempCopy -Force }
+        
+        # 3. Parse transactions
+        $transactions = @()
+        
+        foreach ($row in $shXml.worksheet.sheetData.row) {
+            $rNum = [int]$row.r
+            if ($rNum -lt 7) { continue }
+            
+            $rowDict = @{}
+            foreach ($c in $row.c) {
+                $colLetter = $c.r -replace '[0-9]', ''
+                $tAttr = $c.GetAttribute("t")
+                $vVal = if ($c.v -is [System.Array]) { $c.v[0] } else { $c.v }
+                $val = ""
+                if ($vVal) {
+                    if ($tAttr -eq "s") {
+                        $idx = [int]$vVal
+                        if ($idx -lt $sharedStrings.Count) {
+                            $val = $sharedStrings[$idx]
+                        }
+                    } else {
+                        $val = $vVal
+                    }
+                }
+                $rowDict[$colLetter] = $val
+            }
+            
+            $rawDate = if ($rowDict.ContainsKey('C')) { $rowDict['C'] } else { "" }
+            $category = if ($rowDict.ContainsKey('I') -and $rowDict['I']) { $rowDict['I'].Trim() } else { "" }
+            $description = if ($rowDict.ContainsKey('J') -and $rowDict['J']) { $rowDict['J'].Trim() } else { "" }
+            $partner = if ($rowDict.ContainsKey('L') -and $rowDict['L']) { $rowDict['L'].Trim() } else { "" }
+            $rawAmount = if ($rowDict.ContainsKey('Q')) { $rowDict['Q'] } else { "" }
+            $statut = if ($rowDict.ContainsKey('H')) { $rowDict['H'].Trim() } else { "" }
+            
+            # Format date
+            $formattedDate = ""
+            if ($rawDate) {
+                $numDate = 0.0
+                if ([double]::TryParse($rawDate.Replace(',', '.'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$numDate)) {
+                    if ($numDate -gt 30000 -and $numDate -lt 60000) {
+                        $dt = [DateTime]::FromOADate($numDate)
+                        $formattedDate = $dt.ToString("dd/MM/yyyy")
+                    }
+                } else {
+                    $formattedDate = $rawDate.Trim()
+                }
+            }
+            
+            # Format amount
+            $numAmount = 0.0
+            if ($rawAmount) {
+                $cleanAmt = $rawAmount.Trim().Replace(',', '.')
+                [void][double]::TryParse($cleanAmt, [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$numAmount)
+            }
+            
+            # Row 7 is Saldo iniziale
+            if ($rNum -eq 7) {
+                $category = "Saldo iniziale"
+                $formattedDate = ""
+                $description = ""
+                $partner = ""
+                $numAmount = 0.0
+            } else {
+                # For all other rows, must have a valid date or be a paid transaction
+                if (!$formattedDate) { continue }
+                if ($category -like "*TOTAL*" -or $description -like "*TOTAL*") { continue }
+                if ($statut -eq "NON") { continue }
+            }
+            
+            $tx = [PSCustomObject]@{
+                date = $formattedDate
+                category = $category
+                description = $description
+                partner = $partner
+                amount = [Math]::Round($numAmount, 4)
+            }
+            $transactions += $tx
+        }
+        
+        Write-Host "Totale movimenti bancari estratti da Compte Banque: $($transactions.Count)"
+        return $transactions
+    } catch {
+        Write-Host "Errore durante estrazione CONTABILITA: $($_.Exception.Message)"
+        if (Test-Path $tempCopy) { Remove-Item $tempCopy -Force }
+        return $null
+    }
+}
+
 function Update-GreenEnerbrasData {
     $projectDir = "C:\Users\Utilisateur\Desktop\Documents\GitHub\GREEN_ENERBRAS"
     $searchPaths = @(
@@ -345,6 +504,15 @@ function Update-GreenEnerbrasData {
         $appData | Add-Member -NotePropertyName 'currentExchangeRate' -NotePropertyValue $fxData.currentExchangeRate
     }
     Write-Host "Tassi di cambio estratti: Avg = $($fxData.avgExchangeRate), Current = $($fxData.currentExchangeRate)"
+
+    # Extract bank transactions from CONTABILITA Green Enerbras One SCSp.xlsx (Foglio Compte Banque)
+    $bankTxs = Get-ContabilitaBankTransactions -projectDir $projectDir
+    if ($bankTxs -and $bankTxs.Count -gt 0) {
+        $appData.transactions = $bankTxs
+        Write-Host "Movimenti Conto Bancario aggiornati da Excel: $($bankTxs.Count) operazioni."
+    } else {
+        Write-Host "Movimenti Conto Bancario invariati (nessun nuovo file o dati non disponibili)."
+    }
 
     # Save data.js with unified color helpers
     $updatedJson = $appData | ConvertTo-Json -Depth 10
