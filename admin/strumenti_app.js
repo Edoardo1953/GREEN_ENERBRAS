@@ -24,8 +24,7 @@ async function loadUsers() {
         console.log("Dati utenti dal server:", usersObj);
         window.allUsersData = usersObj || {};
         
-        if (usersObj) {
-            // Convert object to array and sort by order
+            // Convert object to array and sort: ADMIN always first in top position, then by order
             const usersArray = Object.keys(usersObj).map(key => {
                 let u = usersObj[key];
                 if (typeof u !== 'object') u = {};
@@ -34,7 +33,13 @@ async function loadUsers() {
                     ...u
                 };
             });
-            usersArray.sort((a, b) => (a.order || 0) - (b.order || 0));
+            usersArray.sort((a, b) => {
+                const aIsAdmin = (a.role === 'admin' || a.username.toLowerCase() === 'admin');
+                const bIsAdmin = (b.role === 'admin' || b.username.toLowerCase() === 'admin');
+                if (aIsAdmin && !bIsAdmin) return -1;
+                if (!aIsAdmin && bIsAdmin) return 1;
+                return (a.order || 0) - (b.order || 0);
+            });
 
             usersArray.forEach(user => {
                 const username = user.username;
@@ -152,9 +157,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             onEnd: async function (evt) {
                 const rows = tbody.querySelectorAll('tr');
                 const updates = {};
-                rows.forEach((row, index) => {
+                let userOrderIndex = 1;
+                rows.forEach((row) => {
                     const username = row.dataset.username;
-                    updates['users/' + username + '/order'] = index;
+                    const uObj = window.allUsersData[username];
+                    const isAdmin = (uObj && uObj.role === 'admin') || username.toLowerCase() === 'admin';
+                    if (isAdmin) {
+                        updates['users/' + username + '/order'] = 0;
+                    } else {
+                        updates['users/' + username + '/order'] = userOrderIndex++;
+                    }
                 });
                 try {
                     await firebase.database().ref().update(updates);
@@ -187,10 +199,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (partnerName) data.partnerName = partnerName;
 
             const rows = tbody ? tbody.querySelectorAll('tr') : [];
-            if (originalUsername && window.allUsersData[originalUsername]) {
-                data.order = window.allUsersData[originalUsername].order || rows.length;
+            if (role === 'admin' || username.toLowerCase() === 'admin') {
+                data.order = 0;
+            } else if (originalUsername && window.allUsersData[originalUsername] && typeof window.allUsersData[originalUsername].order === 'number') {
+                data.order = window.allUsersData[originalUsername].order;
+                if (data.order === 0) data.order = rows.length || 1;
             } else {
-                data.order = rows.length;
+                data.order = rows.length || 1;
             }
 
             try {
