@@ -453,19 +453,19 @@ h2 {
     .mobile-brand {
         display: flex;
         position: fixed;
-        top: 15px;
-        left: 80px;
+        top: 8px;
+        left: 75px;
         z-index: 1000;
         align-items: center;
         gap: 12px;
         color: var(--text-main);
         font-weight: 800;
         font-size: 1.4rem;
-        height: 50px;
+        height: 55px;
     }
     .mobile-brand img {
-        height: 40px;
-        max-width: 220px;
+        height: 48px;
+        max-width: 250px;
         object-fit: contain;
     }
     .app-container { flex-direction: column; }
