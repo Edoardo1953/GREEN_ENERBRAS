@@ -619,7 +619,7 @@
                         "superficie":  "200/800 mq"
                     }
                 ],
-    "lastUpdated":  "06/09/2026 08:29",
+    "lastUpdated":  "06/09/2026 08:42",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
