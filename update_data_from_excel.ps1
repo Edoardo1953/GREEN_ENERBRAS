@@ -250,9 +250,8 @@ function Get-ContabilitaBankTransactions {
                 $partner = ""
                 $numAmount = 0.0
             } else {
-                # For all other rows, must have a valid date or be a paid transaction
+                # For all other rows, must have a valid date and not be draft/unpaid
                 if (!$formattedDate) { continue }
-                if ($category -like "*TOTAL*" -or $description -like "*TOTAL*") { continue }
                 if ($statut -eq "NON") { continue }
             }
             

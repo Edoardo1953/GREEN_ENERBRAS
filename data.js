@@ -94,6 +94,13 @@
                          {
                              "date":  "02/09/2025",
                              "category":  "Frais Administratives",
+                             "description":  "Total frais avances",
+                             "partner":  "",
+                             "amount":  499.483
+                         },
+                         {
+                             "date":  "02/09/2025",
+                             "category":  "Frais Administratives",
                              "description":  "Remboursement des frais",
                              "partner":  "",
                              "amount":  -499.483
@@ -304,6 +311,13 @@
                          {
                              "date":  "26/01/2026",
                              "category":  "Entry fee (2,00%)",
+                             "description":  "Total Entry fees sur L.P. Contributions verses",
+                             "partner":  "NEW LIFE Sarl",
+                             "amount":  3999.996
+                         },
+                         {
+                             "date":  "26/01/2026",
+                             "category":  "Entry fee (2,00%)",
                              "description":  "Paiement de GEO SCSp au G.P. New Life Sarl des Entry Fees",
                              "partner":  "Green Enerbras One SCSp",
                              "amount":  -3999.996
@@ -321,6 +335,13 @@
                              "description":  "Inscription au RBE des Beneficiaires effectifs",
                              "partner":  "",
                              "amount":  -17.55
+                         },
+                         {
+                             "date":  "27/04/2026",
+                             "category":  "Frais Administratives",
+                             "description":  "Total frais avances",
+                             "partner":  "",
+                             "amount":  17.55
                          },
                          {
                              "date":  "27/04/2026",
@@ -377,6 +398,13 @@
                              "description":  "Entry fee sur L.P. Contribution verse",
                              "partner":  "Miletti Giovanni",
                              "amount":  -399.9996
+                         },
+                         {
+                             "date":  "17/07/2026",
+                             "category":  "Entry fee (2,00%)",
+                             "description":  "Total Entry fees sur L.P. Contributions verses",
+                             "partner":  "NEW LIFE Sarl",
+                             "amount":  1199.9988
                          },
                          {
                              "date":  "17/07/2026",
@@ -612,7 +640,7 @@
                         "superficie":  "200/800 mq"
                     }
                 ],
-    "lastUpdated":  "06/09/2026 20:55",
+    "lastUpdated":  "06/09/2026 21:06",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
