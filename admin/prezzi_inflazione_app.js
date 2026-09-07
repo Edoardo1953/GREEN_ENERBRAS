@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     if (typeof APP_DATA === 'undefined' || !APP_DATA.cosernInflation) {
         console.error("Dati Cosern & Inflazione non trovati in APP_DATA.");
         return;
@@ -87,13 +87,13 @@
                 : '<span style="color:var(--text-muted);">-</span>';
             
             tr.innerHTML = `
-                <td style="text-align: left; font-weight: 600; color: var(--text-main);">
-                    ${idx === 0 ? '<span style="color:#f59e0b; margin-right:4px;">★</span>' : ''}${row.period || ''}
+                <td style="text-align: left; font-weight: 600; color: var(--text-main); font-size: 0.8rem;">
+                    ${idx === 0 ? '<span style="color:#f59e0b; margin-right:2px;">★</span>' : ''}${row.period || ''}
                 </td>
-                <td style="font-family: monospace; font-size: 0.9rem;" title="${row.tariff !== null ? row.tariff : ''}">
+                <td style="font-family: monospace; font-size: 0.82rem;" title="${row.tariff !== null ? row.tariff : ''}">
                     ${tariffFormatted}
                 </td>
-                <td style="font-weight: 600; color: ${inflColor};">
+                <td style="font-weight: 600; font-size: 0.8rem; color: ${inflColor};">
                     ${inflFormatted}
                 </td>
                 <td>

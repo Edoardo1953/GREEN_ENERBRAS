@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let listHtml = '';
             const sortedClients = Object.keys(clientTotalsYear).sort((a,b) => clientTotalsYear[b] - clientTotalsYear[a]);
             sortedClients.forEach(client => {
-                listHtml += `<div style="display: flex; justify-content: space-between;"><span>${client}</span> <span style="color: var(--text-main); font-weight: 600; margin-left: 0.5rem;">${formatBRL(clientTotalsYear[client])}</span></div>`;
+                listHtml += `<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 0.8rem; margin-bottom: 0.2rem; white-space: nowrap;"><span style="overflow: hidden; text-overflow: ellipsis;">${client}</span> <span style="color: var(--text-main); font-weight: 600; flex-shrink: 0; font-family: monospace;">${formatBRL(clientTotalsYear[client])}</span></div>`;
             });
             kpiClientsList.innerHTML = listHtml;
         }

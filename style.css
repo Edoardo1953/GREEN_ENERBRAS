@@ -288,6 +288,23 @@ body.is-user .nav-visibility-header,
     margin-bottom: 2rem;
 }
 
+.vendite-kpi-grid {
+    grid-template-columns: 1.15fr 1.75fr 0.8fr 0.95fr !important;
+    gap: 1.25rem !important;
+}
+
+@media (max-width: 1400px) {
+    .vendite-kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .vendite-kpi-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
 .kpi-card {
     padding: 1.5rem;
     display: flex;

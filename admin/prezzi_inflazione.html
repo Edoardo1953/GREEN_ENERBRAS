@@ -23,17 +23,17 @@
     <style>
         .cosern-page-grid {
             display: grid;
-            grid-template-columns: 1fr 1.35fr;
-            gap: 1.5rem;
+            grid-template-columns: 430px 1fr;
+            gap: 1.25rem;
             align-items: start;
         }
-        @media (max-width: 1200px) {
+        @media (max-width: 1280px) {
             .cosern-page-grid {
                 grid-template-columns: 1fr;
             }
         }
         .cosern-table-container {
-            max-height: 650px;
+            max-height: 680px;
             overflow-y: auto;
             position: relative;
         }
@@ -43,31 +43,33 @@
             background: var(--bg-surface, #1e293b);
             z-index: 2;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            padding: 0.75rem 0.6rem;
-            font-size: 0.82rem;
+            padding: 0.55rem 0.4rem;
+            font-size: 0.78rem;
             white-space: nowrap;
         }
         .cosern-table tbody td {
-            padding: 0.65rem 0.6rem;
-            font-size: 0.85rem;
+            padding: 0.45rem 0.4rem;
+            font-size: 0.8rem;
             border-bottom: 1px solid rgba(255,255,255,0.06);
             white-space: nowrap;
         }
         .cosern-badge-tariff {
             display: inline-block;
             font-weight: 700;
+            font-size: 0.78rem;
             color: #f43f5e;
             background: rgba(244, 63, 94, 0.12);
-            padding: 2px 6px;
+            padding: 1px 5px;
             border-radius: 4px;
             border: 1px solid rgba(244, 63, 94, 0.3);
         }
         .cosern-badge-infl {
             display: inline-block;
             font-weight: 700;
+            font-size: 0.78rem;
             color: #38bdf8;
             background: rgba(56, 189, 248, 0.12);
-            padding: 2px 6px;
+            padding: 1px 5px;
             border-radius: 4px;
             border: 1px solid rgba(56, 189, 248, 0.3);
         }
@@ -243,16 +245,16 @@
             <!-- 2-Column Grid: Left Data Table, Right Chart -->
             <section class="cosern-page-grid">
                 <!-- Left: Table -->
-                <div class="table-container glass-panel" style="padding: 1.25rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.8rem;">
-                        <h2 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
-                            <i class="fa-solid fa-table-list" style="color: #38bdf8;"></i> <span data-i18n="title_tabella_dati">Tabella Dati Storici</span>
+                <div class="table-container glass-panel" style="padding: 1rem 0.8rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <h2 style="margin: 0; font-size: 1rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-solid fa-table-list" style="color: #38bdf8;"></i> <span data-i18n="title_tabella_dati">Tabella Storica</span>
                         </h2>
-                        <div class="export-actions" style="display: flex; gap: 0.5rem; align-items: center;">
-                            <button type="button" class="btn btn-secondary" onclick="exportCosernExcel()" title="Esporta Excel" style="padding: 0.35rem 0.7rem; font-size: 0.8rem; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; border-radius: 6px; cursor: pointer;">
+                        <div class="export-actions" style="display: flex; gap: 0.4rem; align-items: center;">
+                            <button type="button" class="btn btn-secondary" onclick="exportCosernExcel()" title="Esporta Excel" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; border-radius: 6px; cursor: pointer;">
                                 <i class="fa-solid fa-file-excel"></i> Excel
                             </button>
-                            <button type="button" class="btn btn-secondary" onclick="exportCosernPDF()" title="Esporta PDF" style="padding: 0.35rem 0.7rem; font-size: 0.8rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; border-radius: 6px; cursor: pointer;">
+                            <button type="button" class="btn btn-secondary" onclick="exportCosernPDF()" title="Esporta PDF" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; border-radius: 6px; cursor: pointer;">
                                 <i class="fa-solid fa-file-pdf"></i> PDF
                             </button>
                         </div>
@@ -263,10 +265,10 @@
                             <thead>
                                 <tr>
                                     <th style="text-align: left;" data-i18n="table_mese_anno">Mese/Anno</th>
-                                    <th data-i18n="table_tariffa_cosern">Tariffa Cosern (R$/kWh)</th>
-                                    <th data-i18n="table_inflazione_mensile">Inflazione % (IPCA)</th>
-                                    <th data-i18n="table_indice_tariffa">Indice Tariffa (Base 100)</th>
-                                    <th data-i18n="table_indice_inflazione">Indice Inflazione (Base 100)</th>
+                                    <th data-i18n="table_tariffa_cosern_short" title="Tariffa Cosern (R$/kWh)">Tariffa (R$)</th>
+                                    <th data-i18n="table_inflazione_mensile_short" title="Inflazione Mensile % (IPCA)">IPCA %</th>
+                                    <th data-i18n="table_indice_tariffa_short" title="Indice Tariffa Cosern (Base 100 Ago 24)">Idx Tariffa</th>
+                                    <th data-i18n="table_indice_inflazione_short" title="Indice Inflazione (Base 100 Ago 24)">Idx IPCA</th>
                                 </tr>
                             </thead>
                             <tbody id="cosern-table-body">
@@ -301,7 +303,7 @@
                         </div>
                     </div>
 
-                    <div class="chart-wrapper" style="position: relative; height: 520px; width: 100%;">
+                    <div class="chart-wrapper" style="position: relative; height: 570px; width: 100%;">
                         <canvas id="cosernInflationChart"></canvas>
                     </div>
                 </div>
@@ -309,7 +311,7 @@
         </main>
     </div>
 
-    <script src="../data.js?v=301"></script>
-    <script src="prezzi_inflazione_app.js?v=301"></script>
+    <script src="../data.js?v=302"></script>
+    <script src="prezzi_inflazione_app.js?v=302"></script>
 </body>
 </html>
