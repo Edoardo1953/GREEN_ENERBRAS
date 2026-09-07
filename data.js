@@ -640,7 +640,7 @@
                         "superficie":  "200/800 mq"
                     }
                 ],
-    "lastUpdated":  "06/09/2026 21:54",
+    "lastUpdated":  "07/09/2026 09:39",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
@@ -1190,7 +1190,209 @@
                ],
     "totalCollected":  261000,
     "avgExchangeRate":  6.0164208204166663,
-    "currentExchangeRate":  5.882283
+    "currentExchangeRate":  5.882283,
+    "cosernInflation":  [
+                            {
+                                "period":  "08/2024",
+                                "periodCode":  "Aug-24",
+                                "tariff":  0.94362878,
+                                "inflation":  -0.02,
+                                "tariffIndex":  100,
+                                "inflationIndex":  100
+                            },
+                            {
+                                "period":  "09/2024",
+                                "periodCode":  "Sep-24",
+                                "tariff":  0.94995059,
+                                "inflation":  0.44,
+                                "tariffIndex":  100.67,
+                                "inflationIndex":  100.44
+                            },
+                            {
+                                "period":  "10/2024",
+                                "periodCode":  "Oct-24",
+                                "tariff":  0.95706369,
+                                "inflation":  0.56,
+                                "tariffIndex":  101.42,
+                                "inflationIndex":  101
+                            },
+                            {
+                                "period":  "11/2024",
+                                "periodCode":  "Nov-24",
+                                "tariff":  0.95655929,
+                                "inflation":  0.39,
+                                "tariffIndex":  101.37,
+                                "inflationIndex":  101.4
+                            },
+                            {
+                                "period":  "12/2024",
+                                "periodCode":  "Dec-24",
+                                "tariff":  0.95686187,
+                                "inflation":  0.52,
+                                "tariffIndex":  101.4,
+                                "inflationIndex":  101.92
+                            },
+                            {
+                                "period":  "01/2025",
+                                "periodCode":  "Jan-25",
+                                "tariff":  0.94304042,
+                                "inflation":  0.16,
+                                "tariffIndex":  99.94,
+                                "inflationIndex":  102.09
+                            },
+                            {
+                                "period":  "02/2025",
+                                "periodCode":  "Feb-25",
+                                "tariff":  0.97621321,
+                                "inflation":  1.31,
+                                "tariffIndex":  103.45,
+                                "inflationIndex":  103.42
+                            },
+                            {
+                                "period":  "03/2025",
+                                "periodCode":  "Mar-25",
+                                "tariff":  0.95797297,
+                                "inflation":  0.56,
+                                "tariffIndex":  101.52,
+                                "inflationIndex":  104
+                            },
+                            {
+                                "period":  "04/2025",
+                                "periodCode":  "Apr-25",
+                                "tariff":  0.98119725,
+                                "inflation":  0.43,
+                                "tariffIndex":  103.98,
+                                "inflationIndex":  104.45
+                            },
+                            {
+                                "period":  "05/2025",
+                                "periodCode":  "May-25",
+                                "tariff":  0.98489525,
+                                "inflation":  0.26,
+                                "tariffIndex":  104.37,
+                                "inflationIndex":  104.72
+                            },
+                            {
+                                "period":  "06/2025",
+                                "periodCode":  "Jun-25",
+                                "tariff":  0.97710323,
+                                "inflation":  0.24,
+                                "tariffIndex":  103.55,
+                                "inflationIndex":  104.97
+                            },
+                            {
+                                "period":  "07/2025",
+                                "periodCode":  "Jul-25",
+                                "tariff":  0.9953991,
+                                "inflation":  0.26,
+                                "tariffIndex":  105.49,
+                                "inflationIndex":  105.25
+                            },
+                            {
+                                "period":  "08/2025",
+                                "periodCode":  "Aug-25",
+                                "tariff":  0.99274356,
+                                "inflation":  -0.11,
+                                "tariffIndex":  105.2,
+                                "inflationIndex":  105.13
+                            },
+                            {
+                                "period":  "09/2025",
+                                "periodCode":  "Sep-25",
+                                "tariff":  0.98444444,
+                                "inflation":  0.48,
+                                "tariffIndex":  104.33,
+                                "inflationIndex":  105.64
+                            },
+                            {
+                                "period":  "10/2025",
+                                "periodCode":  "Oct-25",
+                                "tariff":  0.99306147,
+                                "inflation":  0.09,
+                                "tariffIndex":  105.24,
+                                "inflationIndex":  105.73
+                            },
+                            {
+                                "period":  "11/2025",
+                                "periodCode":  "Nov-25",
+                                "tariff":  1.00269454,
+                                "inflation":  0.18,
+                                "tariffIndex":  106.26,
+                                "inflationIndex":  105.92
+                            },
+                            {
+                                "period":  "12/2025",
+                                "periodCode":  "Dec-25",
+                                "tariff":  1.00269454,
+                                "inflation":  0.33,
+                                "tariffIndex":  106.26,
+                                "inflationIndex":  106.27
+                            },
+                            {
+                                "period":  "01/2026",
+                                "periodCode":  "Jan-26",
+                                "tariff":  0.99126265,
+                                "inflation":  0.33,
+                                "tariffIndex":  105.05,
+                                "inflationIndex":  106.62
+                            },
+                            {
+                                "period":  "02/2026",
+                                "periodCode":  "Feb-26",
+                                "tariff":  0.98674161,
+                                "inflation":  0.7,
+                                "tariffIndex":  104.57,
+                                "inflationIndex":  107.37
+                            },
+                            {
+                                "period":  "03/2026",
+                                "periodCode":  "Mar-26",
+                                "tariff":  0.99052384,
+                                "inflation":  0.88,
+                                "tariffIndex":  104.97,
+                                "inflationIndex":  108.31
+                            },
+                            {
+                                "period":  "04/2026",
+                                "periodCode":  "Apr-26",
+                                "tariff":  0.98642772,
+                                "inflation":  0.67,
+                                "tariffIndex":  104.54,
+                                "inflationIndex":  109.04
+                            },
+                            {
+                                "period":  "05/2026",
+                                "periodCode":  "May-26",
+                                "tariff":  1.02512955,
+                                "inflation":  0.58,
+                                "tariffIndex":  108.64,
+                                "inflationIndex":  109.67
+                            },
+                            {
+                                "period":  "06/2026",
+                                "periodCode":  "Jun-26",
+                                "tariff":  1.03197828,
+                                "inflation":  0.16,
+                                "tariffIndex":  109.36,
+                                "inflationIndex":  109.85
+                            },
+                            {
+                                "period":  "07/2026",
+                                "periodCode":  "Jul-26",
+                                "tariff":  1.03197828,
+                                "inflation":  0.07,
+                                "tariffIndex":  109.36,
+                                "inflationIndex":  109.92
+                            },
+                            {
+                                "period":  "08/2026",
+                                "periodCode":  "Aug-26",
+                                "tariff":  1.0347311,
+                                "inflation":  null,
+                                "tariffIndex":  109.65,
+                                "inflationIndex":  null
+                            }
+                        ]
 };
 
 window.USINA_COLORS = ['#3b82f6', '#06b6d4', '#10b981', '#14b8a6', '#6366f1', '#0ea5e9', '#2dd4bf', '#2563eb', '#059669', '#4f46e5', '#0891b2', '#15803d'];

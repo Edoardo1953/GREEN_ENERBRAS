@@ -274,6 +274,181 @@ function Get-ContabilitaBankTransactions {
     }
 }
 
+function Get-CosernInflationData {
+    param([string]$projectDir = "C:\Users\Utilisateur\Desktop\Documents\GitHub\GREEN_ENERBRAS")
+    
+    $cosernSearchPaths = @(
+        (Join-Path $projectDir "uploads\COSERN_Prezzi_Energia_Definitivo.xlsx"),
+        "C:\Users\Utilisateur\Desktop\COSERN_Prezzi_Energia_Definitivo.xlsx",
+        "C:\Users\Utilisateur\OneDrive\Desktop\COSERN_Prezzi_Energia_Definitivo.xlsx",
+        (Join-Path $projectDir "COSERN_Prezzi_Energia_Definitivo.xlsx")
+    )
+
+    $cosernPath = ""
+    foreach ($p in $cosernSearchPaths) {
+        if (Test-Path $p) {
+            $cosernPath = $p
+            break
+        }
+    }
+
+    if (!$cosernPath) {
+        Write-Host "File COSERN_Prezzi_Energia_Definitivo.xlsx non trovato."
+        return $null
+    }
+
+    Write-Host "Trovato file COSERN Inflazione: $cosernPath"
+    $tempCopy = Join-Path $projectDir "scratch_temp_cosern.xlsx"
+    try {
+        Copy-Item $cosernPath $tempCopy -Force
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($tempCopy)
+
+        $ssEntry = $zip.GetEntry('xl/sharedStrings.xml')
+        $sharedStrings = @()
+        if ($ssEntry) {
+            $reader = New-Object System.IO.StreamReader($ssEntry.Open())
+            $sXml = [xml]$reader.ReadToEnd()
+            $reader.Close()
+            foreach ($si in $sXml.sst.si) {
+                if ($si.t) { $sharedStrings += $si.t.InnerText }
+                elseif ($si.r) { $sharedStrings += ($si.r | ForEach-Object { $_.t.InnerText }) -join '' }
+                else { $sharedStrings += '' }
+            }
+        }
+
+        $wbEntry = $zip.GetEntry('xl/workbook.xml')
+        $reader = New-Object System.IO.StreamReader($wbEntry.Open())
+        $wbXml = [xml]$reader.ReadToEnd()
+        $reader.Close()
+
+        $relsEntry = $zip.GetEntry('xl/_rels/workbook.xml.rels')
+        $reader = New-Object System.IO.StreamReader($relsEntry.Open())
+        $relsXml = [xml]$reader.ReadToEnd()
+        $reader.Close()
+
+        $sheetObj = $wbXml.workbook.sheets.sheet | Where-Object { $_.name -eq 'Antigravity' } | Select-Object -First 1
+        if (!$sheetObj) {
+            $sheetObj = $wbXml.workbook.sheets.sheet | Where-Object { $_.name -like '*Antigravity*' } | Select-Object -First 1
+        }
+        if (!$sheetObj) {
+            $sheetObj = $wbXml.workbook.sheets.sheet[0]
+        }
+        
+        $rId = $sheetObj.GetAttribute('id', 'http://schemas.openxmlformats.org/officeDocument/2006/relationships')
+        $rel = $relsXml.Relationships.Relationship | Where-Object { $_.Id -eq $rId }
+        $target = if ($rel.Target.StartsWith('/')) { $rel.Target.Substring(1) } else { 'xl/' + $rel.Target }
+
+        $sheetEntry = $zip.GetEntry($target)
+        $reader = New-Object System.IO.StreamReader($sheetEntry.Open())
+        $shXml = [xml]$reader.ReadToEnd()
+        $reader.Close()
+        $zip.Dispose()
+        if (Test-Path $tempCopy) { Remove-Item $tempCopy -Force }
+
+        $rows = @{}
+        foreach ($row in $shXml.worksheet.sheetData.row) {
+            $rNum = [int]$row.r
+            $rowDict = @{}
+            foreach ($c in $row.c) {
+                $colLetter = $c.r -replace '[0-9]', ''
+                $tAttr = $c.GetAttribute('t')
+                $val = $c.v
+                if ($val -and $tAttr -eq 's') { $val = $sharedStrings[[int]$val] }
+                $rowDict[$colLetter] = $val
+            }
+            $rows[$rNum] = $rowDict
+        }
+
+        $result = @()
+        $baseTariff = 0.0
+        $currentInflationIndex = 100.0
+
+        $rowNums = $rows.Keys | Where-Object { $_ -ge 2 } | Sort-Object
+        
+        foreach ($r in $rowNums) {
+            $rDict = $rows[$r]
+            $rawDate = if ($rDict.ContainsKey('A')) { $rDict['A'] } else { '' }
+            if (!$rawDate) { continue }
+            
+            $numDate = 0.0
+            $formattedDate = ''
+            $periodCode = ''
+            if ([double]::TryParse($rawDate.Replace(',', '.'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$numDate)) {
+                if ($numDate -gt 30000 -and $numDate -lt 60000) {
+                    $dt = [DateTime]::FromOADate($numDate)
+                    $formattedDate = $dt.ToString('MM/yyyy')
+                    $periodCode = $dt.ToString('MMM-yy', [System.Globalization.CultureInfo]::InvariantCulture)
+                }
+            } else {
+                $formattedDate = $rawDate.Trim()
+                $periodCode = $rawDate.Trim()
+            }
+            if (!$formattedDate) { continue }
+
+            $rawTariff = if ($rDict.ContainsKey('B')) { $rDict['B'] } else { '' }
+            $numTariff = 0.0
+            if ($rawTariff) {
+                [void][double]::TryParse($rawTariff.Trim().Replace(',', '.'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$numTariff)
+            }
+
+            $rawInflation = if ($rDict.ContainsKey('C')) { $rDict['C'] } else { '' }
+            $numInflation = 0.0
+            $hasInflation = $false
+            if ($rawInflation -ne '' -and $rawInflation -ne $null) {
+                $hasInflation = [double]::TryParse($rawInflation.Trim().Replace(',', '.'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$numInflation)
+            }
+
+            if ($numTariff -eq 0.0 -and !$hasInflation) { continue }
+
+            if ($baseTariff -eq 0.0 -and $numTariff -gt 0) {
+                $baseTariff = $numTariff
+            }
+
+            $tariffIndex = if ($baseTariff -gt 0 -and $numTariff -gt 0) { [Math]::Round(($numTariff / $baseTariff) * 100, 2) } else { $null }
+
+            $rawTariffIdxFromSheet = if ($rDict.ContainsKey('D')) { $rDict['D'] } else { '' }
+            if ($rawTariffIdxFromSheet) {
+                $sheetTariffIdx = 0.0
+                if ([double]::TryParse($rawTariffIdxFromSheet.Trim().Replace(',', '.'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$sheetTariffIdx)) {
+                    $tariffIndex = [Math]::Round($sheetTariffIdx, 2)
+                }
+            }
+
+            $rawInfIdxFromSheet = if ($rDict.ContainsKey('E')) { $rDict['E'] } else { '' }
+            $inflationIndex = $null
+            if ($rawInfIdxFromSheet) {
+                $sheetInfIdx = 0.0
+                if ([double]::TryParse($rawInfIdxFromSheet.Trim().Replace(',', '.'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$sheetInfIdx)) {
+                    $inflationIndex = [Math]::Round($sheetInfIdx, 2)
+                }
+            } elseif ($hasInflation) {
+                if ($result.Count -eq 0) {
+                    $currentInflationIndex = 100.0
+                } else {
+                    $currentInflationIndex = $currentInflationIndex * (1.0 + ($numInflation / 100.0))
+                }
+                $inflationIndex = [Math]::Round($currentInflationIndex, 2)
+            }
+
+            $result += [PSCustomObject]@{
+                period = $formattedDate
+                periodCode = $periodCode
+                tariff = [Math]::Round($numTariff, 8)
+                inflation = if ($hasInflation) { [Math]::Round($numInflation, 2) } else { $null }
+                tariffIndex = $tariffIndex
+                inflationIndex = $inflationIndex
+            }
+        }
+
+        Write-Host "Dati COSERN Inflazione estratti: $($result.Count) mesi."
+        return $result
+    } catch {
+        Write-Host "Errore parsing Cosern Inflation: $($_.Exception.Message)"
+        if (Test-Path $tempCopy) { Remove-Item $tempCopy -Force }
+        return $null
+    }
+}
+
 function Update-GreenEnerbrasData {
     $projectDir = "C:\Users\Utilisateur\Desktop\Documents\GitHub\GREEN_ENERBRAS"
     $searchPaths = @(
@@ -520,6 +695,17 @@ function Update-GreenEnerbrasData {
         Write-Host "Movimenti Conto Bancario aggiornati da Excel: $($bankTxs.Count) operazioni (Totale Capitale: $($appData.totalCollected) €)."
     } else {
         Write-Host "Movimenti Conto Bancario invariati (nessun nuovo file o dati non disponibili)."
+    }
+
+    # Extract COSERN prices and Inflation data from COSERN_Prezzi_Energia_Definitivo.xlsx
+    $cosernInfData = Get-CosernInflationData -projectDir $projectDir
+    if ($cosernInfData -and $cosernInfData.Count -gt 0) {
+        if ($appData.psobject.Properties['cosernInflation']) {
+            $appData.cosernInflation = $cosernInfData
+        } else {
+            $appData | Add-Member -NotePropertyName 'cosernInflation' -NotePropertyValue $cosernInfData
+        }
+        Write-Host "Dati COSERN e Inflazione aggiornati: $($cosernInfData.Count) mesi."
     }
 
     # Save data.js with unified color helpers

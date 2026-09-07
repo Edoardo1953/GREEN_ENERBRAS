@@ -292,10 +292,27 @@ const translations = {
         'btn_aggiungi_testo': 'Aggiungi Testo',
         'btn_rimuovi': 'Rimuovi',
 
-
-
-
-
+        // --- PREZZI ENERGIA & INFLAZIONE (COSERN / IPCA) ---
+        'btn_prezzi_inflazione': 'PREZZI ENERGIA & INFLAZIONE',
+        'sub_prezzi_inflazione': 'Cosern vs Inflazione (IPCA)',
+        'title_prezzi_inflazione': 'Prezzi Energia e Inflazione in Brasile',
+        'btn_back_vendite': 'Torna a Vendite',
+        'desc_prezzi_inflazione': 'Rapporto fra i prezzi dell\'energia fissati mensilmente dalle autorita per l\'energia (Cosern) e l\'inflazione in Brasile (IPCA). L\'andamento evidenzia come le autorita elettriche tendano nel tempo a stabilire tariffe che recuperano l\'effetto inflattivo sui costi.',
+        'table_tariffa_cosern': 'Tariffa Cosern (R$/kWh)',
+        'table_inflazione_mensile': 'Inflazione Mensile % (IPCA)',
+        'table_indice_tariffa': 'Indice Tariffa Cosern (Base 100 Ago 24)',
+        'table_indice_inflazione': 'Indice Inflazione (Base 100 Ago 24)',
+        'chart_title_confronto': 'Andamento Indice Tariffa Cosern vs Indice Inflazione (IPCA)',
+        'legend_tariffa_cosern': 'Indice Tariffa Cosern',
+        'legend_inflazione_ipca': 'Indice Inflazione (IPCA)',
+        'kpi_base_period': 'Base (Ago 2024)',
+        'kpi_latest_tariff': 'Ultima Tariffa Cosern',
+        'kpi_cumul_tariff_var': 'Var. Tariffa Cumulata',
+        'kpi_cumul_infl_var': 'Inflazione IPCA Cumulata',
+        'tooltip_tariff': 'Tariffa Cosern',
+        'tooltip_infl_monthly': 'Inflazione Mensile',
+        'tooltip_tariff_idx': 'Indice Tariffa',
+        'tooltip_infl_idx': 'Indice Inflazione'
     },
     'en': {
         'btn_richiedi': 'Request',
@@ -589,6 +606,28 @@ const translations = {
         'title_testi_liberi': 'Free Texts on Slide',
         'btn_aggiungi_testo': 'Add Text',
         'btn_rimuovi': 'Remove',
+
+        // --- PREZZI ENERGIA & INFLAZIONE (COSERN / IPCA) ---
+        'btn_prezzi_inflazione': 'ENERGY PRICES & INFLATION',
+        'sub_prezzi_inflazione': 'Cosern vs Inflation (IPCA)',
+        'title_prezzi_inflazione': 'Energy Prices and Inflation in Brazil',
+        'btn_back_vendite': 'Back to Sales',
+        'desc_prezzi_inflazione': 'Relationship between monthly energy tariffs set by energy authorities (Cosern) and inflation in Brazil (IPCA). The trend demonstrates how electricity authorities adjust tariffs over time to recover inflationary pressure on prices.',
+        'table_tariffa_cosern': 'Cosern Tariff (R$/kWh)',
+        'table_inflazione_mensile': 'Monthly Inflation % (IPCA)',
+        'table_indice_tariffa': 'Cosern Tariff Index (Base 100 Aug 24)',
+        'table_indice_inflazione': 'Inflation Index (Base 100 Aug 24)',
+        'chart_title_confronto': 'Cosern Tariff Index vs Inflation Index (IPCA)',
+        'legend_tariffa_cosern': 'Cosern Tariff Index',
+        'legend_inflazione_ipca': 'Inflation Index (IPCA)',
+        'kpi_base_period': 'Base (Aug 2024)',
+        'kpi_latest_tariff': 'Latest Cosern Tariff',
+        'kpi_cumul_tariff_var': 'Cumulative Tariff Change',
+        'kpi_cumul_infl_var': 'Cumulative IPCA Inflation',
+        'tooltip_tariff': 'Cosern Tariff',
+        'tooltip_infl_monthly': 'Monthly Inflation',
+        'tooltip_tariff_idx': 'Tariff Index',
+        'tooltip_infl_idx': 'Inflation Index'
     },
     'fr': {
         'btn_richiedi': 'Demander',
@@ -883,10 +922,27 @@ const translations = {
         'btn_aggiungi_testo': 'Ajouter du Texte',
         'btn_rimuovi': 'Retirer',
 
-
-
-
-
+        // --- PREZZI ENERGIA & INFLAZIONE (COSERN / IPCA) ---
+        'btn_prezzi_inflazione': 'PRIX ÉNERGIE & INFLATION',
+        'sub_prezzi_inflazione': 'Cosern vs Inflation (IPCA)',
+        'title_prezzi_inflazione': 'Prix de l\'Énergie et Inflation au Brésil',
+        'btn_back_vendite': 'Retour aux Ventes',
+        'desc_prezzi_inflazione': 'Relation entre les tarifs de l\'énergie fixés mensuellement par les autorités énergétiques (Cosern) et l\'inflation au Brésil (IPCA). La tendance montre comment les autorités électriques ajustent les tarifs dans le temps pour récupérer l\'impact de l\'inflation sur les prix.',
+        'table_tariffa_cosern': 'Tarif Cosern (R$/kWh)',
+        'table_inflazione_mensile': 'Inflation Mensuelle % (IPCA)',
+        'table_indice_tariffa': 'Indice Tarif Cosern (Base 100 Août 24)',
+        'table_indice_inflazione': 'Indice Inflation (Base 100 Août 24)',
+        'chart_title_confronto': 'Indice Tarif Cosern vs Indice Inflation (IPCA)',
+        'legend_tariffa_cosern': 'Indice Tarif Cosern',
+        'legend_inflazione_ipca': 'Indice Inflation (IPCA)',
+        'kpi_base_period': 'Base (Août 2024)',
+        'kpi_latest_tariff': 'Dernier Tarif Cosern',
+        'kpi_cumul_tariff_var': 'Variation Cumulée Tarif',
+        'kpi_cumul_infl_var': 'Inflation IPCA Cumulée',
+        'tooltip_tariff': 'Tarif Cosern',
+        'tooltip_infl_monthly': 'Inflation Mensuelle',
+        'tooltip_tariff_idx': 'Indice Tarif',
+        'tooltip_infl_idx': 'Indice Inflation'
     }
 };
 

@@ -746,6 +746,31 @@ body.theme-light .kpi-card[onclick*="openComparatoreModal"] h3 {
     color: #1d4ed8 !important;
 }
 
+body.theme-light #prezzi-inflazione-kpi-card {
+    background: rgba(2, 132, 199, 0.12) !important;
+    border: 1px solid rgba(2, 132, 199, 0.35) !important;
+}
+
+body.theme-light #prezzi-inflazione-kpi-card h3 {
+    color: #0369a1 !important;
+}
+
+body.theme-light .cosern-table thead th {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+body.theme-light .cosern-table tbody td {
+    color: #0f172a !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-light .btn-back {
+    background: #e2e8f0 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
 body.theme-light .modal-overlay,
 body.theme-light #comparatoreModal {
     background: rgba(15, 23, 42, 0.55) !important;
