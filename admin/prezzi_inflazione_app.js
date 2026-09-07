@@ -11,72 +11,96 @@
     }
 
     // 1. Calculate & Populate KPIs
-    if (data.length > 0) {
+    if (data && data.length > 0) {
         const baseRow = data[0]; // Ago 2024
-        const lastRow = data[data.length - 1]; // Latest available
+        const lastRow = data[data.length - 1]; // Latest available month
+
+        // Find latest row with valid inflation data
+        const latestInflationRow = [...data].reverse().find(r => r.inflationIndex !== null && r.inflationIndex !== undefined && !isNaN(r.inflationIndex)) || lastRow;
 
         const baseTariffEl = document.getElementById('kpi-base-tariff');
-        if (baseTariffEl) {
-            baseTariffEl.textContent = 'R$ ' + baseRow.tariff.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+        if (baseTariffEl && baseRow.tariff !== null && baseRow.tariff !== undefined) {
+            baseTariffEl.textContent = 'R$ ' + Number(baseRow.tariff).toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
         }
 
         const latestTariffValEl = document.getElementById('kpi-latest-tariff-val');
         const latestTariffPeriodEl = document.getElementById('kpi-latest-tariff-period');
-        if (latestTariffValEl) {
-            latestTariffValEl.textContent = 'R$ ' + lastRow.tariff.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+        if (latestTariffValEl && lastRow.tariff !== null && lastRow.tariff !== undefined) {
+            latestTariffValEl.textContent = 'R$ ' + Number(lastRow.tariff).toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
         }
-        if (latestTariffPeriodEl) {
+        if (latestTariffPeriodEl && lastRow.period) {
             latestTariffPeriodEl.textContent = '(' + lastRow.period + ')';
         }
 
         // Cumulative Tariff Variation
         const tariffCumulIdxEl = document.getElementById('kpi-tariff-cumul-idx');
         const tariffCumulPctEl = document.getElementById('kpi-tariff-cumul-pct');
-        const tariffPctVar = lastRow.tariffIndex - 100;
-        if (tariffCumulIdxEl) {
-            tariffCumulIdxEl.textContent = lastRow.tariffIndex.toFixed(2);
-        }
-        if (tariffCumulPctEl) {
-            tariffCumulPctEl.textContent = (tariffPctVar >= 0 ? '+' : '') + tariffPctVar.toFixed(2) + '%';
+        if (lastRow.tariffIndex !== null && lastRow.tariffIndex !== undefined) {
+            const tariffPctVar = Number(lastRow.tariffIndex) - 100;
+            if (tariffCumulIdxEl) {
+                tariffCumulIdxEl.textContent = Number(lastRow.tariffIndex).toFixed(2);
+            }
+            if (tariffCumulPctEl) {
+                tariffCumulPctEl.textContent = (tariffPctVar >= 0 ? '+' : '') + tariffPctVar.toFixed(2) + '%';
+            }
         }
 
-        // Cumulative Inflation Variation
+        // Cumulative Inflation Variation (using latest available inflation data point)
         const inflCumulIdxEl = document.getElementById('kpi-infl-cumul-idx');
         const inflCumulPctEl = document.getElementById('kpi-infl-cumul-pct');
-        const inflPctVar = lastRow.inflationIndex - 100;
-        if (inflCumulIdxEl) {
-            inflCumulIdxEl.textContent = lastRow.inflationIndex.toFixed(2);
-        }
-        if (inflCumulPctEl) {
-            inflCumulPctEl.textContent = (inflPctVar >= 0 ? '+' : '') + inflPctVar.toFixed(2) + '%';
+        if (latestInflationRow && latestInflationRow.inflationIndex !== null && latestInflationRow.inflationIndex !== undefined) {
+            const inflPctVar = Number(latestInflationRow.inflationIndex) - 100;
+            if (inflCumulIdxEl) {
+                inflCumulIdxEl.textContent = Number(latestInflationRow.inflationIndex).toFixed(2);
+            }
+            if (inflCumulPctEl) {
+                inflCumulPctEl.textContent = (inflPctVar >= 0 ? '+' : '') + inflPctVar.toFixed(2) + '%';
+            }
         }
     }
 
     // 2. Populate Data Table
     const tbody = document.getElementById('cosern-table-body');
-    if (tbody) {
+    if (tbody && data && data.length > 0) {
         tbody.innerHTML = '';
         data.forEach((row, idx) => {
             const tr = document.createElement('tr');
             
-            const inflFormatted = (row.inflation >= 0 ? '+' : '') + row.inflation.toFixed(2) + '%';
-            const inflColor = row.inflation > 0 ? '#38bdf8' : (row.inflation < 0 ? '#10b981' : 'var(--text-muted)');
+            let inflFormatted = '<span style="color:var(--text-muted);">-</span>';
+            let inflColor = 'var(--text-muted)';
+            if (row.inflation !== null && row.inflation !== undefined && !isNaN(row.inflation)) {
+                const inflNum = Number(row.inflation);
+                inflFormatted = (inflNum >= 0 ? '+' : '') + inflNum.toFixed(2) + '%';
+                inflColor = inflNum > 0 ? '#38bdf8' : (inflNum < 0 ? '#10b981' : 'var(--text-muted)');
+            }
+
+            const tariffFormatted = (row.tariff !== null && row.tariff !== undefined && !isNaN(row.tariff))
+                ? ('R$ ' + Number(row.tariff).toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 6 }))
+                : '-';
+
+            const tariffIdxBadge = (row.tariffIndex !== null && row.tariffIndex !== undefined && !isNaN(row.tariffIndex))
+                ? `<span class="cosern-badge-tariff">${Number(row.tariffIndex).toFixed(2)}</span>`
+                : '<span style="color:var(--text-muted);">-</span>';
+
+            const inflIdxBadge = (row.inflationIndex !== null && row.inflationIndex !== undefined && !isNaN(row.inflationIndex))
+                ? `<span class="cosern-badge-infl">${Number(row.inflationIndex).toFixed(2)}</span>`
+                : '<span style="color:var(--text-muted);">-</span>';
             
             tr.innerHTML = `
                 <td style="text-align: left; font-weight: 600; color: var(--text-main);">
-                    ${idx === 0 ? '<span style="color:#f59e0b; margin-right:4px;">★</span>' : ''}${row.period}
+                    ${idx === 0 ? '<span style="color:#f59e0b; margin-right:4px;">★</span>' : ''}${row.period || ''}
                 </td>
-                <td style="font-family: monospace; font-size: 0.9rem;" title="${row.tariff}">
-                    R$ ${row.tariff.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 6 })}
+                <td style="font-family: monospace; font-size: 0.9rem;" title="${row.tariff !== null ? row.tariff : ''}">
+                    ${tariffFormatted}
                 </td>
                 <td style="font-weight: 600; color: ${inflColor};">
                     ${inflFormatted}
                 </td>
                 <td>
-                    <span class="cosern-badge-tariff">${row.tariffIndex.toFixed(2)}</span>
+                    ${tariffIdxBadge}
                 </td>
                 <td>
-                    <span class="cosern-badge-infl">${row.inflationIndex.toFixed(2)}</span>
+                    ${inflIdxBadge}
                 </td>
             `;
             tbody.appendChild(tr);
@@ -85,10 +109,10 @@
 
     // 3. Render Chart
     const ctx = document.getElementById('cosernInflationChart');
-    if (ctx) {
+    if (ctx && data && data.length > 0) {
         const labels = data.map(d => d.period);
-        const tariffIndices = data.map(d => d.tariffIndex);
-        const inflationIndices = data.map(d => d.inflationIndex);
+        const tariffIndices = data.map(d => d.tariffIndex !== null && d.tariffIndex !== undefined ? Number(d.tariffIndex) : null);
+        const inflationIndices = data.map(d => d.inflationIndex !== null && d.inflationIndex !== undefined ? Number(d.inflationIndex) : null);
 
         window.cosernChartInstance = new Chart(ctx, {
             type: 'line',
@@ -107,6 +131,7 @@
                         pointRadius: 4,
                         pointHoverRadius: 7,
                         tension: 0.2,
+                        spanGaps: true,
                         fill: false
                     },
                     {
@@ -121,6 +146,7 @@
                         pointRadius: 4,
                         pointHoverRadius: 7,
                         tension: 0.2,
+                        spanGaps: true,
                         fill: false
                     }
                 ]
@@ -149,18 +175,26 @@
                         borderWidth: 1,
                         callbacks: {
                             title: function(tooltipItems) {
+                                if (!tooltipItems || tooltipItems.length === 0) return '';
                                 const idx = tooltipItems[0].dataIndex;
-                                return 'Periodo: ' + data[idx].period;
+                                return 'Periodo: ' + (data[idx] ? data[idx].period : '');
                             },
                             afterTitle: function(tooltipItems) {
+                                if (!tooltipItems || tooltipItems.length === 0) return [];
                                 const idx = tooltipItems[0].dataIndex;
                                 const row = data[idx];
-                                return [
-                                    'Tariffa Cosern: R$ ' + row.tariff.toFixed(4) + '/kWh',
-                                    'Inflazione Mensile IPCA: ' + (row.inflation >= 0 ? '+' : '') + row.inflation.toFixed(2) + '%'
-                                ];
+                                const details = [];
+                                if (row && row.tariff !== null && row.tariff !== undefined) {
+                                    details.push('Tariffa Cosern: R$ ' + Number(row.tariff).toFixed(4) + '/kWh');
+                                }
+                                if (row && row.inflation !== null && row.inflation !== undefined) {
+                                    const inf = Number(row.inflation);
+                                    details.push('Inflazione Mensile IPCA: ' + (inf >= 0 ? '+' : '') + inf.toFixed(2) + '%');
+                                }
+                                return details;
                             },
                             label: function(context) {
+                                if (context.parsed.y === null || context.parsed.y === undefined) return '';
                                 return context.dataset.label + ': ' + context.parsed.y.toFixed(2);
                             }
                         }
@@ -213,10 +247,10 @@ function exportCosernExcel() {
     
     const rows = APP_DATA.cosernInflation.map(r => ({
         'Mese / Anno': r.period,
-        'Tariffa Cosern (R$/kWh)': r.tariff,
-        'Inflazione Mensile % (IPCA)': r.inflation / 100,
-        'Indice Tariffa Cosern (Base 100 Ago 24)': r.tariffIndex,
-        'Indice Inflazione (Base 100 Ago 24)': r.inflationIndex
+        'Tariffa Cosern (R$/kWh)': r.tariff !== null ? r.tariff : '',
+        'Inflazione Mensile % (IPCA)': r.inflation !== null ? (r.inflation / 100) : '',
+        'Indice Tariffa Cosern (Base 100 Ago 24)': r.tariffIndex !== null ? r.tariffIndex : '',
+        'Indice Inflazione (Base 100 Ago 24)': r.inflationIndex !== null ? r.inflationIndex : ''
     }));
 
     const ws = XLSX.utils.json_to_sheet(rows);
@@ -252,10 +286,10 @@ function exportCosernPDF() {
     const headers = [["Mese / Anno", "Tariffa (R$/kWh)", "Inflazione % (IPCA)", "Indice Tariffa", "Indice Inflazione"]];
     const tableData = APP_DATA.cosernInflation.map(r => [
         r.period,
-        r.tariff.toFixed(6),
-        (r.inflation >= 0 ? '+' : '') + r.inflation.toFixed(2) + '%',
-        r.tariffIndex.toFixed(2),
-        r.inflationIndex.toFixed(2)
+        r.tariff !== null ? r.tariff.toFixed(6) : '-',
+        r.inflation !== null ? ((r.inflation >= 0 ? '+' : '') + r.inflation.toFixed(2) + '%') : '-',
+        r.tariffIndex !== null ? r.tariffIndex.toFixed(2) : '-',
+        r.inflationIndex !== null ? r.inflationIndex.toFixed(2) : '-'
     ]);
 
     doc.autoTable({
