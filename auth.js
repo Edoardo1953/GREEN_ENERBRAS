@@ -190,7 +190,7 @@ function showToastNotification(pageKey, isVisible) {
 
 function getStoredAuthUser() {
     try {
-        const stored = localStorage.getItem('green_enerbras_auth_user');
+        const stored = sessionStorage.getItem('green_enerbras_auth_user');
         if (stored) return JSON.parse(stored);
     } catch(e) {}
 
@@ -211,10 +211,12 @@ function getStoredAuthUser() {
 
 function setStoredAuthUser(userData) {
     try {
+        // Pulisce il vecchio localStorage se esiste per evitare conflitti
+        localStorage.removeItem('green_enerbras_auth_user');
         if (userData) {
-            localStorage.setItem('green_enerbras_auth_user', JSON.stringify(userData));
+            sessionStorage.setItem('green_enerbras_auth_user', JSON.stringify(userData));
         } else {
-            localStorage.removeItem('green_enerbras_auth_user');
+            sessionStorage.removeItem('green_enerbras_auth_user');
         }
     } catch(e) {}
 
