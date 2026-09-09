@@ -1388,9 +1388,9 @@
                                 "period":  "08/2026",
                                 "periodCode":  "Aug-26",
                                 "tariff":  1.0347311,
-                                "inflation":  null,
+                                "inflation":  -0.40,
                                 "tariffIndex":  109.65,
-                                "inflationIndex":  null
+                                "inflationIndex":  109.48
                             }
                         ]
 };
