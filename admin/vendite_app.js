@@ -703,17 +703,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     window.openComparatoreModal = function() {
-        const modal = document.getElementById('comparatoreModal');
-        if (modal) {
-            modal.style.display = 'flex';
-            updateComparatorePeriodValues();
-            if (window.renderComparatoreTable) window.renderComparatoreTable();
-        }
+        const dash = document.getElementById('dashboard-content');
+        const comp = document.getElementById('comparatore-content');
+        if (dash) dash.style.display = 'none';
+        if (comp) comp.style.display = 'block';
+        window.scrollTo(0,0);
+        updateComparatorePeriodValues();
+        if (window.renderComparatoreTable) window.renderComparatoreTable();
     };
 
     window.closeComparatoreModal = function() {
-        const modal = document.getElementById('comparatoreModal');
-        if (modal) modal.style.display = 'none';
+        const dash = document.getElementById('dashboard-content');
+        const comp = document.getElementById('comparatore-content');
+        if (dash) dash.style.display = 'block';
+        if (comp) comp.style.display = 'none';
+        window.scrollTo(0,0);
     };
 
     window.updateComparatorePeriodValues = function() {

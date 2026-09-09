@@ -515,13 +515,25 @@ window.toggleComparatoreVisibility = function() {
 };
 
 window.openComparatoreModal = function() {
-    document.getElementById('comparatoreModal').style.display = 'flex';
+    
+    const dash = document.getElementById('dashboard-content');
+    const comp = document.getElementById('comparatore-content');
+    if(dash) dash.style.display = 'none';
+    if(comp) comp.style.display = 'block';
+    window.scrollTo(0,0);
+    
     updateComparatorePeriodValues();
     if(window.renderComparatoreTable) window.renderComparatoreTable();
 };
 
 window.closeComparatoreModal = function() {
-    document.getElementById('comparatoreModal').style.display = 'none';
+    
+    const dash = document.getElementById('dashboard-content');
+    const comp = document.getElementById('comparatore-content');
+    if(dash) dash.style.display = 'block';
+    if(comp) comp.style.display = 'none';
+    window.scrollTo(0,0);
+    
 };
 
 window.updateComparatorePeriodValues = function() {
