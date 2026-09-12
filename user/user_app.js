@@ -172,26 +172,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const stato = (m.stato || '').toUpperCase();
             if (stato === 'ATTIVO' || stato === 'ATTIVI' || stato === 'IN PRODUZIONE') {
                 activePlantsCount++;
-            } else if (stato.includes('ATTESA')) {
+            } else if (stato.includes('ATTESA') || stato.includes('FINITO') || stato.includes('COMPLETATO')) {
                 waitingPlantsCount++;
-            } else if (stato.includes('COSTRUZIONE') || stato.includes('IN CORSO')) {
+            } else if (stato.includes('COSTRUZIONE') || stato.includes('IN CORSO') || stato.includes('PIANIFICATO')) {
                 wipPlantsCount++;
             }
         });
-        
-        // Fallbacks per allineare i dati con i requisiti espliciti se il db non è ancora differenziato
-        if (activePlantsCount === 0 && waitingPlantsCount === 0 && wipPlantsCount === 0) {
-            activePlantsCount = 4;
-            waitingPlantsCount = 2;
-            wipPlantsCount = 2;
-        } else if (activePlantsCount === APP_DATA.modules.length) {
-            activePlantsCount = 4;
-            waitingPlantsCount = 2;
-            wipPlantsCount = 2;
-        }
     } else {
-        activePlantsCount = 4;
-        waitingPlantsCount = 2;
+        activePlantsCount = 6;
+        waitingPlantsCount = 4;
         wipPlantsCount = 2;
     }
 

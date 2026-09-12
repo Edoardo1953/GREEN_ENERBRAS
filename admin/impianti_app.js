@@ -93,14 +93,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         gruppo.impianti.forEach((impianto, index) => {
             let statoKey = '';
-              if (impianto.stato.toUpperCase() === 'ATTIVO') statoKey = 'status_attivi';
-              else if (impianto.stato.toUpperCase().includes('FINITO')) statoKey = 'status_finiti_cosern';
-              else if (impianto.stato.toUpperCase().includes('COSTRUZIONE')) statoKey = 'status_in_costruzione';
-              else if (impianto.stato.toUpperCase().includes('PRODUZIONE')) statoKey = 'status_in_produzione';
-              else if (impianto.stato.toUpperCase().includes('CORSO')) statoKey = 'status_in_corso';
-              else if (impianto.stato.toUpperCase().includes('PIANIFICATO')) statoKey = 'status_pianificato';
-              
-              const statusClass = (impianto.stato.toUpperCase() === 'ATTIVO' || impianto.stato.toUpperCase().includes('PRODUZIONE')) ? 'status-attivo' : 'status-costruzione';
+            const stUpper = (impianto.stato || '').toUpperCase();
+            if (stUpper === 'ATTIVO' || stUpper === 'ATTIVI') statoKey = 'status_attivi';
+            else if (stUpper.includes('FINITO') || stUpper.includes('COMPLETATO') || stUpper.includes('ATTESA')) statoKey = 'status_finiti_cosern';
+            else if (stUpper.includes('COSTRUZIONE')) statoKey = 'status_in_costruzione';
+            else if (stUpper.includes('PRODUZIONE')) statoKey = 'status_in_produzione';
+            else if (stUpper.includes('CORSO')) statoKey = 'status_in_corso';
+            else if (stUpper.includes('PIANIFICATO')) statoKey = 'status_pianificato';
+            
+            const statusClass = (stUpper === 'ATTIVO' || stUpper.includes('PRODUZIONE')) ? 'status-attivo' : 'status-costruzione';
             impiantiHtml += `
                 <div style="${index > 0 ? 'margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;' : ''}">
                     <div class="impianto-header" style="border: none; padding: 0; margin-bottom: 0.5rem;">

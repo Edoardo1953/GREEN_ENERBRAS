@@ -29,9 +29,12 @@ function NumToCol([int]$num) {
 }
 
 function Get-TransfertsExchangeData {
-    param([string]$projectDir = "C:\Users\Utilisateur\Desktop\Documents\GitHub\GREEN_ENERBRAS")
+    param([string]$projectDir)
     
     $transfertsPath = Join-Path $projectDir "uploads\TRANSFERTS.xlsx"
+    if (!(Test-Path $transfertsPath)) {
+        $transfertsPath = Join-Path $projectDir "TRANSFERTS.xlsx"
+    }
     if (!(Test-Path $transfertsPath)) {
         return @{ avgExchangeRate = 6.0164; currentExchangeRate = 5.8823 }
     }
@@ -48,9 +51,7 @@ function Get-TransfertsExchangeData {
             $ssXml = [xml]$reader.ReadToEnd()
             $reader.Close()
             foreach ($si in $ssXml.sst.si) {
-                if ($si.t) { $sharedStrings += $si.t.InnerText }
-                elseif ($si.r) { $sharedStrings += ($si.r | ForEach-Object { $_.t.InnerText }) -join '' }
-                else { $sharedStrings += "" }
+                $sharedStrings += $si.InnerText
             }
         }
 
@@ -117,13 +118,13 @@ function Get-TransfertsExchangeData {
 }
 
 function Get-ContabilitaBankTransactions {
-    param([string]$projectDir = "C:\Users\Utilisateur\Desktop\Documents\GitHub\GREEN_ENERBRAS")
+    param([string]$projectDir)
     
     $searchPaths = @(
         (Join-Path $projectDir "uploads\CONTABILITA Green Enerbras One SCSp.xlsx"),
-        "C:\Users\Utilisateur\Desktop\CONTABILITA Green Enerbras One SCSp.xlsx",
-        "C:\Users\Utilisateur\OneDrive\Desktop\CONTABILITA Green Enerbras One SCSp.xlsx",
-        (Join-Path $projectDir "CONTABILITA Green Enerbras One SCSp.xlsx")
+        (Join-Path $projectDir "CONTABILITA Green Enerbras One SCSp.xlsx"),
+        ([System.IO.Path]::Combine([System.Environment]::GetFolderPath('Desktop'), "CONTABILITA Green Enerbras One SCSp.xlsx")),
+        ([System.IO.Path]::Combine([System.Environment]::GetFolderPath('UserProfile'), "OneDrive\Desktop\CONTABILITA Green Enerbras One SCSp.xlsx"))
     )
     
     $xlsxPath = ""
@@ -275,13 +276,13 @@ function Get-ContabilitaBankTransactions {
 }
 
 function Get-CosernInflationData {
-    param([string]$projectDir = "C:\Users\Utilisateur\Desktop\Documents\GitHub\GREEN_ENERBRAS")
+    param([string]$projectDir)
     
     $cosernSearchPaths = @(
         (Join-Path $projectDir "uploads\COSERN_Prezzi_Energia_Definitivo.xlsx"),
-        "C:\Users\Utilisateur\Desktop\COSERN_Prezzi_Energia_Definitivo.xlsx",
-        "C:\Users\Utilisateur\OneDrive\Desktop\COSERN_Prezzi_Energia_Definitivo.xlsx",
-        (Join-Path $projectDir "COSERN_Prezzi_Energia_Definitivo.xlsx")
+        (Join-Path $projectDir "COSERN_Prezzi_Energia_Definitivo.xlsx"),
+        ([System.IO.Path]::Combine([System.Environment]::GetFolderPath('Desktop'), "COSERN_Prezzi_Energia_Definitivo.xlsx")),
+        ([System.IO.Path]::Combine([System.Environment]::GetFolderPath('UserProfile'), "OneDrive\Desktop\COSERN_Prezzi_Energia_Definitivo.xlsx"))
     )
 
     $cosernPath = ""
@@ -310,9 +311,7 @@ function Get-CosernInflationData {
             $sXml = [xml]$reader.ReadToEnd()
             $reader.Close()
             foreach ($si in $sXml.sst.si) {
-                if ($si.t) { $sharedStrings += $si.t.InnerText }
-                elseif ($si.r) { $sharedStrings += ($si.r | ForEach-Object { $_.t.InnerText }) -join '' }
-                else { $sharedStrings += '' }
+                $sharedStrings += $si.InnerText
             }
         }
 
@@ -449,12 +448,14 @@ function Get-CosernInflationData {
     }
 }
 
-function Update-GreenEnerbrasData {
-    $projectDir = "C:\Users\Utilisateur\Desktop\Documents\GitHub\GREEN_ENERBRAS"
+function Get-ImpiantiModulesData {
+    param([string]$projectDir)
+    
     $searchPaths = @(
-        "C:\Users\Utilisateur\Desktop\Controle_GD_TriStarOne.xlsx",
-        "C:\Users\Utilisateur\OneDrive\Desktop\Controle_GD_TriStarOne.xlsx",
-        (Join-Path $projectDir "Controle_GD_TriStarOne.xlsx")
+        (Join-Path $projectDir "uploads\Impianti Tri Star.xlsx"),
+        (Join-Path $projectDir "Impianti Tri Star.xlsx"),
+        ([System.IO.Path]::Combine([System.Environment]::GetFolderPath('Desktop'), "Impianti Tri Star.xlsx")),
+        ([System.IO.Path]::Combine([System.Environment]::GetFolderPath('UserProfile'), "OneDrive\Desktop\Impianti Tri Star.xlsx"))
     )
 
     $xlsxPath = ""
@@ -466,192 +467,193 @@ function Update-GreenEnerbrasData {
     }
 
     if (!$xlsxPath) {
-        Write-Error "File Controle_GD_TriStarOne.xlsx non trovato!"
-        return
+        Write-Host "File Impianti Tri Star.xlsx non trovato."
+        return $null
     }
 
-    Write-Host "Trovato file Excel: $xlsxPath"
-    $localCopy = Join-Path $projectDir "Controle_GD_TriStarOne.xlsx"
-    if ($xlsxPath -ne $localCopy) {
-        Copy-Item -Path $xlsxPath -Destination $localCopy -Force
-        Write-Host "Copiato in: $localCopy"
-    }
+    Write-Host "Trovato file Impianti Tri Star: $xlsxPath"
+    $tempCopy = Join-Path $projectDir "scratch_temp_impianti.xlsx"
+    try {
+        Copy-Item $xlsxPath $tempCopy -Force
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($tempCopy)
 
-    # Open and extract XMLs
-    $zip = [System.IO.Compression.ZipFile]::OpenRead($localCopy)
-    
-    # Shared strings
-    $ssEntry = $zip.GetEntry("xl/sharedStrings.xml")
-    $sharedStrings = @()
-    if ($ssEntry) {
-        $reader = New-Object System.IO.StreamReader($ssEntry.Open())
-        $ssXml = [xml]$reader.ReadToEnd()
+        $ssEntry = $zip.GetEntry('xl/sharedStrings.xml')
+        $sharedStrings = @()
+        if ($ssEntry) {
+            $reader = New-Object System.IO.StreamReader($ssEntry.Open())
+            $sXml = [xml]$reader.ReadToEnd()
+            $reader.Close()
+            foreach ($si in $sXml.sst.si) {
+                $sharedStrings += $si.InnerText
+            }
+        }
+
+        $sheetEntry = $zip.GetEntry('xl/worksheets/sheet1.xml')
+        $reader = New-Object System.IO.StreamReader($sheetEntry.Open())
+        $shXml = [xml]$reader.ReadToEnd()
         $reader.Close()
-        foreach ($si in $ssXml.sst.si) {
-            if ($si.t) { $sharedStrings += $si.t }
-            elseif ($si.r) { $sharedStrings += ($si.r | ForEach-Object { $_.t }) -join '' }
-            else { $sharedStrings += "" }
-        }
-    }
-
-    # Find Faturamento sheet
-    $wbEntry = $zip.GetEntry("xl/workbook.xml")
-    $reader = New-Object System.IO.StreamReader($wbEntry.Open())
-    $wbXml = [xml]$reader.ReadToEnd()
-    $reader.Close()
-    
-    $sheetObj = $wbXml.workbook.sheets.sheet | Where-Object { $_.name -like "*Faturamento*" } | Select-Object -First 1
-    if (!$sheetObj) {
         $zip.Dispose()
-        throw "Foglio 'Faturamento (Nao Editar)' non trovato!"
-    }
-    $rId = $sheetObj.GetAttribute("id", "http://schemas.openxmlformats.org/officeDocument/2006/relationships")
-    
-    $relsEntry = $zip.GetEntry("xl/_rels/workbook.xml.rels")
-    $reader = New-Object System.IO.StreamReader($relsEntry.Open())
-    $relsXml = [xml]$reader.ReadToEnd()
-    $reader.Close()
-    $rel = $relsXml.Relationships.Relationship | Where-Object { $_.Id -eq $rId }
-    $target = $rel.Target
-    if ($target.StartsWith("/")) { $target = $target.Substring(1) } else { $target = "xl/" + $target }
-    
-    $wsEntry = $zip.GetEntry($target)
-    $reader = New-Object System.IO.StreamReader($wsEntry.Open())
-    $wsXml = [xml]$reader.ReadToEnd()
-    $reader.Close()
-    $zip.Dispose()
+        if (Test-Path $tempCopy) { Remove-Item $tempCopy -Force }
 
-    # Parse rows into dictionary
-    $sheetRows = @{}
-    foreach ($row in $wsXml.worksheet.sheetData.row) {
-        $rNum = [int]$row.r
-        $rowDict = @{}
-        foreach ($c in $row.c) {
-            $colLetter = $c.r -replace '[0-9]', ''
-            $val = ""
-            if ($c.v) {
-                if ($c.t -eq "s") { $val = $sharedStrings[[int]$c.v] }
-                else { $val = $c.v }
+        $sheetRows = @{}
+        foreach ($row in $shXml.worksheet.sheetData.row) {
+            $rNum = [int]$row.r
+            $rowDict = @{}
+            foreach ($c in $row.c) {
+                $colLetter = $c.r -replace '[0-9]', ''
+                $tAttr = $c.GetAttribute('t')
+                $val = ""
+                if ($c.v) {
+                    $rawV = if ($c.v -is [System.Array]) { $c.v[0] } else { $c.v }
+                    if ($tAttr -eq "s") {
+                        $sIdx = 0
+                        if ([int]::TryParse($rawV, [ref]$sIdx) -and $sIdx -lt $sharedStrings.Count) {
+                            $val = $sharedStrings[$sIdx]
+                        } else {
+                            $val = $rawV
+                        }
+                    } else {
+                        $val = $rawV
+                    }
+                }
+                $rowDict[$colLetter] = [string]$val
             }
-            $rowDict[$colLetter] = $val
+            $sheetRows[$rNum] = $rowDict
         }
-        $sheetRows[$rNum] = $rowDict
-    }
 
-    $row5 = $sheetRows[5]
-    $row6 = $sheetRows[6]
-    
-    # 1. Detect price columns
-    $priceCosernCol = ""
-    $priceDiscountCol = ""
-    $maxColNum = 50
-    for ($i = 2; $i -le $maxColNum; $i++) {
-        $colLet = NumToCol $i
-        $val6 = if ($row6.ContainsKey($colLet)) { $row6[$colLet].Trim() } else { "" }
-        if ($val6 -like "*Pre*o*R$*KWh*(-)*" -or $val6 -like "*(-) 30%*") {
-            $priceDiscountCol = $colLet
-        } elseif ($val6 -like "*Pre*o*R$*KWh*") {
-            $priceCosernCol = $colLet
-        }
-    }
-    
-    $priceCosernColNum = if ($priceCosernCol) { ColToNum $priceCosernCol } else { 7 }
-    
-    # 2. Detect Usina columns (from column B until priceCosernCol)
-    $usinaCols = @()
-    for ($i = 2; $i -lt $priceCosernColNum; $i++) {
-        $colLet = NumToCol $i
-        $val6 = if ($row6.ContainsKey($colLet)) { $row6[$colLet].Trim() } else { "" }
-        if ($val6 -ne "") {
-            $usinaCols += $colLet
-        }
-    }
-    
-    # 3. Detect Client columns (starting after priceDiscountCol until TOTAL / empty)
-    $startClientColNum = if ($priceDiscountCol) { (ColToNum $priceDiscountCol) + 1 } else { 10 }
-    while ($startClientColNum -le $maxColNum) {
-        $colLet = NumToCol $startClientColNum
-        $val6 = if ($row6.ContainsKey($colLet)) { $row6[$colLet].Trim() } else { "" }
-        if ($val6 -ne "") { break }
-        $startClientColNum++
-    }
-    
-    $clientCols = @()
-    for ($i = $startClientColNum; $i -le $maxColNum; $i++) {
-        $colLet = NumToCol $i
-        $val6 = if ($row6.ContainsKey($colLet)) { $row6[$colLet].Trim() } else { "" }
-        $val5 = if ($row5.ContainsKey($colLet)) { $row5[$colLet].Trim() } else { "" }
-        if ($val6 -like "*TOTAL*") { break }
-        if ($val6 -eq "" -and $val5 -eq "") { break }
-        if ($val6 -ne "") {
-            $clientCols += $colLet
-        }
-    }
+        $modules = @()
+        $rowNums = $sheetRows.Keys | Where-Object { $_ -ge 2 } | Sort-Object
+        foreach ($r in $rowNums) {
+            $rDict = $sheetRows[$r]
+            $idRaw = if ($rDict.ContainsKey('A') -and $rDict['A']) { $rDict['A'].Trim() } else { '' }
+            if (!$idRaw) { continue }
+            $numId = 0
+            if (![int]::TryParse($idRaw, [ref]$numId)) { continue }
 
-    Write-Host "Usinas rilevate: $($usinaCols.Count) colonne ($($usinaCols -join ', '))"
-    Write-Host "Clienti rilevati: $($clientCols.Count) colonne ($($clientCols -join ', '))"
+            $nome = if ($rDict.ContainsKey('C') -and $rDict['C']) { $rDict['C'].Trim() } else { '' }
+            $loc = if ($rDict.ContainsKey('D') -and $rDict['D']) { $rDict['D'].Trim() } else { '' }
+            $zona = if ($rDict.ContainsKey('E') -and $rDict['E']) { $rDict['E'].Trim() } else { '' }
+            $lotto = if ($rDict.ContainsKey('F') -and $rDict['F']) { $rDict['F'].Trim() } else { '' }
+            $superficie = if ($rDict.ContainsKey('G') -and $rDict['G']) { $rDict['G'].Trim() } else { '' }
 
-    # 4. Extract data rows
-    $newProduction = @()
-    $rowKeys = $sheetRows.Keys | Where-Object { $_ -ge 7 } | Sort-Object
-    
-    foreach ($r in $rowKeys) {
-        $rDict = $sheetRows[$r]
-        $compVal = if ($rDict.ContainsKey('A')) { $rDict['A'] } else { "" }
-        if (!$compVal -or $compVal -eq "0") { continue }
-        
-        $period = ""
-        $numericDate = 0.0
-        if ([double]::TryParse($compVal.Replace(',', '.'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$numericDate)) {
-            if ($numericDate -gt 30000 -and $numericDate -lt 60000) {
-                $dt = [DateTime]::FromOADate($numericDate)
-                $period = $dt.ToString("MM/yyyy")
+            $invRaw = if ($rDict.ContainsKey('H') -and $rDict['H']) { $rDict['H'].Trim() } else { '0' }
+            $numInv = 0.0
+            if ($invRaw) {
+                [void][double]::TryParse($invRaw.Replace(',', '.'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$numInv)
             }
-        } else {
-            $period = $compVal.Trim()
-        }
-        if (!$period) { continue }
 
-        # Check if row has data
-        $hasData = $false
-        for ($uIdx = 0; $uIdx -lt $usinaCols.Count; $uIdx++) {
-            $uCol = $usinaCols[$uIdx]
-            $kwhRaw = if ($rDict.ContainsKey($uCol)) { $rDict[$uCol] } else { "" }
-            $kwhVal = ToDouble $kwhRaw
-            if ($kwhVal -gt 0) {
-                $hasData = $true
-                break
+            $stato = if ($rDict.ContainsKey('J') -and $rDict['J']) { $rDict['J'].Trim() } else { '' }
+            $gruppo = if ($rDict.ContainsKey('K') -and $rDict['K']) { $rDict['K'].Trim() } else { '' }
+            $contratto = if ($rDict.ContainsKey('L') -and $rDict['L']) { $rDict['L'].Trim() } else { '' }
+            $locatore = if ($rDict.ContainsKey('M') -and $rDict['M']) { $rDict['M'].Trim() } else { '' }
+            
+            $affitto = if ($rDict.ContainsKey('P') -and $rDict['P']) { $rDict['P'].Trim() } else { '' }
+            $autCosern = if ($rDict.ContainsKey('Q') -and $rDict['Q']) { $rDict['Q'].Trim() } else { '' }
+            
+            $rawDate = if ($rDict.ContainsKey('R') -and $rDict['R']) { $rDict['R'].Trim() } else { '' }
+            $formattedDate = ''
+            if ($rawDate) {
+                $numDate = 0.0
+                if ([double]::TryParse($rawDate.Replace(',', '.'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$numDate)) {
+                    if ($numDate -gt 30000 -and $numDate -lt 60000) {
+                        $dt = [DateTime]::FromOADate($numDate)
+                        $formattedDate = $dt.ToString('dd/MM/yyyy')
+                    }
+                } else {
+                    $formattedDate = $rawDate
+                }
             }
-        }
-        if (!$hasData) { continue }
 
-        for ($uIdx = 0; $uIdx -lt $usinaCols.Count; $uIdx++) {
-            $uCol = $usinaCols[$uIdx]
-            $usinaId = ($uIdx + 1).ToString()
-            $usinaName = $row6[$uCol].Trim()
+            $cliente = if ($rDict.ContainsKey('S') -and $rDict['S']) { $rDict['S'].Trim() } else { '' }
+            $locatario = if ($rDict.ContainsKey('T') -and $rDict['T']) { $rDict['T'].Trim() } else { '' }
+            $internet = if ($rDict.ContainsKey('U') -and $rDict['U']) { $rDict['U'].Trim() } else { '' }
+            $empresa = if ($rDict.ContainsKey('V') -and $rDict['V']) { $rDict['V'].Trim() } else { '' }
+            $codiceImpianto = if ($rDict.ContainsKey('X') -and $rDict['X']) { $rDict['X'].Trim() } else { '' }
+            $potenza = if ($rDict.ContainsKey('Y') -and $rDict['Y']) { $rDict['Y'].Trim() } else { '' }
+            $nrAutCosern = if ($rDict.ContainsKey('Z') -and $rDict['Z']) { $rDict['Z'].Trim() } else { '' }
+            $materialPlacas = if ($rDict.ContainsKey('AA') -and $rDict['AA']) { $rDict['AA'].Trim() } else { '' }
+            $materialInversores = if ($rDict.ContainsKey('AB') -and $rDict['AB']) { $rDict['AB'].Trim() } else { '' }
 
-            $kwhRaw = if ($rDict.ContainsKey($uCol)) { $rDict[$uCol] } else { "0" }
-            $kwhVal = ToDouble $kwhRaw
-
-            $cCol = if ($uIdx -lt $clientCols.Count) { $clientCols[$uIdx] } else { "" }
-            $clientName = if ($cCol -and $row6.ContainsKey($cCol)) { $row6[$cCol].Trim() } else { $usinaName }
-
-            $revRaw = if ($cCol -and $rDict.ContainsKey($cCol)) { $rDict[$cCol] } else { "0" }
-            $revVal = ToDouble $revRaw
-
-            $newProduction += [PSCustomObject]@{
-                period = $period
-                id = $usinaId
-                kwh = [Math]::Round($kwhVal, 2)
-                revenues = [Math]::Round($revVal, 2)
-                client = $clientName
+            # Coordinates mapping
+            $lat = -5.915
+            $lng = -35.255
+            if ($nome -like '*CIDADE BELA*' -or $loc -like '*CIDADE BELA*') {
+                $lat = -6.042
+                $lng = -35.232
+            } elseif ($nome -like '*CAMINHO DOS VENTOS*' -or $loc -like '*CAMINHO DOS VENTOS*') {
+                $lat = -5.352
+                $lng = -36.002
             }
+
+            $mod = [PSCustomObject]@{
+                impianto = ('USINA {0:D3}' -f $numId)
+                nome = $nome
+                localizzazione = $loc
+                zona = $zona
+                lotto = $lotto
+                superficie = $superficie
+                investimento = [Math]::Round($numInv, 2)
+                stato = $stato
+                gruppo = $gruppo
+                contratto = $contratto
+                locatore = $locatore
+                affitto = $affitto
+                internet = $internet
+                autorizzazioneCosern = $autCosern
+                dataAutorizzazione = $formattedDate
+                cliente = $cliente
+                locatario = $locatario
+                empresa = $empresa
+                codiceImpianto = $codiceImpianto
+                potenza = $potenza
+                nrAutCosern = $nrAutCosern
+                materialPlacas = $materialPlacas
+                materialInversores = $materialInversores
+                lat = $lat
+                lng = $lng
+            }
+            $modules += $mod
+        }
+
+        Write-Host "Impianti estratti: $($modules.Count) moduli."
+        return $modules
+    } catch {
+        Write-Host "Errore estrazione Impianti: $($_.Exception.Message)"
+        if (Test-Path $tempCopy) { Remove-Item $tempCopy -Force }
+        return $null
+    }
+}
+
+function Update-GreenEnerbrasData {
+    $projectDir = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+    Write-Host "Cartella Progetto: $projectDir"
+
+    $searchPaths = @(
+        (Join-Path $projectDir "uploads\Controle_GD_TriStarOne.xlsx"),
+        (Join-Path $projectDir "Controle_GD_TriStarOne.xlsx"),
+        ([System.IO.Path]::Combine([System.Environment]::GetFolderPath('Desktop'), "Controle_GD_TriStarOne.xlsx")),
+        ([System.IO.Path]::Combine([System.Environment]::GetFolderPath('UserProfile'), "OneDrive\Desktop\Controle_GD_TriStarOne.xlsx"))
+    )
+
+    $xlsxPath = ""
+    foreach ($p in $searchPaths) {
+        if (Test-Path $p) {
+            $xlsxPath = $p
+            break
         }
     }
 
-    Write-Host "Totale record di produzione generati: $($newProduction.Count)"
+    if (!$xlsxPath) {
+        Write-Host "File Controle_GD_TriStarOne.xlsx non trovato, mantengo produzione esistente."
+    } else {
+        Write-Host "Trovato file Excel Produzione: $xlsxPath"
+        $localCopy = Join-Path $projectDir "Controle_GD_TriStarOne.xlsx"
+        if ($xlsxPath -ne $localCopy) {
+            Copy-Item -Path $xlsxPath -Destination $localCopy -Force
+        }
+    }
 
-    # 5. Read and update data.js
+    # 1. Read existing data.js
     $dataPath = Join-Path $projectDir "data.js"
     $jsContent = Get-Content -Path $dataPath -Raw
     $idxStart = $jsContent.IndexOf('{')
@@ -661,11 +663,171 @@ function Update-GreenEnerbrasData {
     $jsonStr = $jsContent.Substring($idxStart, $idxEnd - $idxStart).Trim().TrimEnd(';')
     $appData = $jsonStr | ConvertFrom-Json
 
-    # Replace production
-    $appData.production = $newProduction
-    $appData.lastUpdated = (Get-Date).ToString("dd/MM/yyyy HH:mm")
+    # 2. Extract Production if file exists
+    if ($xlsxPath) {
+        try {
+            $zip = [System.IO.Compression.ZipFile]::OpenRead($xlsxPath)
+            
+            $ssEntry = $zip.GetEntry("xl/sharedStrings.xml")
+            $sharedStrings = @()
+            if ($ssEntry) {
+                $reader = New-Object System.IO.StreamReader($ssEntry.Open())
+                $ssXml = [xml]$reader.ReadToEnd()
+                $reader.Close()
+                foreach ($si in $ssXml.sst.si) {
+                    $sharedStrings += $si.InnerText
+                }
+            }
 
-    # Extract exchange rates from TRANSFERTS.xlsx
+            $wbEntry = $zip.GetEntry("xl/workbook.xml")
+            $reader = New-Object System.IO.StreamReader($wbEntry.Open())
+            $wbXml = [xml]$reader.ReadToEnd()
+            $reader.Close()
+            
+            $sheetObj = $wbXml.workbook.sheets.sheet | Where-Object { $_.name -like "*Faturamento*" } | Select-Object -First 1
+            if ($sheetObj) {
+                $rId = $sheetObj.GetAttribute("id", "http://schemas.openxmlformats.org/officeDocument/2006/relationships")
+                $relsEntry = $zip.GetEntry("xl/_rels/workbook.xml.rels")
+                $reader = New-Object System.IO.StreamReader($relsEntry.Open())
+                $relsXml = [xml]$reader.ReadToEnd()
+                $reader.Close()
+                $rel = $relsXml.Relationships.Relationship | Where-Object { $_.Id -eq $rId }
+                $target = $rel.Target
+                if ($target.StartsWith("/")) { $target = $target.Substring(1) } else { $target = "xl/" + $target }
+                
+                $wsEntry = $zip.GetEntry($target)
+                $reader = New-Object System.IO.StreamReader($wsEntry.Open())
+                $wsXml = [xml]$reader.ReadToEnd()
+                $reader.Close()
+                $zip.Dispose()
+
+                $sheetRows = @{}
+                foreach ($row in $wsXml.worksheet.sheetData.row) {
+                    $rNum = [int]$row.r
+                    $rowDict = @{}
+                    foreach ($c in $row.c) {
+                        $colLetter = $c.r -replace '[0-9]', ''
+                        $val = ""
+                        if ($c.v) {
+                            if ($c.t -eq "s") { $val = $sharedStrings[[int]$c.v] }
+                            else { $val = $c.v }
+                        }
+                        $rowDict[$colLetter] = $val
+                    }
+                    $sheetRows[$rNum] = $rowDict
+                }
+
+                $row5 = $sheetRows[5]
+                $row6 = $sheetRows[6]
+                
+                $priceCosernCol = ""
+                $priceDiscountCol = ""
+                $maxColNum = 50
+                for ($i = 2; $i -le $maxColNum; $i++) {
+                    $colLet = NumToCol $i
+                    $val6 = if ($row6.ContainsKey($colLet)) { $row6[$colLet].Trim() } else { "" }
+                    if ($val6 -like "*Pre*o*R$*KWh*(-)*" -or $val6 -like "*(-) 30%*") {
+                        $priceDiscountCol = $colLet
+                    } elseif ($val6 -like "*Pre*o*R$*KWh*") {
+                        $priceCosernCol = $colLet
+                    }
+                }
+                
+                $priceCosernColNum = if ($priceCosernCol) { ColToNum $priceCosernCol } else { 7 }
+                
+                $usinaCols = @()
+                for ($i = 2; $i -lt $priceCosernColNum; $i++) {
+                    $colLet = NumToCol $i
+                    $val6 = if ($row6.ContainsKey($colLet)) { $row6[$colLet].Trim() } else { "" }
+                    if ($val6 -ne "") {
+                        $usinaCols += $colLet
+                    }
+                }
+                
+                $startClientColNum = if ($priceDiscountCol) { (ColToNum $priceDiscountCol) + 1 } else { 10 }
+                while ($startClientColNum -le $maxColNum) {
+                    $colLet = NumToCol $startClientColNum
+                    $val6 = if ($row6.ContainsKey($colLet)) { $row6[$colLet].Trim() } else { "" }
+                    if ($val6 -ne "") { break }
+                    $startClientColNum++
+                }
+                
+                $clientCols = @()
+                for ($i = $startClientColNum; $i -le $maxColNum; $i++) {
+                    $colLet = NumToCol $i
+                    $val6 = if ($row6.ContainsKey($colLet)) { $row6[$colLet].Trim() } else { "" }
+                    $val5 = if ($row5.ContainsKey($colLet)) { $row5[$colLet].Trim() } else { "" }
+                    if ($val6 -like "*TOTAL*") { break }
+                    if ($val6 -eq "" -and $val5 -eq "") { break }
+                    if ($val6 -ne "") {
+                        $clientCols += $colLet
+                    }
+                }
+
+                $newProduction = @()
+                $rowKeys = $sheetRows.Keys | Where-Object { $_ -ge 7 } | Sort-Object
+                
+                foreach ($r in $rowKeys) {
+                    $rDict = $sheetRows[$r]
+                    $compVal = if ($rDict.ContainsKey('A')) { $rDict['A'] } else { "" }
+                    if (!$compVal -or $compVal -eq "0") { continue }
+                    
+                    $period = ""
+                    $numericDate = 0.0
+                    if ([double]::TryParse($compVal.Replace(',', '.'), [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$numericDate)) {
+                        if ($numericDate -gt 30000 -and $numericDate -lt 60000) {
+                            $dt = [DateTime]::FromOADate($numericDate)
+                            $period = $dt.ToString("MM/yyyy")
+                        }
+                    } else {
+                        $period = $compVal.Trim()
+                    }
+                    if (!$period) { continue }
+
+                    $hasData = $false
+                    for ($uIdx = 0; $uIdx -lt $usinaCols.Count; $uIdx++) {
+                        $uCol = $usinaCols[$uIdx]
+                        $kwhRaw = if ($rDict.ContainsKey($uCol)) { $rDict[$uCol] } else { "" }
+                        $kwhVal = ToDouble $kwhRaw
+                        if ($kwhVal -gt 0) {
+                            $hasData = $true
+                            break
+                        }
+                    }
+                    if (!$hasData) { continue }
+
+                    for ($uIdx = 0; $uIdx -lt $usinaCols.Count; $uIdx++) {
+                        $uCol = $usinaCols[$uIdx]
+                        $usinaId = ($uIdx + 1).ToString()
+                        $usinaName = $row6[$uCol].Trim()
+
+                        $kwhRaw = if ($rDict.ContainsKey($uCol)) { $rDict[$uCol] } else { "0" }
+                        $kwhVal = ToDouble $kwhRaw
+
+                        $cCol = if ($uIdx -lt $clientCols.Count) { $clientCols[$uIdx] } else { "" }
+                        $clientName = if ($cCol -and $row6.ContainsKey($cCol)) { $row6[$cCol].Trim() } else { $usinaName }
+
+                        $revRaw = if ($cCol -and $rDict.ContainsKey($cCol)) { $rDict[$cCol] } else { "0" }
+                        $revVal = ToDouble $revRaw
+
+                        $newProduction += [PSCustomObject]@{
+                            period = $period
+                            id = $usinaId
+                            kwh = [Math]::Round($kwhVal, 2)
+                            revenues = [Math]::Round($revVal, 2)
+                            client = $clientName
+                        }
+                    }
+                }
+                $appData.production = $newProduction
+                Write-Host "Produzione aggiornata: $($newProduction.Count) record."
+            }
+        } catch {
+            Write-Host "Errore estrazione produzione: $($_.Exception.Message)"
+        }
+    }
+
+    # 3. Extract exchange rates from TRANSFERTS.xlsx
     $fxData = Get-TransfertsExchangeData -projectDir $projectDir
     if ($appData.psobject.Properties['avgExchangeRate']) {
         $appData.avgExchangeRate = $fxData.avgExchangeRate
@@ -679,7 +841,7 @@ function Update-GreenEnerbrasData {
     }
     Write-Host "Tassi di cambio estratti: Avg = $($fxData.avgExchangeRate), Current = $($fxData.currentExchangeRate)"
 
-    # Extract bank transactions from CONTABILITA Green Enerbras One SCSp.xlsx (Foglio Compte Banque)
+    # 4. Extract bank transactions from CONTABILITA Green Enerbras One SCSp.xlsx (Foglio Compte Banque)
     $bankTxs = Get-ContabilitaBankTransactions -projectDir $projectDir
     if ($bankTxs -and $bankTxs.Count -gt 0) {
         $appData.transactions = $bankTxs
@@ -697,7 +859,7 @@ function Update-GreenEnerbrasData {
         Write-Host "Movimenti Conto Bancario invariati (nessun nuovo file o dati non disponibili)."
     }
 
-    # Extract COSERN prices and Inflation data from COSERN_Prezzi_Energia_Definitivo.xlsx
+    # 5. Extract COSERN prices and Inflation data from COSERN_Prezzi_Energia_Definitivo.xlsx
     $cosernInfData = Get-CosernInflationData -projectDir $projectDir
     if ($cosernInfData -and $cosernInfData.Count -gt 0) {
         if ($appData.psobject.Properties['cosernInflation']) {
@@ -708,7 +870,20 @@ function Update-GreenEnerbrasData {
         Write-Host "Dati COSERN e Inflazione aggiornati: $($cosernInfData.Count) mesi."
     }
 
-    # Save data.js with unified color helpers
+    # 6. Extract Impianti / Modules data from Impianti Tri Star.xlsx
+    $modulesData = Get-ImpiantiModulesData -projectDir $projectDir
+    if ($modulesData -and $modulesData.Count -gt 0) {
+        if ($appData.psobject.Properties['modules']) {
+            $appData.modules = $modulesData
+        } else {
+            $appData | Add-Member -NotePropertyName 'modules' -NotePropertyValue $modulesData
+        }
+        Write-Host "Dati Impianti / Moduli aggiornati da Excel: $($modulesData.Count) impianti."
+    }
+
+    $appData.lastUpdated = (Get-Date).ToString("dd/MM/yyyy HH:mm")
+
+    # 7. Save data.js with unified color helpers
     $updatedJson = $appData | ConvertTo-Json -Depth 10
     $colorHelpers = @"
 
