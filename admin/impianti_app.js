@@ -69,8 +69,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const groups = Array.from(groupsMap.values()).map(g => {
-        // Ricostruisce il suffisso (USINA 1-2)
-        const nums = g.impianti.map(imp => parseInt(imp.impianto.replace(/\\D/g, ''), 10)).filter(n => !isNaN(n));
+        g.impianti.sort((a, b) => {
+            const numA = parseInt(a.impianto.replace(/\D/g, ''), 10) || 0;
+            const numB = parseInt(b.impianto.replace(/\D/g, ''), 10) || 0;
+            return numA - numB;
+        });
+        const nums = g.impianti.map(imp => parseInt(imp.impianto.replace(/\D/g, ''), 10)).filter(n => !isNaN(n));
         let usinaText = '';
         if (nums.length === 1) {
             usinaText = `(USINA ${nums[0]})`;
@@ -112,14 +116,46 @@ document.addEventListener('DOMContentLoaded', () => {
                         <i class="fa-solid fa-location-dot"></i>
                         <span>${impianto.localizzazione || 'Localizzazione non disponibile'}</span>
                     </div>
+                    ${impianto.zona ? `
+                    <div class="impianto-detail" style="font-size: 0.85rem;">
+                        <i class="fa-solid fa-map-pin"></i>
+                        <span>${impianto.zona}</span>
+                    </div>
+                    ` : ''}
+                    ${impianto.lotto ? `
+                    <div class="impianto-detail">
+                        <i class="fa-solid fa-vector-square"></i>
+                        <span>${impianto.lotto}</span>
+                    </div>
+                    ` : ''}
                     <div class="impianto-detail">
                         <i class="fa-solid fa-file-contract"></i>
-                        <span><span data-i18n="label_auth_cosern">Autorizzazione Cosern</span>: ${impianto.autorizzazioneCosern === 'SI' ? '<span data-i18n="label_si">SI</span>' + (impianto.dataAutorizzazione ? ' - ' + impianto.dataAutorizzazione : '') : (impianto.autorizzazioneCosern === 'NO' ? '<span data-i18n="label_no">NO</span>' : (impianto.autorizzazioneCosern || '<span data-i18n="label_na">N/A</span>'))}</span>
+                        <span><span data-i18n="label_auth_cosern">Autorizzazione Cosern</span>: ${impianto.autorizzazioneCosern === 'SI' ? '<span data-i18n="label_si">SI</span>' + (impianto.dataAutorizzazione ? ' - ' + impianto.dataAutorizzazione : '') : (impianto.autorizzazioneCosern === 'NO' ? '<span data-i18n="label_no">NO</span>' : (impianto.autorizzazioneCosern || '<span data-i18n="label_na">N/A</span>'))}${impianto.nrAutCosern ? ' (Protocollo: ' + impianto.nrAutCosern + ')' : ''}</span>
                     </div>
+                    ${impianto.cliente ? `
                     <div class="impianto-detail">
                         <i class="fa-solid fa-user-tie"></i>
-                        <span><span data-i18n="label_cliente">Cliente</span>: ${impianto.cliente || '<span data-i18n="label_na">N/A</span>'}</span>
+                        <span><span data-i18n="label_cliente">Cliente</span>: ${impianto.cliente}</span>
                     </div>
+                    ` : ''}
+                    ${(impianto.potenza || impianto.codiceImpianto) ? `
+                    <div class="impianto-detail">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>${impianto.potenza ? 'Potenza: ' + impianto.potenza + ' kW' : ''}${impianto.potenza && impianto.codiceImpianto ? ' | ' : ''}${impianto.codiceImpianto ? 'Codice: ' + impianto.codiceImpianto : ''}</span>
+                    </div>
+                    ` : ''}
+                    ${(impianto.materialPlacas || impianto.materialInversores) ? `
+                    <div class="impianto-detail" style="font-size: 0.85rem;">
+                        <i class="fa-solid fa-solar-panel"></i>
+                        <span>${[impianto.materialPlacas, impianto.materialInversores].filter(Boolean).join(' | ')}</span>
+                    </div>
+                    ` : ''}
+                    ${impianto.empresa ? `
+                    <div class="impianto-detail">
+                        <i class="fa-solid fa-building"></i>
+                        <span>Empresa: ${impianto.empresa}</span>
+                    </div>
+                    ` : ''}
                     <div class="impianto-detail">
                         <i class="fa-solid fa-expand"></i>
                         <span><span data-i18n="label_superficie">Superficie</span>: ${impianto.superficie || '<span data-i18n="label_na">N/A</span>'}</span>
