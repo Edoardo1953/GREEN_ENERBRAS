@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -76,7 +76,7 @@
                             <div class="update-info">
                     <p data-i18n="last_updated">Ultimo aggiornamento:</p>
                     <p id="last-updated" class="text-bold">--/--/----</p>
-                    <button class="btn-refresh" onclick="if(window.location.hostname==='localhost'){fetch('http://localhost:8081/update').then(function(r){window.location.reload()}).catch(function(){alert('Errore: Il server locale non Ã¨ avviato.')})}else{window.location.reload(true)}" data-i18n="btn_refresh"><i class="fa-solid fa-rotate-right"></i> Ricarica Dati</button>
+                    <button class="btn-refresh" onclick="if(window.location.hostname==='localhost'){fetch('http://localhost:8081/update').then(function(r){window.location.reload()}).catch(function(){alert('Errore: Il server locale non è avviato.')})}else{window.location.reload(true)}" data-i18n="btn_refresh"><i class="fa-solid fa-rotate-right"></i> Ricarica Dati</button>
                 </div>
             </nav>
         </aside>
@@ -228,7 +228,7 @@
     <!-- Data script -->
     <script src="../data.js"></script>
     <!-- App logic -->
-    <script src="app.js?v=300"></script>
+    <script src="app.js?v=42"></script>
 </body>
 </html>
 

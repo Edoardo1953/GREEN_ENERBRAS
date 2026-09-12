@@ -220,11 +220,11 @@ document.addEventListener('DOMContentLoaded', () => {
     trTotal.style.backgroundColor = 'rgba(255,255,255,0.05)';
     trTotal.innerHTML = `
         <td></td>
-        <td class="text-bold" style="font-size: 1.1rem;">TOTALE</td>
+        <td class="text-bold" style="font-size: 1.1rem; color: #f8fafc !important;">TOTALE</td>
         <td></td>
-        <td class="text-bold" style="font-size: 1.1rem; color: #f59e0b;">${Math.round(sumDetention)}%</td>
-        <td class="text-bold" style="font-size: 1.1rem;">${formatCurrency(sumContribution)}</td>
-        <td class="text-bold text-green" style="font-size: 1.1rem;">${formatCurrency(sumPaid)}</td>
+        <td class="text-bold" style="font-size: 1.1rem; color: #f59e0b !important;">${Math.round(sumDetention)}%</td>
+        <td class="text-bold" style="font-size: 1.1rem; color: #f8fafc !important;">${formatCurrency(sumContribution)}</td>
+        <td class="text-bold text-green" style="font-size: 1.1rem; color: #10b981 !important;">${formatCurrency(sumPaid)}</td>
     `;
     
     const tableFoot = document.getElementById('partners-table-foot');
