@@ -308,9 +308,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let anonChartInstance = null;
     const anonCtx = document.getElementById('anonDetentionChart');
-    const anonChartTypeSelector = document.getElementById('anonChartType');
 
-    function renderAnonChart(type) {
+    function renderAnonChart() {
         if (!anonCtx || validPartners.length === 0) return;
         
         if (anonChartInstance) {
@@ -345,30 +344,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        if (type === 'bar') {
-            options.scales = {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) { return value + '%'; },
-                        color: '#94a3b8'
-                    },
-                    grid: { color: 'rgba(255,255,255,0.1)' }
-                },
-                x: {
-                    ticks: { display: false },
-                    grid: { display: false }
-                }
-            };
-        }
-
         // Register plugin explicitly if not done globally
         if (typeof ChartDataLabels !== 'undefined') {
             Chart.register(ChartDataLabels);
         }
 
         anonChartInstance = new Chart(anonCtx.getContext('2d'), {
-            type: type,
+            type: 'pie',
             data: {
                 labels: chartLabels,
                 datasets: [{
@@ -376,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     data: chartData,
                     backgroundColor: baseColors.slice(0, validPartners.length),
                     borderWidth: 0,
-                    hoverOffset: type === 'pie' ? 4 : 0
+                    hoverOffset: 4
                 }]
             },
             options: options
@@ -384,13 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (anonCtx) {
-        renderAnonChart('pie');
-    }
-
-    if (anonChartTypeSelector) {
-        anonChartTypeSelector.addEventListener('change', (e) => {
-            renderAnonChart(e.target.value);
-        });
+        renderAnonChart();
     }
 });
 

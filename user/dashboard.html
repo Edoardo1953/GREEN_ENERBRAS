@@ -83,16 +83,19 @@
                 }
                 @media (max-width: 768px) {
                     .landing-slideshow { margin: -6rem -2rem 2rem -2rem; }
+                    .landing-logo-custom { height: 110px; max-height: 130px; }
+                    .landing-top-bar { padding: 1.25rem 1.5rem; }
                 }
                 .landing-top-bar {
                     position: absolute; top: 0; left: 0; width: 100%; padding: 2rem 2.5rem;
                     display: flex; flex-direction: column; gap: 1.25rem; z-index: 20;
                 }
                 .landing-logo-custom {
-                    height: 110px;
-                    max-height: 130px;
+                    height: 185px;
+                    max-height: 220px;
+                    width: auto;
                     object-fit: contain;
-                    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.85));
+                    filter: drop-shadow(0 6px 20px rgba(0,0,0,0.85));
                 }
                 .slideshow-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
                 
@@ -145,15 +148,11 @@
             
             <div id="landing-slideshow" class="landing-slideshow">
                 <div class="landing-top-bar">
-                    <div style="display: flex; align-items: center;">
-                        <img src="../uploads/Logo Green Enerbras 01.png" alt="Green Enerbras Logo" class="landing-logo-custom">
-                    </div>
-                    <header class="topbar" style="margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                        <div>
-                            <h1 id="welcome-title-container" data-i18n="title_user_welcome" style="margin: 0; font-size: 1.8rem; font-weight: 800; color: #ffffff; text-shadow: 0 2px 8px rgba(0,0,0,0.9);">Benvenuto, <span id="user-name-title" class="text-green"></span></h1>
-                            <p style="color: rgba(255,255,255,0.85); margin-top: 0.35rem; text-shadow: 0 1px 4px rgba(0,0,0,0.85); font-size: 0.95rem;" data-i18n="subtitle_user_welcome">Ecco il riepilogo della tua posizione nel progetto Green Enerbras.</p>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                        <div style="display: flex; align-items: center;">
+                            <img src="../uploads/Logo Green Enerbras 01.png" alt="Green Enerbras Logo" class="landing-logo-custom">
                         </div>
-                        <div style="display: flex; align-items: center; gap: 1.25rem;">
+                        <div style="display: flex; align-items: center; gap: 1.25rem; margin-top: 0.25rem;">
                             <div class="lang-tools-wrapper">
                                 <div class="lang-selector" style="display: flex; gap: 0.5rem; align-items: center; background: rgba(0,0,0,0.45); padding: 6px 12px; border-radius: 20px; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15);">
                                     <img src="https://flagcdn.com/w40/it.png" alt="IT" data-lang="it" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
@@ -168,6 +167,12 @@
                                 <img id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=10b981&color=fff" alt="User" class="avatar" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;">
                                 <span id="user-name-nav" style="color: #ffffff; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.85);">Utente</span>
                             </div>
+                        </div>
+                    </div>
+                    <header class="topbar" style="margin-bottom: 0; width: 100%;">
+                        <div>
+                            <h1 id="welcome-title-container" data-i18n="title_user_welcome" style="margin: 0; font-size: 1.8rem; font-weight: 800; color: #ffffff; text-shadow: 0 2px 8px rgba(0,0,0,0.9);">Benvenuto, <span id="user-name-title" class="text-green"></span></h1>
+                            <p style="color: rgba(255,255,255,0.85); margin-top: 0.35rem; text-shadow: 0 1px 4px rgba(0,0,0,0.85); font-size: 0.95rem;" data-i18n="subtitle_user_welcome">Ecco il riepilogo della tua posizione nel progetto Green Enerbras.</p>
                         </div>
                     </header>
                 </div>
@@ -469,14 +474,7 @@
                         </table>
                     </div>
 
-                    <div style="flex: 1; min-width: 350px; max-width: 500px; display: flex; flex-direction: column; align-items: center;">
-                        <div style="margin-bottom: 1rem; width: 100%; text-align: right;">
-                            <label for="anonChartType" style="margin-right: 10px; color: var(--text-muted); font-size: 0.9rem;" data-i18n="chart_type">Tipo Grafico:</label>
-                            <select id="anonChartType" style="padding: 5px 10px; border-radius: 5px; background: rgba(0,0,0,0.3); color: #fff; border: 1px solid rgba(255,255,255,0.2); font-size: 0.9rem;">
-                                <option value="pie" style="color: #000;" data-i18n="chart_pie">Torta (Pie)</option>
-                                <option value="bar" style="color: #000;" data-i18n="chart_bar">Barre (Bar)</option>
-                            </select>
-                        </div>
+                    <div style="flex: 1; min-width: 350px; max-width: 500px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                         <canvas id="anonDetentionChart"></canvas>
                     </div>
                 </div>
@@ -511,7 +509,7 @@
     <!-- Data script -->
     <script src="../data.js"></script>
     <!-- App logic -->
-    <script src="user_app.js"></script>
+    <script src="user_app.js?v=45"></script>
 </body>
 </html>
 

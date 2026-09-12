@@ -234,12 +234,11 @@ document.addEventListener('DOMContentLoaded', () => {
         tableBody.appendChild(trTotal);
     }
 
-    // 5. Crea Grafico (Chart.js)
+    // 5. Crea Grafico (Chart.js - Torta)
     let detentionChartInstance = null;
     const ctx = document.getElementById('detentionChart');
-    const chartTypeSelector = document.getElementById('chartType');
 
-    function renderChart(type) {
+    function renderChart() {
         if (!ctx || validPartners.length === 0) return;
         
         if (detentionChartInstance) {
@@ -269,25 +268,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        if (type === 'bar') {
-            options.scales = {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) { return value + '%'; },
-                        color: '#94a3b8'
-                    },
-                    grid: { color: 'rgba(255,255,255,0.1)' }
-                },
-                x: {
-                    ticks: { display: false },
-                    grid: { display: false }
-                }
-            };
-        }
-
         detentionChartInstance = new Chart(ctx.getContext('2d'), {
-            type: type,
+            type: 'pie',
             plugins: [ChartDataLabels],
             data: {
                 labels: chartLabels,
@@ -296,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     data: chartData,
                     backgroundColor: baseColors.slice(0, validPartners.length),
                     borderWidth: 0,
-                    hoverOffset: type === 'pie' ? 4 : 0
+                    hoverOffset: 4
                 }]
             },
             options: options
@@ -304,13 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (ctx) {
-        renderChart('pie');
-    }
-
-    if (chartTypeSelector) {
-        chartTypeSelector.addEventListener('change', (e) => {
-            renderChart(e.target.value);
-        });
+        renderChart();
     }
 
     // Gestione Modifica ROI (In corso e A regime)
