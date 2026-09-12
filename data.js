@@ -496,7 +496,7 @@
     "totalTarget":  281000,
     "modules":  [
                     {
-                        "impianto":  "USINA 001",
+                        "impianto":  "USINA 01",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 239, Rua Projetada 03 - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -523,7 +523,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 002",
+                        "impianto":  "USINA 02",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 239-A, Rua Projetada 03 - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -550,7 +550,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 003",
+                        "impianto":  "USINA 03",
                         "nome":  "CIDADE BELA",
                         "localizzazione":  "LOTEAMENTO CIDADE BELA",
                         "zona":  "SÃO JOSE DE MIPIBU – RN – CEP 59162-000, Rua dos Sabugueiros 1038 Taborda",
@@ -577,7 +577,7 @@
                         "lng":  -35.232
                     },
                     {
-                        "impianto":  "USINA 004",
+                        "impianto":  "USINA 04",
                         "nome":  "CIDADE BELA",
                         "localizzazione":  "LOTEAMENTO CIDADE BELA",
                         "zona":  "SÃO JOSE DE MIPIBU – RN – CEP 59162-000, Rua dos Sabugueiros 1037 Taborda",
@@ -604,7 +604,7 @@
                         "lng":  -35.232
                     },
                     {
-                        "impianto":  "USINA 005",
+                        "impianto":  "USINA 05",
                         "nome":  "CAMINHO DOS VENTOS",
                         "localizzazione":  "LOTEAMENTO CAMINHO DOS VENTOS",
                         "zona":  "Município de Jandaíra/RN, Rua Antônio Barbosa de Lima, Nº S/N – Centro – Jandaíra/RN",
@@ -631,7 +631,7 @@
                         "lng":  -36.002
                     },
                     {
-                        "impianto":  "USINA 006",
+                        "impianto":  "USINA 06",
                         "nome":  "CAMINHO DOS VENTOS",
                         "localizzazione":  "LOTEAMENTO CAMINHO DOS VENTOS",
                         "zona":  "Município de Jandaíra/RN, Rua Antônio Barbosa de Lima, Nº S/N – Centro – Jandaíra/RN",
@@ -658,7 +658,7 @@
                         "lng":  -36.002
                     },
                     {
-                        "impianto":  "USINA 007",
+                        "impianto":  "USINA 07",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 240, - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -685,7 +685,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 008",
+                        "impianto":  "USINA 08",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 240-A, - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -712,7 +712,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 009",
+                        "impianto":  "USINA 09",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 240-A, - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -739,7 +739,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 010",
+                        "impianto":  "USINA 10",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 240-A, - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -766,7 +766,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 011",
+                        "impianto":  "USINA 11",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 240-A, - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -793,7 +793,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 012",
+                        "impianto":  "USINA 12",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 240-A, - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -820,7 +820,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "12/09/2026 13:37",
+    "lastUpdated":  "12/09/2026 13:41",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,

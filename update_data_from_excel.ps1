@@ -530,6 +530,7 @@ function Get-ImpiantiModulesData {
             $numId = 0
             if (![int]::TryParse($idRaw, [ref]$numId)) { continue }
 
+            $impName = if ($rDict.ContainsKey('B') -and $rDict['B']) { $rDict['B'].Trim() } else { ('USINA {0:D2}' -f $numId) }
             $nome = if ($rDict.ContainsKey('C') -and $rDict['C']) { $rDict['C'].Trim() } else { '' }
             $loc = if ($rDict.ContainsKey('D') -and $rDict['D']) { $rDict['D'].Trim() } else { '' }
             $zona = if ($rDict.ContainsKey('E') -and $rDict['E']) { $rDict['E'].Trim() } else { '' }
@@ -586,7 +587,7 @@ function Get-ImpiantiModulesData {
             }
 
             $mod = [PSCustomObject]@{
-                impianto = ('USINA {0:D3}' -f $numId)
+                impianto = $impName
                 nome = $nome
                 localizzazione = $loc
                 zona = $zona
