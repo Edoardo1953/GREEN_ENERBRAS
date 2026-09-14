@@ -15,9 +15,10 @@
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="../admin/Loghi/Green Enerbras solo logo.png">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="../auth.js?v=300"></script>
-    <script src="../i18n.js?v=300"></script>
-    <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="../auth.js?v=202609141445"></script>
+    <script src="../i18n.js?v=202609141445"></script>
+    <script>Auth.requireRole(['admin', 'partner', 'visitor', 'user', 'investitore', 'ospite']);</script>
 </head>
 <body>
     <div class="app-container">
@@ -44,9 +45,6 @@
                 </div>
                 <div class="nav-item-row" data-page="tristar">
                     <a href="../admin/tristar.html" class="nav-item"><i class="fa-solid fa-file-contract"></i> <span data-i18n="nav_tristar">Documentazione TRI STAR</span></a>
-                </div>
-                <div class="nav-item-row" data-page="azionariato">
-                    <a href="../admin/index.html" class="nav-item"><i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_azionariato">Azionariato (LPs)</span></a>
                 </div>
                 <div class="nav-item-row" data-page="banca">
                     <a href="../admin/banca.html" class="nav-item"><i class="fa-solid fa-building-columns"></i> <span data-i18n="nav_conto">Conto Bancario</span></a>
@@ -459,7 +457,7 @@
                                 <tr>
                                     <th style="width: 30px;"></th>
                                     <th data-i18n="table_riferimento">Riferimento</th>
-                                    <th data-i18n="table_tipo" data-i18n="table_tipo">Tipo</th>
+                                    <th data-i18n="table_tipo">Tipo</th>
                                     <th data-i18n="table_det">Det. %</th>
                                     <th data-i18n="table_sottoscritto">Sottoscritto</th>
                                     <th data-i18n="table_versato">Versato</th>
@@ -506,9 +504,9 @@
     </div>
 
     <!-- Data script -->
-    <script src="../data.js?v=202609121341"></script>
+    <script src="../data.js?v=202609141445"></script>
     <!-- App logic -->
-    <script src="user_app.js?v=202609121341"></script>
+    <script src="user_app.js?v=202609141445"></script>
 </body>
 </html>
 

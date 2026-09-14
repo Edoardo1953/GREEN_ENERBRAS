@@ -14,7 +14,7 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 
-const db = (typeof firebase !== 'undefined' && firebase.apps.length) ? firebase.database() : null;
+const db = (typeof firebase !== 'undefined' && firebase.apps.length && typeof firebase.database === 'function') ? firebase.database() : null;
 
 // ==========================================
 // Theme Manager (Dark / Light Grey Theme)
@@ -369,7 +369,7 @@ const Auth = {
                 event.stopPropagation();
             } catch(e) {}
         }
-        if (!pageKey) return false;
+        if (!pageKey || pageKey === 'azionariato') return false;
 
         // Anti-bounce guard
         window._lastToggleTimes = window._lastToggleTimes || {};
@@ -601,7 +601,7 @@ const Auth = {
             if (!pageKey) return;
             
             btn.setAttribute('data-page', pageKey);
-            if (isUser) {
+            if (isUser || pageKey === 'azionariato') {
                 btn.style.setProperty('display', 'none', 'important');
             } else {
                 btn.style.setProperty('display', 'inline-flex', 'important');
@@ -631,6 +631,11 @@ const Auth = {
             const pageKey = row.getAttribute('data-page') || getPageKeyFromElement(row.querySelector('a'));
             if (pageKey && pageKey !== 'my_report') {
                 if (isUser) {
+                    // Azionariato (LPs) admin view MUST NEVER be shown in menu for Users
+                    if (pageKey === 'azionariato') {
+                        row.style.setProperty('display', 'none', 'important');
+                        return;
+                    }
                     const isVisible = (Auth.pageVisibility[pageKey] !== false);
                     row.style.setProperty('display', isVisible ? 'flex' : 'none', 'important');
                 } else {

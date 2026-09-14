@@ -97,8 +97,11 @@ const translations = {
         'section_stato_globale': 'Stato Globale del Progetto TRI STAR SCP',
         'title_moduli_fotovoltaici': 'Moduli Fotovoltaici in Brasile',
         'kpi_moduli_attivi': 'Moduli Attivi',
+        'kpi_finiti_attesa': 'Finiti in attesa autorizzazione',
+        'kpi_in_costruzione': 'In costruzione',
         'kpi_in_corso': 'In corso di realizzazione',
         'kpi_energia_totale': 'Energia Generata Totale',
+        'scroll_report': 'Scorri per vedere il tuo report',
 
         // --- PRODUZIONE ---
         'title_produzione': 'Produzione Energia Elettrica',
@@ -416,8 +419,11 @@ const translations = {
         'section_stato_globale': 'Global Status of TRI STAR SCP Project',
         'title_moduli_fotovoltaici': 'Photovoltaic Modules in Brazil',
         'kpi_moduli_attivi': 'Active Modules',
+        'kpi_finiti_attesa': 'Completed awaiting authorization',
+        'kpi_in_costruzione': 'Under Construction',
         'kpi_in_corso': 'Under Construction',
         'kpi_energia_totale': 'Total Energy Generated',
+        'scroll_report': 'Scroll to view your report',
 
         // --- PRODUZIONE ---
         'title_produzione': 'Electrical Energy Production',
@@ -735,8 +741,11 @@ const translations = {
         'section_stato_globale': 'État Global du Projet TRI STAR SCP',
         'title_moduli_fotovoltaici': 'Modules Photovoltaïques au Brésil',
         'kpi_moduli_attivi': 'Modules Actifs',
+        'kpi_finiti_attesa': 'Terminés en attente d\'autorisation',
+        'kpi_in_costruzione': 'En Construction',
         'kpi_in_corso': 'En Construction',
         'kpi_energia_totale': 'Énergie Totale Générée',
+        'scroll_report': 'Faites défiler pour voir votre rapport',
 
         // --- PRODUZIONE ---
         'title_produzione': 'Production d\'Énergie Électrique',
