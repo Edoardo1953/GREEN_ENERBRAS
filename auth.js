@@ -92,7 +92,8 @@ const DEFAULT_PAGE_VISIBILITY = {
     azionariato: false,
     banca: false,
     strumenti: false,
-    risultati: false
+    risultati: false,
+    contabilita: false
 };
 
 function getPageKeyFromElement(el) {

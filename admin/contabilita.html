@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contabilità PCN - GREEN ENERBRAS ONE SCSp</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Librerie Esportazione -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    <link rel="stylesheet" href="../style.css?v=300">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="../auth.js?v=300"></script>
+    <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
+    <script src="../i18n.js?v=300"></script>
+
+    <style>
+        .kpi-grid-contabilita {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+        .contab-kpi-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .contab-kpi-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+        .contab-kpi-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .contab-kpi-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: white;
+        }
+        .btn-action-contab {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        .btn-action-contab:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+            color: #10b981;
+        }
+        .bilan-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        @media (max-width: 900px) {
+            .bilan-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        /* Supporto Tema Chiaro / Grigio */
+        body.theme-light .contab-kpi-card {
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+        }
+        body.theme-light .contab-kpi-title {
+            color: #64748b !important;
+        }
+        body.theme-light .btn-action-contab {
+            background: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #1e293b !important;
+        }
+        body.theme-light .btn-action-contab:hover {
+            background: #f0fdf4 !important;
+            border-color: #10b981 !important;
+            color: #10b981 !important;
+        }
+        body.theme-light .tab-btn {
+            color: #475569 !important;
+        }
+        body.theme-light .tab-btn.active {
+            color: #10b981 !important;
+            border-bottom: 3px solid #10b981 !important;
+        }
+        body.theme-light .table-container table {
+            color: #0f172a !important;
+        }
+        body.theme-light .table-container table td,
+        body.theme-light .table-container table th {
+            color: #1e293b !important;
+        }
+        body.theme-light .table-container thead {
+            background: #f1f5f9 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass-panel">
+            <div class="logo" style="display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; padding: 0.5rem 0.25rem;">
+                <img src="Loghi/Logo Green Enerbras 01.png" alt="GREEN ENERBRAS" style="max-width: 100%; height: auto; max-height: 105px; object-fit: contain;">
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-visibility-header">
+                    <span data-i18n="nav_menu_title">PAGINA</span>
+                    <span class="user-view-col-header" data-i18n="nav_col_partner_view"><i class="fa-solid fa-users-viewfinder"></i> USER VIEW</span>
+                </div>
+                <div class="nav-item-row" data-page="azionariato">
+                    <a href="index.html" class="nav-item"><i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_azionariato">Azionariato (LPs)</span></a>
+                </div>
+                <div class="nav-item-row" data-page="banca">
+                    <a href="banca.html" class="nav-item"><i class="fa-solid fa-building-columns"></i> <span data-i18n="nav_conto">Conto Bancario</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="banca" data-visible="false" onclick="Auth.togglePageVisibility('banca')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="produzione">
+                    <a href="produzione.html" class="nav-item"><i class="fa-solid fa-solar-panel"></i> <span data-i18n="nav_produzione">Produzione Energia</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="produzione" data-visible="true" onclick="Auth.togglePageVisibility('produzione')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="vendite">
+                    <a href="vendite.html" class="nav-item"><i class="fa-solid fa-money-bill-trend-up"></i> <span data-i18n="nav_vendite">Vendite Energia</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="vendite" data-visible="true" onclick="Auth.togglePageVisibility('vendite')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="impianti">
+                    <a href="impianti.html" class="nav-item"><i class="fa-solid fa-map-location-dot"></i> <span data-i18n="nav_impianti">Impianti e Mappa</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="impianti" data-visible="true" onclick="Auth.togglePageVisibility('impianti')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="reporting">
+                    <a href="reporting.html" class="nav-item"><i class="fa-solid fa-file-pdf"></i> <span data-i18n="nav_reporting">Documentazione Green Enerbras</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="reporting" data-visible="true" onclick="Auth.togglePageVisibility('reporting')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="tristar">
+                    <a href="tristar.html" class="nav-item"><i class="fa-solid fa-file-contract"></i> <span data-i18n="nav_tristar">Documentazione TRI STAR</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="tristar" data-visible="true" onclick="Auth.togglePageVisibility('tristar')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.8rem 0;"></div>
+                <div class="nav-item-row" data-page="strumenti">
+                    <a href="strumenti.html" class="nav-item"><i class="fa-solid fa-toolbox"></i> <span data-i18n="nav_strumenti">Strumenti</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="strumenti" data-visible="false" onclick="Auth.togglePageVisibility('strumenti')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="risultati">
+                    <a href="risultati.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> <span data-i18n="menu_risultati">Risultati</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="risultati" data-visible="false" onclick="Auth.togglePageVisibility('risultati')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="contabilita">
+                    <a href="contabilita.html" class="nav-item active"><i class="fa-solid fa-book-bookmark"></i> <span data-i18n="menu_contabilita">Contabilità</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="contabilita" data-visible="false" onclick="Auth.togglePageVisibility('contabilita')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; margin-top: 1rem; border: 1px dashed #3b82f6; justify-content: center;"><i class="fa-solid fa-right-left"></i> <span data-i18n="nav_switch_user">Switch to USER</span></a>
+                <a href="#" onclick="Auth.logout()" class="nav-item" style="color: #ef4444; margin-top: 0.5rem; justify-content: center;"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="nav_logout">Esci</span></a>
+                <div class="update-info">
+                    <p data-i18n="last_updated">Ultimo aggiornamento:</p>
+                    <p id="last-updated" class="text-bold">--/--/----</p>
+                    <button class="btn-refresh" onclick="if(window.location.hostname==='localhost'){fetch('http://localhost:8081/update').then(function(r){window.location.reload()}).catch(function(){alert('Errore: Il server locale non è avviato.')})}else{window.location.reload(true)}" data-i18n="btn_refresh"><i class="fa-solid fa-rotate-right"></i> Ricarica Dati</button>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div>
+                    <h1 data-i18n="title_contabilita" style="margin-bottom: 0.25rem;">Contabilità SCSp (PCN Lussemburgo)</h1>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">GREEN ENERBRAS ONE SCSp • RCS: B 295061 • Matricule: 2025 5805 747</p>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    <div class="lang-tools-wrapper">
+                        <div class="lang-selector" style="display: flex; gap: 0.5rem; align-items: center;">
+                            <img src="https://flagcdn.com/w40/it.png" alt="IT" data-lang="it" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                            <img src="https://flagcdn.com/w40/gb.png" alt="EN" data-lang="en" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                            <img src="https://flagcdn.com/w40/fr.png" alt="FR" data-lang="fr" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        </div>
+                        <button type="button" class="btn-theme-toggle" onclick="ThemeManager.toggle()" title="Cambia tema: Scuro / Grigio chiaro">
+                            <i class="fa-solid fa-wrench"></i> <span class="theme-toggle-text">TOOLS</span>
+                        </button>
+                    </div>
+                    <div class="user-profile">
+                        <img src="https://ui-avatars.com/api/?name=Edoardo+Tubia&background=3b82f6&color=fff" alt="Admin" class="avatar">
+                        <span>Edoardo Tubia (Admin)</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Top Controls & Export Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <div style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <label style="font-weight: 700; color: var(--text-main);" data-i18n="filter_anno">Anno</label>
+                        <select id="filter-year" class="filter-input" style="padding: 0.55rem 1rem; border-radius: 8px; font-weight: bold; background: rgba(0,0,0,0.25); color: var(--text-main); border: 1px solid var(--border-color); cursor: pointer;">
+                            <option value="2025" selected>2025 (Chiuso)</option>
+                            <option value="2026">2026 (In corso)</option>
+                            <option value="all" data-i18n="filter_tutti_anni">Tutti gli anni (Storico)</option>
+                        </select>
+                    </div>
+                    <div id="quadratura-badge" style="display: inline-flex; align-items: center;"></div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                    <button class="btn-action-contab" onclick="exportContabilitaExcel()"><i class="fa-solid fa-file-excel" style="color: #10b981;"></i> <span data-i18n="btn_export_excel">Esporta Excel (XLSX)</span></button>
+                    <button class="btn-action-contab" onclick="exportContabilitaPDF()"><i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i> <span data-i18n="btn_export_pdf">Esporta PDF</span></button>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-grid-contabilita">
+                <div class="contab-kpi-card glass-panel">
+                    <div class="contab-kpi-title"><span data-i18n="kpi_total_actif">Totale Attivo (Actif)</span> <i class="fa-solid fa-wallet" style="color: #38bdf8;"></i></div>
+                    <div class="contab-kpi-value" id="kpi-total-actif" style="color: #38bdf8;">-- €</div>
+                </div>
+                <div class="contab-kpi-card glass-panel">
+                    <div class="contab-kpi-title"><span data-i18n="kpi_total_passif">Totale Passivo (Passif)</span> <i class="fa-solid fa-scale-balanced" style="color: #34d399;"></i></div>
+                    <div class="contab-kpi-value" id="kpi-total-passif" style="color: #34d399;">-- €</div>
+                </div>
+                <div class="contab-kpi-card glass-panel">
+                    <div class="contab-kpi-title"><span data-i18n="kpi_capitale_netto">Capitale Sottoscritto</span> <i class="fa-solid fa-landmark" style="color: #fbbf24;"></i></div>
+                    <div class="contab-kpi-value" id="kpi-capitale-netto" style="color: #f59e0b;">-- €</div>
+                </div>
+                <div class="contab-kpi-card glass-panel">
+                    <div class="contab-kpi-title"><span data-i18n="kpi_risultato_esercizio">Risultato Esercizio</span> <i class="fa-solid fa-chart-line" style="color: #f87171;"></i></div>
+                    <div class="contab-kpi-value" id="kpi-risultato-esercizio">-- €</div>
+                </div>
+                <div class="contab-kpi-card glass-panel">
+                    <div class="contab-kpi-title"><span data-i18n="kpi_disponibilita_banca">C/C Banque Luxembourg</span> <i class="fa-solid fa-building-columns" style="color: #10b981;"></i></div>
+                    <div class="contab-kpi-value" id="kpi-disponibilita-banca" style="color: #10b981;">-- €</div>
+                </div>
+                <div class="contab-kpi-card glass-panel">
+                    <div class="contab-kpi-title"><span data-i18n="kpi_partecipazioni">Partecipazioni (SCP)</span> <i class="fa-solid fa-diagram-project" style="color: #60a5fa;"></i></div>
+                    <div class="contab-kpi-value" id="kpi-partecipazioni" style="color: #60a5fa;">-- €</div>
+                </div>
+            </div>
+
+            <!-- Main Panel with Tabs -->
+            <section class="dashboard-grid" style="grid-template-columns: 1fr; margin-top: 1rem;">
+                <div class="glass-panel" style="grid-column: 1 / -1; min-height: 550px; position: relative;">
+                    
+                    <!-- Tabs -->
+                    <div class="tabs-container" style="display: flex; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 1.5rem; flex-wrap: wrap;">
+                        <button class="tab-btn active" onclick="switchTab('tab-pnl')" style="background: none; border: none; color: white; padding: 1rem 1.75rem; cursor: pointer; border-bottom: 3px solid #10b981; font-weight: bold; font-size: 1rem;" data-i18n="tab_pnl">Perdite e Profitti (P&L)</button>
+                        <button class="tab-btn" onclick="switchTab('tab-bilan')" style="background: none; border: none; color: white; padding: 1rem 1.75rem; cursor: pointer; border-bottom: 3px solid transparent; opacity: 0.7; font-weight: bold; font-size: 1rem;" data-i18n="tab_bilan">Stato Patrimoniale (Bilan)</button>
+                        <button class="tab-btn" onclick="switchTab('tab-grand-livre')" style="background: none; border: none; color: white; padding: 1rem 1.75rem; cursor: pointer; border-bottom: 3px solid transparent; opacity: 0.7; font-weight: bold; font-size: 1rem;" data-i18n="tab_grand_livre">Giornale Movimenti / Mastrini</button>
+                    </div>
+
+                    <!-- TAB 1: COMPTE DE PERTES ET PROFITS (P&L) -->
+                    <div id="tab-pnl" class="tab-content" style="display: block;">
+                        <div class="table-container" style="overflow-x: auto;">
+                            <table style="width: 100%; color: white; border-collapse: collapse; min-width: 800px;">
+                                <thead style="background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    <tr>
+                                        <th style="padding: 1rem; text-align: left; width: 180px; min-width: 170px;"><span data-i18n="col_pcn_code">Conto PCN</span></th>
+                                        <th style="padding: 1rem; text-align: left;"><span data-i18n="col_pcn_desc">Descrizione PCN / Voce</span></th>
+                                        <th style="padding: 1rem; text-align: left; width: 150px;"><span data-i18n="col_rif_fattura">Rif. / Note</span></th>
+                                        <th style="padding: 1rem; text-align: right; width: 180px;"><span data-i18n="col_ammontare">Importo (€)</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body-pnl">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: BILAN COMPTABLE (STATO PATRIMONIALE) -->
+                    <div id="tab-bilan" class="tab-content" style="display: none;">
+                        <div class="bilan-grid">
+                            <!-- ACTIF TABLE -->
+                            <div style="background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.2); padding: 1rem;">
+                                <h3 style="margin-top: 0; color: #93c5fd; border-bottom: 1px solid rgba(59, 130, 246, 0.3); padding-bottom: 0.5rem;" data-i18n="section_actif">
+                                    <i class="fa-solid fa-circle-arrow-down"></i> ATTIVO (ACTIF)
+                                </h3>
+                                <table style="width: 100%; color: white; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; color: var(--text-muted);">
+                                            <th style="padding: 0.6rem 0.5rem; text-align: left; width: 110px; min-width: 90px; white-space: nowrap;">PCN</th>
+                                            <th style="padding: 0.6rem 0.5rem; text-align: left;">Voce</th>
+                                            <th style="padding: 0.6rem 0.5rem; text-align: right; width: 150px; min-width: 140px; white-space: nowrap;">Importo (€)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table-body-bilan-actif">
+                                        <!-- Injected via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- PASSIF TABLE -->
+                            <div style="background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2); padding: 1rem;">
+                                <h3 style="margin-top: 0; color: #6ee7b7; border-bottom: 1px solid rgba(16, 185, 129, 0.3); padding-bottom: 0.5rem; font-size: 1.05rem;" data-i18n="section_passif">
+                                    <i class="fa-solid fa-circle-arrow-up"></i> PASSIVO & PATRIMONIO (PASSIF)
+                                </h3>
+                                <table style="width: 100%; color: white; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; color: var(--text-muted);">
+                                            <th style="padding: 0.6rem 0.5rem; text-align: left; width: 110px; min-width: 90px; white-space: nowrap;">PCN</th>
+                                            <th style="padding: 0.6rem 0.5rem; text-align: left;">Voce</th>
+                                            <th style="padding: 0.6rem 0.5rem; text-align: right; width: 150px; min-width: 140px; white-space: nowrap;">Importo (€)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table-body-bilan-passif">
+                                        <!-- Injected via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: GRAND LIVRE / JOURNAL -->
+                    <div id="tab-grand-livre" class="tab-content" style="display: none;">
+                        <div class="table-container" style="overflow-x: auto;">
+                            <table style="width: 100%; color: white; border-collapse: collapse; min-width: 950px;">
+                                <thead style="background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    <tr>
+                                        <th style="padding: 0.8rem 0.5rem; text-align: center; width: 40px;">#</th>
+                                        <th style="padding: 0.8rem 0.5rem; text-align: left; width: 100px;"><span data-i18n="col_data_contabile">Data</span></th>
+                                        <th style="padding: 0.8rem 0.5rem; text-align: left;"><span data-i18n="col_beneficiario">Partner / Descrizione</span></th>
+                                        <th style="padding: 0.8rem 0.5rem; text-align: left; width: 130px;"><span data-i18n="col_pcn_code">Conto PCN</span></th>
+                                        <th style="padding: 0.8rem 0.5rem; text-align: center; width: 80px;">Sez.</th>
+                                        <th style="padding: 0.8rem 0.5rem; text-align: right; width: 110px;"><span data-i18n="col_imponibile">Imponibile</span></th>
+                                        <th style="padding: 0.8rem 0.5rem; text-align: right; width: 90px;"><span data-i18n="col_tva">TVA</span></th>
+                                        <th style="padding: 0.8rem 0.5rem; text-align: right; width: 120px;"><span data-i18n="col_totale">Totale (€)</span></th>
+                                        <th style="padding: 0.8rem 0.5rem; text-align: right; width: 130px;"><span data-i18n="col_progressivo">Progressivo</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body-grand-livre">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="../data.js"></script>
+    <script src="contabilita_app.js?v=325"></script>
+</body>
+</html>
