@@ -133,6 +133,46 @@
             color: #334155 !important;
             border-bottom: 1px dashed #e2e8f0 !important;
         }
+        .mastrino-row:hover {
+            background: rgba(16, 185, 129, 0.08) !important;
+        }
+        body.theme-light .mastrino-group-header {
+            background: #e2e8f0 !important;
+            color: #0f172a !important;
+        }
+        body.theme-light .mastrino-row {
+            background: #ffffff !important;
+            color: #1e293b !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        body.theme-light .mastrino-row:hover {
+            background: #f1f5f9 !important;
+        }
+        body.theme-light .mastrino-detail-row {
+            background: #f8fafc !important;
+            color: #334155 !important;
+            border-bottom: 1px dashed #cbd5e1 !important;
+        }
+        .bilan-group-row:hover {
+            background: rgba(59, 130, 246, 0.09) !important;
+        }
+        body.theme-light .bilan-group-row:hover {
+            background: #f1f5f9 !important;
+        }
+        body.theme-light .bilan-detail-row {
+            background: #ffffff !important;
+            color: #334155 !important;
+            border-bottom: 1px dashed #cbd5e1 !important;
+        }
+        body.theme-light #filter-journal-search,
+        body.theme-light #filter-journal-date,
+        body.theme-light #filter-journal-pcn,
+        body.theme-light #filter-journal-section,
+        body.theme-light #filter-mastrini-search {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border-color: #cbd5e1 !important;
+        }
     </style>
 </head>
 <body>
@@ -279,7 +319,8 @@
                     <div class="tabs-container" style="display: flex; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 1.5rem; flex-wrap: wrap;">
                         <button class="tab-btn active" onclick="switchTab('tab-pnl')" style="background: none; border: none; color: white; padding: 1rem 1.75rem; cursor: pointer; border-bottom: 3px solid #10b981; font-weight: bold; font-size: 1rem;" data-i18n="tab_pnl">Perdite e Profitti (P&L)</button>
                         <button class="tab-btn" onclick="switchTab('tab-bilan')" style="background: none; border: none; color: white; padding: 1rem 1.75rem; cursor: pointer; border-bottom: 3px solid transparent; opacity: 0.7; font-weight: bold; font-size: 1rem;" data-i18n="tab_bilan">Stato Patrimoniale (Bilan)</button>
-                        <button class="tab-btn" onclick="switchTab('tab-grand-livre')" style="background: none; border: none; color: white; padding: 1rem 1.75rem; cursor: pointer; border-bottom: 3px solid transparent; opacity: 0.7; font-weight: bold; font-size: 1rem;" data-i18n="tab_grand_livre">Giornale Movimenti / Mastrini</button>
+                        <button class="tab-btn" onclick="switchTab('tab-journal')" style="background: none; border: none; color: white; padding: 1rem 1.75rem; cursor: pointer; border-bottom: 3px solid transparent; opacity: 0.7; font-weight: bold; font-size: 1rem;" data-i18n="tab_journal">Giornale Movimenti</button>
+                        <button class="tab-btn" onclick="switchTab('tab-mastrini')" style="background: none; border: none; color: white; padding: 1rem 1.75rem; cursor: pointer; border-bottom: 3px solid transparent; opacity: 0.7; font-weight: bold; font-size: 1rem;" data-i18n="tab_mastrini">Mastrini</button>
                     </div>
 
                     <!-- TAB 1: COMPTE DE PERTES ET PROFITS (P&L) -->
@@ -303,6 +344,18 @@
 
                     <!-- TAB 2: BILAN COMPTABLE (STATO PATRIMONIALE) -->
                     <div id="tab-bilan" class="tab-content" style="display: none;">
+                        <!-- BARRA STRUMENTI & CONTROLLI FISARMONICA BILAN -->
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.88rem;">
+                                <i class="fa-solid fa-circle-info" style="color: #3b82f6;"></i>
+                                <span>Clicca sulle singole voci di Attivo e Passivo per aprire/chiudere il dettaglio delle operazioni</span>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <button type="button" class="btn-action-contab" style="padding: 0.4rem 0.85rem; font-size: 0.82rem;" onclick="toggleAllBilanGroups(true)"><i class="fa-solid fa-folder-open"></i> <span data-i18n="btn_espandi_tutti">Espandi Tutti</span></button>
+                                <button type="button" class="btn-action-contab" style="padding: 0.4rem 0.85rem; font-size: 0.82rem;" onclick="toggleAllBilanGroups(false)"><i class="fa-solid fa-folder"></i> <span data-i18n="btn_comprimi_tutti">Comprimi Tutti</span></button>
+                            </div>
+                        </div>
+
                         <div class="bilan-grid">
                             <!-- ACTIF TABLE -->
                             <div style="background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.2); padding: 1rem;">
@@ -344,8 +397,39 @@
                         </div>
                     </div>
 
-                    <!-- TAB 3: GRAND LIVRE / JOURNAL -->
-                    <div id="tab-grand-livre" class="tab-content" style="display: none;">
+                    <!-- TAB 3: GIORNALE MOVIMENTI (JOURNAL) -->
+                    <div id="tab-journal" class="tab-content" style="display: none;">
+                        <!-- FILTRI GIORNALE (IN ALTO / TITOLI) -->
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; display: flex; flex-wrap: wrap; gap: 0.85rem; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; flex: 1;">
+                                <div style="position: relative; min-width: 180px; flex: 1;">
+                                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+                                    <input type="text" id="filter-journal-search" oninput="onJournalFilterChange()" placeholder="Cerca partner o descrizione..." data-i18n-placeholder="filter_cerca_movimenti" style="width: 100%; padding: 0.5rem 0.75rem 0.5rem 2rem; border-radius: 7px; background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; font-size: 0.88rem;">
+                                </div>
+                                <div style="min-width: 130px;">
+                                    <input type="text" id="filter-journal-date" oninput="onJournalFilterChange()" placeholder="Filtra Data..." style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 7px; background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; font-size: 0.88rem;">
+                                </div>
+                                <div style="min-width: 150px;">
+                                    <select id="filter-journal-pcn" onchange="onJournalFilterChange()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 7px; background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; font-size: 0.88rem; cursor: pointer;">
+                                        <option value="" data-i18n="filter_tutti_conti">Tutti i conti PCN</option>
+                                    </select>
+                                </div>
+                                <div style="min-width: 140px;">
+                                    <select id="filter-journal-section" onchange="onJournalFilterChange()" style="width: 100%; padding: 0.5rem 0.75rem; border-radius: 7px; background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; font-size: 0.88rem; cursor: pointer;">
+                                        <option value="" data-i18n="filter_tutte_sezioni">Tutte le sezioni</option>
+                                        <option value="BIL">BILAN (Bilancio)</option>
+                                        <option value="PP">P&L (Perdite e Profitti)</option>
+                                    </select>
+                                </div>
+                                <button type="button" class="btn-action-contab" onclick="resetJournalFilters()" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;">
+                                    <i class="fa-solid fa-rotate-left"></i> <span data-i18n="btn_reset_filtri">Reset Filtri</span>
+                                </button>
+                            </div>
+                            <div id="journal-filter-stats" style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600; white-space: nowrap;">
+                                <!-- Injected via JS -->
+                            </div>
+                        </div>
+
                         <div class="table-container" style="overflow-x: auto;">
                             <table style="width: 100%; color: white; border-collapse: collapse; min-width: 950px;">
                                 <thead style="background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1);">
@@ -361,7 +445,48 @@
                                         <th style="padding: 0.8rem 0.5rem; text-align: right; width: 130px;"><span data-i18n="col_progressivo">Progressivo</span></th>
                                     </tr>
                                 </thead>
-                                <tbody id="table-body-grand-livre">
+                                <tbody id="table-body-journal">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: MASTRINI (GRAND LIVRE DEI CONTI) -->
+                    <div id="tab-mastrini" class="tab-content" style="display: none;">
+                        <!-- HEADER CONTROLS MASTRINI -->
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; display: flex; flex-wrap: wrap; gap: 0.85rem; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; flex: 1;">
+                                <div style="position: relative; min-width: 200px; flex: 1;">
+                                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+                                    <input type="text" id="filter-mastrini-search" oninput="onMastriniFilterChange()" placeholder="Cerca conto per codice o nome..." style="width: 100%; padding: 0.5rem 0.75rem 0.5rem 2rem; border-radius: 7px; background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: white; font-size: 0.88rem;">
+                                </div>
+                                <button type="button" class="btn-action-contab" onclick="toggleAllMastrini(true)" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;">
+                                    <i class="fa-solid fa-folder-open"></i> <span data-i18n="btn_espandi_tutti">Espandi Tutti</span>
+                                </button>
+                                <button type="button" class="btn-action-contab" onclick="toggleAllMastrini(false)" style="padding: 0.5rem 0.85rem; font-size: 0.85rem;">
+                                    <i class="fa-solid fa-folder"></i> <span data-i18n="btn_comprimi_tutti">Comprimi Tutti</span>
+                                </button>
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                                <i class="fa-solid fa-info-circle"></i> Clicca su un mastrino per consultare le registrazioni di dettaglio
+                            </div>
+                        </div>
+
+                        <div class="table-container" style="overflow-x: auto;">
+                            <table style="width: 100%; color: white; border-collapse: collapse; min-width: 980px;">
+                                <thead style="background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    <tr>
+                                        <th style="padding: 0.9rem 0.75rem; text-align: left; width: 140px;"><span data-i18n="col_conto_pcn">Nr Conto</span></th>
+                                        <th style="padding: 0.9rem 0.75rem; text-align: left;"><span data-i18n="col_titolo_conto">Titolo del Conto</span></th>
+                                        <th style="padding: 0.9rem 0.75rem; text-align: center; width: 90px;"><span data-i18n="col_tipo_conto">Sezione</span></th>
+                                        <th style="padding: 0.9rem 0.75rem; text-align: right; width: 150px;"><span data-i18n="col_saldo_prec">Saldo Precedente</span></th>
+                                        <th style="padding: 0.9rem 0.75rem; text-align: right; width: 150px;"><span data-i18n="col_entrate_costi">Entrate / Costi</span></th>
+                                        <th style="padding: 0.9rem 0.75rem; text-align: right; width: 150px;"><span data-i18n="col_uscite_ricavi">Uscite / Ricavi</span></th>
+                                        <th style="padding: 0.9rem 0.75rem; text-align: right; width: 160px;"><span data-i18n="col_nuovo_saldo">Nuovo Saldo</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body-mastrini">
                                     <!-- Injected via JS -->
                                 </tbody>
                             </table>
