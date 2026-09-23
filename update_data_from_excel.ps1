@@ -120,6 +120,24 @@ function Get-TransfertsExchangeData {
 function Get-ContabilitaBankTransactions {
     param([string]$projectDir)
     
+    # 1. Try Python extraction first (handles complex formulas, inline strings, openpyxl)
+    $pyScript = Join-Path $projectDir "extract_contabilita.py"
+    if (Test-Path $pyScript) {
+        try {
+            $pyOutput = & python $pyScript $projectDir 2>$null
+            if ($pyOutput) {
+                $pyTxs = $pyOutput | ConvertFrom-Json
+                if ($pyTxs -and $pyTxs.Count -gt 0) {
+                    Write-Host "Totale movimenti bancari estratti con Python: $($pyTxs.Count)"
+                    return $pyTxs
+                }
+            }
+        } catch {
+            Write-Host "Python extraction non riuscita, passaggio al parser PowerShell..."
+        }
+    }
+
+    # 2. PowerShell fallback parser
     $searchPaths = @(
         (Join-Path $projectDir "uploads\CONTABILITA Green Enerbras One SCSp.xlsx"),
         (Join-Path $projectDir "CONTABILITA Green Enerbras One SCSp.xlsx"),
@@ -146,7 +164,7 @@ function Get-ContabilitaBankTransactions {
         Copy-Item -Path $xlsxPath -Destination $tempCopy -Force
         $zip = [System.IO.Compression.ZipFile]::OpenRead($tempCopy)
         
-        # 1. Read shared strings
+        # 1. Read shared strings if present
         $ssEntry = $zip.GetEntry('xl/sharedStrings.xml')
         $sharedStrings = @()
         if ($ssEntry) {
@@ -166,10 +184,7 @@ function Get-ContabilitaBankTransactions {
         
         $sheetObj = $wbXml.workbook.sheets.sheet | Where-Object { $_.name -like "*Compte*Banque*" -or $_.name -like "*Banque*" } | Select-Object -First 1
         if (!$sheetObj) {
-            Write-Host "Foglio 'Compte Banque' non trovato in CONTABILITA!"
-            $zip.Dispose()
-            if (Test-Path $tempCopy) { Remove-Item $tempCopy -Force }
-            return $null
+            $sheetObj = $wbXml.workbook.sheets.sheet[0]
         }
         
         $rId = $sheetObj.GetAttribute("id", "http://schemas.openxmlformats.org/officeDocument/2006/relationships")
@@ -200,17 +215,22 @@ function Get-ContabilitaBankTransactions {
             foreach ($c in $row.c) {
                 $colLetter = $c.r -replace '[0-9]', ''
                 $tAttr = $c.GetAttribute("t")
-                $vVal = if ($c.v -is [System.Array]) { $c.v[0] } else { $c.v }
                 $val = ""
-                if ($vVal) {
-                    if ($tAttr -eq "s") {
+                
+                if ($tAttr -eq "inlineStr" -or ($c.is -and $c.is.t)) {
+                    $val = if ($c.is.t -is [System.Array]) { $c.is.t[0] } else { $c.is.t }
+                    if (!$val -and $c.is) { $val = $c.is.InnerText }
+                } elseif ($tAttr -eq "s") {
+                    $vVal = if ($c.v -is [System.Array]) { $c.v[0] } else { $c.v }
+                    if ($vVal) {
                         $idx = [int]$vVal
                         if ($idx -lt $sharedStrings.Count) {
                             $val = $sharedStrings[$idx]
                         }
-                    } else {
-                        $val = $vVal
                     }
+                } else {
+                    $vVal = if ($c.v -is [System.Array]) { $c.v[0] } else { $c.v }
+                    if ($vVal) { $val = $vVal }
                 }
                 $rowDict[$colLetter] = $val
             }
@@ -219,8 +239,18 @@ function Get-ContabilitaBankTransactions {
             $category = if ($rowDict.ContainsKey('I') -and $rowDict['I']) { $rowDict['I'].Trim() } else { "" }
             $description = if ($rowDict.ContainsKey('J') -and $rowDict['J']) { $rowDict['J'].Trim() } else { "" }
             $partner = if ($rowDict.ContainsKey('L') -and $rowDict['L']) { $rowDict['L'].Trim() } else { "" }
+            $beneficiario = if ($rowDict.ContainsKey('M') -and $rowDict['M']) { $rowDict['M'].Trim() } else { "" }
+            $ordinante = if ($rowDict.ContainsKey('K') -and $rowDict['K']) { $rowDict['K'].Trim() } else { "" }
             $rawAmount = if ($rowDict.ContainsKey('Q')) { $rowDict['Q'] } else { "" }
+            $rawMontant = if ($rowDict.ContainsKey('O')) { $rowDict['O'] } else { "" }
+            $rawTva = if ($rowDict.ContainsKey('P')) { $rowDict['P'] } else { "" }
             $statut = if ($rowDict.ContainsKey('H')) { $rowDict['H'].Trim() } else { "" }
+            
+            # Partner fallback
+            if (!$partner) {
+                if ($beneficiario) { $partner = $beneficiario }
+                elseif ($ordinante) { $partner = $ordinante }
+            }
             
             # Format date
             $formattedDate = ""
@@ -241,6 +271,16 @@ function Get-ContabilitaBankTransactions {
             if ($rawAmount) {
                 $cleanAmt = $rawAmount.Trim().Replace(',', '.')
                 [void][double]::TryParse($cleanAmt, [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$numAmount)
+            } elseif ($rawMontant) {
+                $cleanM = $rawMontant.Trim().Replace(',', '.')
+                $nM = 0.0
+                [void][double]::TryParse($cleanM, [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$nM)
+                $nT = 0.0
+                if ($rawTva) {
+                    $cleanT = $rawTva.Trim().Replace(',', '.')
+                    [void][double]::TryParse($cleanT, [System.Globalization.NumberStyles]::Any, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$nT)
+                }
+                $numAmount = $nM + $nT
             }
             
             # Row 7 is Saldo iniziale
@@ -251,7 +291,6 @@ function Get-ContabilitaBankTransactions {
                 $partner = ""
                 $numAmount = 0.0
             } else {
-                # For all other rows, must have a valid date and not be draft/unpaid
                 if (!$formattedDate) { continue }
                 if ($statut -eq "NON") { continue }
             }
