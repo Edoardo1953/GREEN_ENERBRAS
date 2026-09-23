@@ -1680,51 +1680,29 @@ function renderContabilita() {
     const yearSelect = document.getElementById('filter-year');
     if (yearSelect) selectedYear = yearSelect.value;
 
+    // Movimenti dell'esercizio corrente (per P&L, Giornale e Mastrini)
     const filtered = CONTABILITA_RECORDS.filter(r => {
         if (selectedYear === 'all') return true;
         return String(r.anno) === String(selectedYear);
     });
 
-    // 1. Calcoli KPI Principali e Quadratura
-    let totalBanque = 0;
-    let totalCharges = 0;
-    let totalProduits = 0;
-    let totalImmob = 0;
-    let totalCapital = 0;
-    let totalDettes = 0;
-
-    // Saldo c/c Banca (cumulativo fino all'anno selezionato)
-    CONTABILITA_RECORDS.forEach(r => {
-        if (selectedYear === 'all' || Number(r.anno) <= Number(selectedYear)) {
-            if (!r.isNonCashAccrual && !r.isInternalOffset) {
-                totalBanque += Number(r.totale) || 0;
-            }
-        }
+    // Movimenti cumulativi fino all'esercizio selezionato (per Stato Patrimoniale / Bilan)
+    const cumFiltered = CONTABILITA_RECORDS.filter(r => {
+        if (selectedYear === 'all') return true;
+        return Number(r.anno) <= Number(selectedYear);
     });
 
+    // Movimenti degli esercizi precedenti (per calcolare il Report à nouveau)
+    const priorFiltered = CONTABILITA_RECORDS.filter(r => {
+        if (selectedYear === 'all') return false;
+        return Number(r.anno) < Number(selectedYear);
+    });
+
+    // 1. Calcoli Conto Economico (Pertes et Profits) per l'anno selezionato
+    let totalCharges = 0;
+    let totalProduits = 0;
     filtered.forEach(r => {
         const val = Number(r.totale) || 0;
-        const pcn = String(r.pcnCode || '');
-        const tip = String(r.tipologia || '');
-        const desc = String(r.desc || '');
-        const ap = String(r.ap || '');
-
-        // Bilan Immobilisations (Immobilisations financières TRI STAR)
-        if (ap === 'IMMOBILISATIONS' || tip.includes('PARTICIPATIONS') || pcn.startsWith('233') || pcn.startsWith('261')) {
-            totalImmob += Math.abs(val);
-        }
-
-        // Bilan Capitale Sociale
-        if (pcn.includes('CAPITAL') || tip.includes('CAPITAL') || desc.includes('101')) {
-            totalCapital += val;
-        }
-
-        // Factures non parvenues / Dettes
-        if (pcn.includes('472') || tip.includes('FACTURES NON PARVENUES')) {
-            totalDettes += val;
-        }
-
-        // Pertes et Profits
         if (r.tipo === 'PP' && !r.isInternalOffset) {
             if (val < 0) {
                 totalCharges += Math.abs(val);
@@ -1733,26 +1711,56 @@ function renderContabilita() {
             }
         }
     });
+    const currentNetResult = totalProduits - totalCharges;
 
-    const netResult = totalProduits - totalCharges;
+    // 2. Calcolo Risultati Esercizi Precedenti (Report à nouveau - PCN 142/122)
+    let priorNetResult = 0;
+    priorFiltered.forEach(r => {
+        const val = Number(r.totale) || 0;
+        if (r.tipo === 'PP' && !r.isInternalOffset) {
+            priorNetResult += val;
+        }
+    });
 
-    let totalActif = 0;
-    let totalPassif = 0;
+    // 3. Calcoli Stato Patrimoniale (Bilan) Cumulativi fino all'anno selezionato
+    let totalBanque = 0;
+    let totalImmob = 0;
+    let totalCapital = 0;
+    let totalDettes = 0;
 
-    if (selectedYear === '2026') {
-        // Variazione di periodo banca nel 2026
-        let banquePeriodo = 0;
-        filtered.forEach(r => {
-            if (!r.isNonCashAccrual && !r.isInternalOffset) {
-                banquePeriodo += Number(r.totale) || 0;
-            }
-        });
-        totalActif = totalImmob + banquePeriodo;
-        totalPassif = totalCapital + netResult + totalDettes;
-    } else {
-        totalActif = totalImmob + totalBanque;
-        totalPassif = totalCapital + netResult + totalDettes;
-    }
+    cumFiltered.forEach(r => {
+        const val = Number(r.totale) || 0;
+        const pcn = String(r.pcnCode || '');
+        const tip = String(r.tipologia || '');
+        const desc = String(r.desc || '');
+        const ap = String(r.ap || '');
+
+        // Saldo C/C Banca
+        if (!r.isNonCashAccrual && !r.isInternalOffset) {
+            totalBanque += val;
+        }
+
+        // Bilan Immobilisations (Immobilisations financières TRI STAR)
+        if (ap === 'IMMOBILISATIONS' || tip.includes('PARTICIPATIONS') || pcn.startsWith('233') || pcn.startsWith('261')) {
+            totalImmob += Math.abs(val);
+        }
+
+        // Bilan Capitale Sociale (Capital Souscrit)
+        if (pcn.includes('CAPITAL') || tip.includes('CAPITAL') || desc.includes('101')) {
+            totalCapital += val;
+        }
+
+        // Factures non parvenues / Dettes
+        if (pcn.includes('472') || tip.includes('FACTURES NON PARVENUES')) {
+            totalDettes += val;
+        }
+    });
+
+    // Totale Attivo (Actif) = Immobilizzazioni + Disponibilità liquide
+    const totalActif = totalImmob + totalBanque;
+
+    // Totale Passivo e Patrimonio (Passif & Capitaux) = Capitale + Risultati Esercizi Prec. + Risultato Esercizio Corrente + Debiti
+    const totalPassif = totalCapital + priorNetResult + currentNetResult + totalDettes;
 
     // Aggiornamento KPI Cards in Alto
     const elActif = document.getElementById('kpi-total-actif');
@@ -1766,8 +1774,8 @@ function renderContabilita() {
 
     const elResult = document.getElementById('kpi-risultato-esercizio');
     if (elResult) {
-        elResult.textContent = formatCurrency(netResult);
-        elResult.style.color = netResult >= 0 ? '#10b981' : '#f87171';
+        elResult.textContent = formatCurrency(currentNetResult);
+        elResult.style.color = currentNetResult >= 0 ? '#10b981' : '#f87171';
     }
 
     const elBanque = document.getElementById('kpi-disponibilita-banca');
@@ -1791,8 +1799,8 @@ function renderContabilita() {
     populateJournalPcnDropdown();
 
     // Render Tabelle
-    renderPnlTable(filtered, totalCharges, totalProduits, netResult);
-    renderBilanTable(filtered, totalImmob, totalBanque, totalActif, totalCapital, netResult, totalDettes, totalPassif);
+    renderPnlTable(filtered, totalCharges, totalProduits, currentNetResult);
+    renderBilanTable(cumFiltered, filtered, totalImmob, totalBanque, totalActif, totalCapital, priorNetResult, currentNetResult, totalDettes, totalPassif);
     renderJournalTable(filtered);
     renderMastriniTable(filtered);
 }
@@ -1919,19 +1927,19 @@ function renderPnlTable(records, totalCharges, totalProduits, netResult) {
     tbody.innerHTML = html;
 }
 
-function renderBilanTable(records, immob, bank, totalActif, capital, netResult, totalDettes, totalPassif) {
+function renderBilanTable(cumRecords, yearRecords, immob, bank, totalActif, capital, priorNetResult, netResult, totalDettes, totalPassif) {
     const tbodyActif = document.getElementById('table-body-bilan-actif');
     const tbodyPassif = document.getElementById('table-body-bilan-passif');
     if (!tbodyActif || !tbodyPassif) return;
 
-    // Estrazione movimenti per le voci di Stato Patrimoniale
+    // Estrazione movimenti per le voci di Stato Patrimoniale (cumulativi fino alla data/anno)
     const immobItems = [];
     const bankItems = [];
     const capItems = [];
     const dettesItems = [];
     const pnlItems = [];
 
-    records.forEach(r => {
+    cumRecords.forEach(r => {
         const ap = String(r.ap || '');
         const pcn = String(r.pcnCode || '');
         const tip = String(r.tipologia || '');
@@ -1952,7 +1960,10 @@ function renderBilanTable(records, immob, bank, totalActif, capital, netResult, 
         if (pcn.includes('472') || tip.includes('FACTURES NON PARVENUES')) {
             dettesItems.push(r);
         }
+    });
 
+    // Voci di P&L dell'esercizio selezionato
+    yearRecords.forEach(r => {
         if (r.tipo === 'PP' && !r.isInternalOffset) {
             pnlItems.push(r);
         }
@@ -2087,7 +2098,25 @@ function renderBilanTable(records, immob, bank, totalActif, capital, netResult, 
         });
     }
 
-    // 2. RÉSULTAT NET DE L'EXERCICE (121 / 141)
+    // 2. RÉSULTATS REPORTÉS / REPORT À NOUVEAU (142 / 122) (se presenti da esercizi precedenti)
+    if (Math.abs(priorNetResult) > 0.001) {
+        const repColor = priorNetResult >= 0 ? '#10b981' : '#f87171';
+        htmlPassif += `
+            <tr class="bilan-group-row" style="background: rgba(147, 197, 253, 0.08); font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.06); transition: background 0.2s;">
+                <td style="padding: 0.8rem 0.5rem; font-family: monospace; color: #93c5fd; white-space: nowrap; width: 110px; font-size: 0.88rem;">
+                    <span style="display:inline-block; width:14px;"></span>
+                    142 / 122
+                </td>
+                <td style="padding: 0.8rem 0.5rem;">
+                    A.IV. RÉSULTATS REPORTÉS (REPORT À NOUVEAU)
+                    <br><small style="color: var(--text-muted); font-size: 0.8rem;">Risultati economici cumulati degli esercizi precedenti (2025)</small>
+                </td>
+                <td style="padding: 0.8rem 0.5rem; text-align: right; color: ${repColor}; font-weight: bold; white-space: nowrap; width: 140px;">${formatCurrency(priorNetResult)}</td>
+            </tr>
+        `;
+    }
+
+    // 3. RÉSULTAT NET DE L'EXERCICE (121 / 141)
     const pnlHasItems = pnlItems.length > 0;
     const resId = 'bilan-passif-res';
     const resColor = netResult >= 0 ? '#10b981' : '#f87171';
@@ -2100,7 +2129,7 @@ function renderBilanTable(records, immob, bank, totalActif, capital, netResult, 
             <td style="padding: 0.8rem 0.5rem;">
                 A.V. RÉSULTAT DE L'EXERCICE
                 ${pnlHasItems ? `<span style="font-size: 0.75rem; background: rgba(239, 68, 68, 0.25); color: #fca5a5; padding: 0.15rem 0.45rem; border-radius: 4px; margin-left: 0.4rem; font-weight: normal;">${pnlItems.length} voci</span>` : ''}
-                <br><small style="color: var(--text-muted); font-size: 0.8rem;">Risultato netto economico del periodo</small>
+                <br><small style="color: var(--text-muted); font-size: 0.8rem;">Risultato netto economico del periodo (${selectedYear === 'all' ? 'Tutti gli anni' : selectedYear})</small>
             </td>
             <td style="padding: 0.8rem 0.5rem; text-align: right; color: ${resColor}; font-weight: bold; white-space: nowrap; width: 140px;">${formatCurrency(netResult)}</td>
         </tr>
@@ -2126,7 +2155,7 @@ function renderBilanTable(records, immob, bank, totalActif, capital, netResult, 
         });
     }
 
-    // 3. DETTES / FACTURES NON PARVENUES (4720000) (se presente)
+    // 4. DETTES / FACTURES NON PARVENUES (4720000) (se presente)
     if (Math.abs(totalDettes) > 0.01) {
         const dettesHasItems = dettesItems.length > 0;
         const dettesId = 'bilan-passif-dettes';
@@ -2398,6 +2427,18 @@ function renderMastriniTable(yearRecords) {
     });
     const dettesNuovoSaldo = dettesSaldoPrec + dettesInflows - dettesOutflows;
 
+    // E. RESULTATS REPORTES / REPORT A NOUVEAU (1420000 / 1220000)
+    let pnlSaldoPrec = 0;
+    if (selectedYear !== 'all' && selectedYear !== '2025') {
+        CONTABILITA_RECORDS.forEach(r => {
+            if (Number(r.anno) < Number(selectedYear)) {
+                if (r.tipo === 'PP' && !r.isInternalOffset) {
+                    pnlSaldoPrec += Number(r.totale) || 0;
+                }
+            }
+        });
+    }
+
     const bilMastrini = [
         {
             code: '1010000',
@@ -2418,28 +2459,43 @@ function renderMastriniTable(yearRecords) {
             col2: immobOutflows,
             nuovoSaldo: immobNuovoSaldo,
             items: immobItems
-        },
-        {
-            code: '4720000',
-            title: 'Dettes - Factures non parvenues (Debiti verso GP)',
-            section: 'BILAN',
-            saldoPrec: dettesSaldoPrec,
-            col1: dettesInflows, // Nuovi debiti
-            col2: dettesOutflows, // Debiti pagati
-            nuovoSaldo: dettesNuovoSaldo,
-            items: dettesItems
-        },
-        {
-            code: '512 / 513',
-            title: 'Avoirs en Banque (Banque de Luxembourg EUR)',
-            section: 'BILAN',
-            saldoPrec: bankSaldoPrec,
-            col1: bankInflows, // Entrate / Incassi
-            col2: bankOutflows, // Uscite / Bonifici
-            nuovoSaldo: bankNuovoSaldo,
-            items: bankItems
         }
     ];
+
+    if (Math.abs(pnlSaldoPrec) > 0.001) {
+        bilMastrini.push({
+            code: '142 / 122',
+            title: 'Résultats reportés / Report à nouveau (Esercizi Precedenti)',
+            section: 'BILAN',
+            saldoPrec: pnlSaldoPrec,
+            col1: 0,
+            col2: 0,
+            nuovoSaldo: pnlSaldoPrec,
+            items: []
+        });
+    }
+
+    bilMastrini.push({
+        code: '4720000',
+        title: 'Dettes - Factures non parvenues (Debiti verso GP)',
+        section: 'BILAN',
+        saldoPrec: dettesSaldoPrec,
+        col1: dettesInflows, // Nuovi debiti
+        col2: dettesOutflows, // Debiti pagati
+        nuovoSaldo: dettesNuovoSaldo,
+        items: dettesItems
+    });
+
+    bilMastrini.push({
+        code: '512 / 513',
+        title: 'Avoirs en Banque (Banque de Luxembourg EUR)',
+        section: 'BILAN',
+        saldoPrec: bankSaldoPrec,
+        col1: bankInflows, // Entrate / Incassi
+        col2: bankOutflows, // Uscite / Bonifici
+        nuovoSaldo: bankNuovoSaldo,
+        items: bankItems
+    });
 
     // 2. Costruzione Mastrini per CONTI DI PERDITE E PROFITTI (P&L)
     const pnlGroups = {};
@@ -2839,21 +2895,19 @@ function exportContabilitaPDF() {
     let totalCapital = 0;
     let totalDettes = 0;
 
-    CONTABILITA_RECORDS.forEach(r => {
-        if (selectedYear === 'all' || Number(r.anno) <= Number(selectedYear)) {
-            if (!r.isNonCashAccrual && !r.isInternalOffset) {
-                totalBanque += Number(r.totale) || 0;
-            }
-        }
-    });
+    const cumFiltered = CONTABILITA_RECORDS.filter(r => selectedYear === 'all' || Number(r.anno) <= Number(selectedYear));
+    const priorFiltered = CONTABILITA_RECORDS.filter(r => selectedYear !== 'all' && Number(r.anno) < Number(selectedYear));
 
-    filtered.forEach(r => {
+    cumFiltered.forEach(r => {
         const val = Number(r.totale) || 0;
         const pcn = String(r.pcnCode || '');
         const tip = String(r.tipologia || '');
         const desc = String(r.desc || '');
         const ap = String(r.ap || '');
 
+        if (!r.isNonCashAccrual && !r.isInternalOffset) {
+            totalBanque += val;
+        }
         if (ap === 'IMMOBILISATIONS' || tip.includes('PARTICIPATIONS') || pcn.startsWith('233') || pcn.startsWith('261')) {
             totalImmob += Math.abs(val);
         }
@@ -2863,28 +2917,26 @@ function exportContabilitaPDF() {
         if (pcn.includes('472') || tip.includes('FACTURES NON PARVENUES')) {
             totalDettes += val;
         }
+    });
+
+    filtered.forEach(r => {
+        const val = Number(r.totale) || 0;
         if (r.tipo === 'PP' && !r.isInternalOffset) {
             if (val < 0) totalCharges += Math.abs(val);
             else totalProduits += val;
         }
     });
 
+    let priorNetResult = 0;
+    priorFiltered.forEach(r => {
+        if (r.tipo === 'PP' && !r.isInternalOffset) {
+            priorNetResult += Number(r.totale) || 0;
+        }
+    });
+
     const netResult = totalProduits - totalCharges;
-
-    let totalActif = 0;
-    let totalPassif = 0;
-
-    if (selectedYear === '2026') {
-        let banquePeriodo = 0;
-        filtered.forEach(r => {
-            if (!r.isNonCashAccrual && !r.isInternalOffset) banquePeriodo += Number(r.totale) || 0;
-        });
-        totalActif = totalImmob + banquePeriodo;
-        totalPassif = totalCapital + netResult + totalDettes;
-    } else {
-        totalActif = totalImmob + totalBanque;
-        totalPassif = totalCapital + netResult + totalDettes;
-    }
+    const totalActif = totalImmob + totalBanque;
+    const totalPassif = totalCapital + priorNetResult + netResult + totalDettes;
 
     const pnlRecords = filtered.filter(r => r.tipo === 'PP' && !r.isInternalOffset);
     const pcnGroups = {};
@@ -3025,13 +3077,22 @@ function exportContabilitaPDF() {
             { content: "1010000", styles: { fontStyle: 'normal' } },
             { content: "A.I. CAPITAL SOUSCRIT (Apporti Associati GP & LPs)", styles: { fontStyle: 'normal' } },
             { content: formatCurrency(totalCapital), styles: { halign: 'right', fontStyle: 'bold' } }
-        ],
-        [
-            { content: "121 / 141", styles: { fontStyle: 'normal' } },
-            { content: "A.V. RÉSULTAT DE L'EXERCICE (Risultato netto economico)", styles: { fontStyle: 'normal' } },
-            { content: formatCurrency(netResult), styles: { halign: 'right', fontStyle: 'bold', textColor: resNetColor } }
         ]
     ];
+
+    if (Math.abs(priorNetResult) > 0.001) {
+        bilanBody.push([
+            { content: "142 / 122", styles: { fontStyle: 'normal' } },
+            { content: "A.IV. RÉSULTATS REPORTÉS (Report à nouveau esercizi prec.)", styles: { fontStyle: 'normal' } },
+            { content: formatCurrency(priorNetResult), styles: { halign: 'right', fontStyle: 'bold', textColor: priorNetResult >= 0 ? [4, 120, 87] : [220, 38, 38] } }
+        ]);
+    }
+
+    bilanBody.push([
+        { content: "121 / 141", styles: { fontStyle: 'normal' } },
+        { content: `A.V. RÉSULTAT DE L'EXERCICE (Risultato netto ${selectedYear === 'all' ? 'Tutti gli anni' : selectedYear})`, styles: { fontStyle: 'normal' } },
+        { content: formatCurrency(netResult), styles: { halign: 'right', fontStyle: 'bold', textColor: resNetColor } }
+    ]);
 
     if (Math.abs(totalDettes) > 0.01) {
         bilanBody.push([
