@@ -83,6 +83,9 @@
                 grid-template-columns: 1fr;
             }
         }
+        .pnl-group-row:hover {
+            background: rgba(16, 185, 129, 0.08) !important;
+        }
         /* Supporto Tema Chiaro / Grigio */
         body.theme-light .contab-kpi-card {
             background: #ffffff !important;
@@ -118,6 +121,17 @@
         }
         body.theme-light .table-container thead {
             background: #f1f5f9 !important;
+        }
+        body.theme-light .pnl-group-row {
+            background: #f8fafc !important;
+        }
+        body.theme-light .pnl-group-row:hover {
+            background: #f1f5f9 !important;
+        }
+        body.theme-light .pnl-detail-row {
+            background: #ffffff !important;
+            color: #334155 !important;
+            border-bottom: 1px dashed #e2e8f0 !important;
         }
     </style>
 </head>
@@ -359,7 +373,7 @@
         </main>
     </div>
 
-    <script src="../data.js"></script>
-    <script src="contabilita_app.js?v=325"></script>
+    <script src="../data.js?v=330"></script>
+    <script src="contabilita_app.js?v=330"></script>
 </body>
 </html>
