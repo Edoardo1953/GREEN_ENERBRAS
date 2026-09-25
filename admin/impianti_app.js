@@ -138,10 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span><span data-i18n="label_cliente">Cliente</span>: ${impianto.cliente}</span>
                     </div>
                     ` : ''}
-                    ${(impianto.potenza || impianto.codiceImpianto) ? `
+                    ${(impianto.codiceImpianto || impianto.potenza || impianto.codiceIniettore) ? `
                     <div class="impianto-detail">
                         <i class="fa-solid fa-bolt"></i>
-                        <span>${impianto.potenza ? 'Potenza: ' + impianto.potenza + ' kW' : ''}${impianto.potenza && impianto.codiceImpianto ? ' | ' : ''}${impianto.codiceImpianto ? 'Codice: ' + impianto.codiceImpianto : ''}</span>
+                        <span>${impianto.codiceImpianto ? 'Codice: ' + impianto.codiceImpianto : ''}${impianto.codiceImpianto && (impianto.potenza || impianto.codiceIniettore) ? ' | ' : ''}${impianto.potenza ? 'Potenza: ' + impianto.potenza + ' kW' : ''}${impianto.potenza && impianto.codiceIniettore ? ' | ' : ''}${impianto.codiceIniettore ? 'Cod. Iniettore: ' + impianto.codiceIniettore : ''}</span>
                     </div>
                     ` : ''}
                     ${(impianto.materialPlacas || impianto.materialInversores) ? `

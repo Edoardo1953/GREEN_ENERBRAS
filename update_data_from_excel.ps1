@@ -608,11 +608,13 @@ function Get-ImpiantiModulesData {
             $locatario = if ($rDict.ContainsKey('T') -and $rDict['T']) { $rDict['T'].Trim() } else { '' }
             $internet = if ($rDict.ContainsKey('U') -and $rDict['U']) { $rDict['U'].Trim() } else { '' }
             $empresa = if ($rDict.ContainsKey('V') -and $rDict['V']) { $rDict['V'].Trim() } else { '' }
+            $nomeUsinaTalita = if ($rDict.ContainsKey('W') -and $rDict['W']) { $rDict['W'].Trim() } else { '' }
             $codiceImpianto = if ($rDict.ContainsKey('X') -and $rDict['X']) { $rDict['X'].Trim() } else { '' }
-            $potenza = if ($rDict.ContainsKey('Y') -and $rDict['Y']) { $rDict['Y'].Trim() } else { '' }
-            $nrAutCosern = if ($rDict.ContainsKey('Z') -and $rDict['Z']) { $rDict['Z'].Trim() } else { '' }
-            $materialPlacas = if ($rDict.ContainsKey('AA') -and $rDict['AA']) { $rDict['AA'].Trim() } else { '' }
-            $materialInversores = if ($rDict.ContainsKey('AB') -and $rDict['AB']) { $rDict['AB'].Trim() } else { '' }
+            $codiceIniettore = if ($rDict.ContainsKey('Y') -and $rDict['Y']) { $rDict['Y'].Trim() } else { '' }
+            $potenza = if ($rDict.ContainsKey('Z') -and $rDict['Z']) { $rDict['Z'].Trim() } else { '' }
+            $nrAutCosern = if ($rDict.ContainsKey('AA') -and $rDict['AA']) { $rDict['AA'].Trim() } else { '' }
+            $materialPlacas = if ($rDict.ContainsKey('AB') -and $rDict['AB']) { $rDict['AB'].Trim() } else { '' }
+            $materialInversores = if ($rDict.ContainsKey('AC') -and $rDict['AC']) { $rDict['AC'].Trim() } else { '' }
 
             # Coordinates mapping
             $lat = -5.915
@@ -644,7 +646,9 @@ function Get-ImpiantiModulesData {
                 cliente = $cliente
                 locatario = $locatario
                 empresa = $empresa
+                nomeUsinaTalita = $nomeUsinaTalita
                 codiceImpianto = $codiceImpianto
+                codiceIniettore = $codiceIniettore
                 potenza = $potenza
                 nrAutCosern = $nrAutCosern
                 materialPlacas = $materialPlacas
