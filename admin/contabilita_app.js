@@ -1676,24 +1676,46 @@ function populateJournalPcnDropdown() {
     if (currentVal) pSelect.value = currentVal;
 }
 
+function getEffectiveContabilitaRecords() {
+    const list = [...CONTABILITA_RECORDS];
+    try {
+        const storedMap = JSON.parse(localStorage.getItem('green_enerbras_posted_ammortamenti') || '{}');
+        Object.values(storedMap).forEach(post => {
+            if (post && Array.isArray(post.records)) {
+                post.records.forEach(r => {
+                    const exists = list.some(ex => ex.fattura === r.fattura && ex.pcnCode === r.pcnCode && ex.anno === r.anno);
+                    if (!exists) {
+                        list.push(r);
+                    }
+                });
+            }
+        });
+    } catch(e) {
+        console.error("Errore lettura ammortamenti:", e);
+    }
+    return list;
+}
+
 function renderContabilita() {
     const yearSelect = document.getElementById('filter-year');
     if (yearSelect) selectedYear = yearSelect.value;
 
+    const allRecords = getEffectiveContabilitaRecords();
+
     // Movimenti dell'esercizio corrente (per P&L, Giornale e Mastrini)
-    const filtered = CONTABILITA_RECORDS.filter(r => {
+    const filtered = allRecords.filter(r => {
         if (selectedYear === 'all') return true;
         return String(r.anno) === String(selectedYear);
     });
 
     // Movimenti cumulativi fino all'esercizio selezionato (per Stato Patrimoniale / Bilan)
-    const cumFiltered = CONTABILITA_RECORDS.filter(r => {
+    const cumFiltered = allRecords.filter(r => {
         if (selectedYear === 'all') return true;
         return Number(r.anno) <= Number(selectedYear);
     });
 
     // Movimenti degli esercizi precedenti (per calcolare il Report à nouveau)
-    const priorFiltered = CONTABILITA_RECORDS.filter(r => {
+    const priorFiltered = allRecords.filter(r => {
         if (selectedYear === 'all') return false;
         return Number(r.anno) < Number(selectedYear);
     });
@@ -1724,7 +1746,9 @@ function renderContabilita() {
 
     // 3. Calcoli Stato Patrimoniale (Bilan) Cumulativi fino all'anno selezionato
     let totalBanque = 0;
-    let totalImmob = 0;
+    let totalImmobFin = 0;
+    let totalImmobIncorp = 0;
+    let totalImmobCorp = 0;
     let totalCapital = 0;
     let totalDettes = 0;
 
@@ -1740,9 +1764,19 @@ function renderContabilita() {
             totalBanque += val;
         }
 
-        // Bilan Immobilisations (Immobilisations financières TRI STAR)
-        if (ap === 'IMMOBILISATIONS' || tip.includes('PARTICIPATIONS') || pcn.startsWith('233') || pcn.startsWith('261')) {
-            totalImmob += Math.abs(val);
+        // Bilan Immobilisations Incorporelles (20x, 21x, 2018, 2148)
+        if (r.tipo === 'BIL' && (pcn.startsWith('20') || pcn.startsWith('21'))) {
+            totalImmobIncorp += val;
+        }
+
+        // Bilan Immobilisations Corporelles (22x, 231, 232, 24x, 25x, 2318, 2528)
+        if (r.tipo === 'BIL' && (pcn.startsWith('22') || pcn.startsWith('231') || pcn.startsWith('232') || pcn.startsWith('24') || pcn.startsWith('25'))) {
+            totalImmobCorp += val;
+        }
+
+        // Bilan Immobilisations Financières (233 / 261 TRI STAR)
+        if (r.tipo === 'BIL' && (tip.includes('PARTICIPATIONS') || pcn.startsWith('233') || pcn.startsWith('261') || (ap === 'IMMOBILISATIONS' && !pcn.startsWith('20') && !pcn.startsWith('21') && !pcn.startsWith('22') && !pcn.startsWith('231') && !pcn.startsWith('232') && !pcn.startsWith('25')))) {
+            totalImmobFin += Math.abs(val);
         }
 
         // Bilan Capitale Sociale (Capital Souscrit)
@@ -1756,8 +1790,8 @@ function renderContabilita() {
         }
     });
 
-    // Totale Attivo (Actif) = Immobilizzazioni + Disponibilità liquide
-    const totalActif = totalImmob + totalBanque;
+    // Totale Attivo (Actif) = Immobilizzazioni Nette + Disponibilità liquide
+    const totalActif = totalImmobIncorp + totalImmobCorp + totalImmobFin + totalBanque;
 
     // Totale Passivo e Patrimonio (Passif & Capitaux) = Capitale + Risultati Esercizi Prec. + Risultato Esercizio Corrente + Debiti
     const totalPassif = totalCapital + priorNetResult + currentNetResult + totalDettes;
@@ -1782,7 +1816,7 @@ function renderContabilita() {
     if (elBanque) elBanque.textContent = formatCurrency(totalBanque);
 
     const elImmob = document.getElementById('kpi-partecipazioni');
-    if (elImmob) elImmob.textContent = formatCurrency(totalImmob);
+    if (elImmob) elImmob.textContent = formatCurrency(totalImmobFin + totalImmobIncorp + totalImmobCorp);
 
     // Badge Quadratura
     const diffQuadratura = Math.abs(totalActif - totalPassif);
@@ -1800,7 +1834,7 @@ function renderContabilita() {
 
     // Render Tabelle
     renderPnlTable(filtered, totalCharges, totalProduits, currentNetResult);
-    renderBilanTable(cumFiltered, filtered, totalImmob, totalBanque, totalActif, totalCapital, priorNetResult, currentNetResult, totalDettes, totalPassif);
+    renderBilanTable(cumFiltered, filtered, totalImmobFin, totalImmobIncorp, totalImmobCorp, totalBanque, totalActif, totalCapital, priorNetResult, currentNetResult, totalDettes, totalPassif);
     renderJournalTable(filtered);
     renderMastriniTable(filtered);
 }
@@ -1927,13 +1961,15 @@ function renderPnlTable(records, totalCharges, totalProduits, netResult) {
     tbody.innerHTML = html;
 }
 
-function renderBilanTable(cumRecords, yearRecords, immob, bank, totalActif, capital, priorNetResult, netResult, totalDettes, totalPassif) {
+function renderBilanTable(cumRecords, yearRecords, immobFin, totalImmobIncorp, totalImmobCorp, bank, totalActif, capital, priorNetResult, netResult, totalDettes, totalPassif) {
     const tbodyActif = document.getElementById('table-body-bilan-actif');
     const tbodyPassif = document.getElementById('table-body-bilan-passif');
     if (!tbodyActif || !tbodyPassif) return;
 
-    // Estrazione movimenti per le voci di Stato Patrimoniale (cumulativi fino alla data/anno)
-    const immobItems = [];
+    // Estrazione movimenti per le voci di Stato Patrimoniale
+    const immobFinItems = [];
+    const immobIncorpItems = [];
+    const immobCorpItems = [];
     const bankItems = [];
     const capItems = [];
     const dettesItems = [];
@@ -1945,8 +1981,16 @@ function renderBilanTable(cumRecords, yearRecords, immob, bank, totalActif, capi
         const tip = String(r.tipologia || '');
         const desc = String(r.desc || '');
 
-        if (ap === 'IMMOBILISATIONS' || tip.includes('PARTICIPATIONS') || pcn.startsWith('233') || pcn.startsWith('261')) {
-            immobItems.push(r);
+        if (r.tipo === 'BIL' && (pcn.startsWith('20') || pcn.startsWith('21'))) {
+            immobIncorpItems.push(r);
+        }
+
+        if (r.tipo === 'BIL' && (pcn.startsWith('22') || pcn.startsWith('231') || pcn.startsWith('232') || pcn.startsWith('24') || pcn.startsWith('25'))) {
+            immobCorpItems.push(r);
+        }
+
+        if (r.tipo === 'BIL' && (tip.includes('PARTICIPATIONS') || pcn.startsWith('233') || pcn.startsWith('261') || (ap === 'IMMOBILISATIONS' && !pcn.startsWith('20') && !pcn.startsWith('21') && !pcn.startsWith('22') && !pcn.startsWith('231') && !pcn.startsWith('232') && !pcn.startsWith('25')))) {
+            immobFinItems.push(r);
         }
 
         if (!r.isNonCashAccrual && !r.isInternalOffset) {
@@ -1974,26 +2018,106 @@ function renderBilanTable(cumRecords, yearRecords, immob, bank, totalActif, capi
     // ----------------------------------------------------
     let htmlActif = '';
 
-    // 1. IMMOBILISATIONS FINANCIÈRES (233 / 261)
-    const immobHasItems = immobItems.length > 0;
+    // A. IMMOBILISATIONS INCORPORELLES (20x / 21x) (se presenti)
+    if (Math.abs(totalImmobIncorp) > 0.001 || immobIncorpItems.length > 0) {
+        const incorpHasItems = immobIncorpItems.length > 0;
+        const incorpId = 'bilan-actif-incorp';
+        htmlActif += `
+            <tr class="bilan-group-row" onclick="${incorpHasItems ? `toggleBilanGroup('${incorpId}')` : ''}" style="background: rgba(147, 197, 253, 0.1); font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.06); ${incorpHasItems ? 'cursor: pointer;' : ''} transition: background 0.2s;" title="${incorpHasItems ? `Clicca per consultare i ${immobIncorpItems.length} movimenti` : ''}">
+                <td style="padding: 0.8rem 0.5rem; font-family: monospace; color: #93c5fd; white-space: nowrap; width: 110px; font-size: 0.88rem;">
+                    ${incorpHasItems ? `<i class="fa-solid fa-chevron-right bilan-group-icon" id="icon-${incorpId}" style="margin-right: 6px; font-size: 0.75rem; color: var(--text-muted); transition: transform 0.2s;"></i>` : '<span style="display:inline-block; width:14px;"></span>'}
+                    201 / 21x
+                </td>
+                <td style="padding: 0.8rem 0.5rem;">
+                    A. IMMOBILISATIONS INCORPORELLES
+                    ${incorpHasItems ? `<span style="font-size: 0.75rem; background: rgba(147, 197, 253, 0.25); color: #bfdbfe; padding: 0.15rem 0.45rem; border-radius: 4px; margin-left: 0.4rem; font-weight: normal;">${immobIncorpItems.length} mov.</span>` : ''}
+                    <br><small style="color: var(--text-muted); font-size: 0.8rem;">Costi di costituzione, licenze e software (al netto fondi ammortamento)</small>
+                </td>
+                <td style="padding: 0.8rem 0.5rem; text-align: right; color: var(--text-main, #ffffff); font-weight: bold; white-space: nowrap; width: 140px;">${formatCurrency(totalImmobIncorp)}</td>
+            </tr>
+        `;
+
+        if (incorpHasItems) {
+            immobIncorpItems.forEach(item => {
+                const val = Number(item.totale) || 0;
+                const isPos = val >= 0;
+                const formattedVal = isPos ? ('+ ' + formatCurrency(val)) : ('- ' + formatCurrency(Math.abs(val)));
+                const valColor = isPos ? '#93c5fd' : '#f87171';
+                htmlActif += `
+                    <tr class="bilan-detail-row ${incorpId}" style="display: none; background: rgba(0,0,0,0.22); border-bottom: 1px dashed rgba(255,255,255,0.05); font-size: 0.84rem; color: #cbd5e1;">
+                        <td style="padding: 0.45rem 0.5rem 0.45rem 1.6rem; color: var(--text-muted); font-family: monospace; white-space: nowrap; font-size: 0.82rem;">
+                            <i class="fa-solid fa-angle-right" style="opacity: 0.5; margin-right: 3px;"></i> ${item.data}
+                        </td>
+                        <td style="padding: 0.45rem 0.5rem;">
+                            <span style="color: white; font-weight: 500;">${item.desc}</span> <span style="color: var(--text-muted);">(${item.pcnCode})</span>
+                        </td>
+                        <td style="padding: 0.45rem 0.5rem; text-align: right; color: ${valColor}; font-weight: 600; white-space: nowrap;">${formattedVal}</td>
+                    </tr>
+                `;
+            });
+        }
+    }
+
+    // B. IMMOBILISATIONS CORPORELLES (22x / 23x / 25x) (se presenti)
+    if (Math.abs(totalImmobCorp) > 0.001 || immobCorpItems.length > 0) {
+        const corpHasItems = immobCorpItems.length > 0;
+        const corpId = 'bilan-actif-corp';
+        htmlActif += `
+            <tr class="bilan-group-row" onclick="${corpHasItems ? `toggleBilanGroup('${corpId}')` : ''}" style="background: rgba(52, 211, 153, 0.1); font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.06); ${corpHasItems ? 'cursor: pointer;' : ''} transition: background 0.2s;" title="${corpHasItems ? `Clicca per consultare i ${immobCorpItems.length} movimenti` : ''}">
+                <td style="padding: 0.8rem 0.5rem; font-family: monospace; color: #6ee7b7; white-space: nowrap; width: 110px; font-size: 0.88rem;">
+                    ${corpHasItems ? `<i class="fa-solid fa-chevron-right bilan-group-icon" id="icon-${corpId}" style="margin-right: 6px; font-size: 0.75rem; color: var(--text-muted); transition: transform 0.2s;"></i>` : '<span style="display:inline-block; width:14px;"></span>'}
+                    22x / 23x / 25x
+                </td>
+                <td style="padding: 0.8rem 0.5rem;">
+                    B. IMMOBILISATIONS CORPORELLES
+                    ${corpHasItems ? `<span style="font-size: 0.75rem; background: rgba(52, 211, 153, 0.25); color: #a7f3d0; padding: 0.15rem 0.45rem; border-radius: 4px; margin-left: 0.4rem; font-weight: normal;">${immobCorpItems.length} mov.</span>` : ''}
+                    <br><small style="color: var(--text-muted); font-size: 0.8rem;">Impianti tecnici, usine solari, hardware e attrezzature (al netto ammortamenti)</small>
+                </td>
+                <td style="padding: 0.8rem 0.5rem; text-align: right; color: var(--text-main, #ffffff); font-weight: bold; white-space: nowrap; width: 140px;">${formatCurrency(totalImmobCorp)}</td>
+            </tr>
+        `;
+
+        if (corpHasItems) {
+            immobCorpItems.forEach(item => {
+                const val = Number(item.totale) || 0;
+                const isPos = val >= 0;
+                const formattedVal = isPos ? ('+ ' + formatCurrency(val)) : ('- ' + formatCurrency(Math.abs(val)));
+                const valColor = isPos ? '#6ee7b7' : '#f87171';
+                htmlActif += `
+                    <tr class="bilan-detail-row ${corpId}" style="display: none; background: rgba(0,0,0,0.22); border-bottom: 1px dashed rgba(255,255,255,0.05); font-size: 0.84rem; color: #cbd5e1;">
+                        <td style="padding: 0.45rem 0.5rem 0.45rem 1.6rem; color: var(--text-muted); font-family: monospace; white-space: nowrap; font-size: 0.82rem;">
+                            <i class="fa-solid fa-angle-right" style="opacity: 0.5; margin-right: 3px;"></i> ${item.data}
+                        </td>
+                        <td style="padding: 0.45rem 0.5rem;">
+                            <span style="color: white; font-weight: 500;">${item.desc}</span> <span style="color: var(--text-muted);">(${item.pcnCode})</span>
+                        </td>
+                        <td style="padding: 0.45rem 0.5rem; text-align: right; color: ${valColor}; font-weight: 600; white-space: nowrap;">${formattedVal}</td>
+                    </tr>
+                `;
+            });
+        }
+    }
+
+    // C. IMMOBILISATIONS FINANCIÈRES (233 / 261)
+    const immobHasItems = immobFinItems.length > 0;
     const immobId = 'bilan-actif-immob';
     htmlActif += `
-        <tr class="bilan-group-row" onclick="${immobHasItems ? `toggleBilanGroup('${immobId}')` : ''}" style="background: rgba(59, 130, 246, 0.12); font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.06); ${immobHasItems ? 'cursor: pointer;' : ''} transition: background 0.2s;" title="${immobHasItems ? `Clicca per consultare i ${immobItems.length} investimenti` : ''}">
+        <tr class="bilan-group-row" onclick="${immobHasItems ? `toggleBilanGroup('${immobId}')` : ''}" style="background: rgba(59, 130, 246, 0.12); font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.06); ${immobHasItems ? 'cursor: pointer;' : ''} transition: background 0.2s;" title="${immobHasItems ? `Clicca per consultare i ${immobFinItems.length} investimenti` : ''}">
             <td style="padding: 0.8rem 0.5rem; font-family: monospace; color: #93c5fd; white-space: nowrap; width: 110px; font-size: 0.88rem;">
                 ${immobHasItems ? `<i class="fa-solid fa-chevron-right bilan-group-icon" id="icon-${immobId}" style="margin-right: 6px; font-size: 0.75rem; color: var(--text-muted); transition: transform 0.2s;"></i>` : '<span style="display:inline-block; width:14px;"></span>'}
                 233 / 261
             </td>
             <td style="padding: 0.8rem 0.5rem;">
                 C. IMMOBILISATIONS FINANCIÈRES
-                ${immobHasItems ? `<span style="font-size: 0.75rem; background: rgba(59, 130, 246, 0.25); color: #bfdbfe; padding: 0.15rem 0.45rem; border-radius: 4px; margin-left: 0.4rem; font-weight: normal;">${immobItems.length} mov.</span>` : ''}
+                ${immobHasItems ? `<span style="font-size: 0.75rem; background: rgba(59, 130, 246, 0.25); color: #bfdbfe; padding: 0.15rem 0.45rem; border-radius: 4px; margin-left: 0.4rem; font-weight: normal;">${immobFinItems.length} mov.</span>` : ''}
                 <br><small style="color: var(--text-muted); font-size: 0.8rem;">Partecipazione TRI STAR ENERBRAS ONE SCP</small>
             </td>
-            <td style="padding: 0.8rem 0.5rem; text-align: right; color: var(--text-main, #ffffff); font-weight: bold; white-space: nowrap; width: 140px;">${formatCurrency(immob)}</td>
+            <td style="padding: 0.8rem 0.5rem; text-align: right; color: var(--text-main, #ffffff); font-weight: bold; white-space: nowrap; width: 140px;">${formatCurrency(immobFin)}</td>
         </tr>
     `;
 
     if (immobHasItems) {
-        immobItems.forEach(item => {
+        immobFinItems.forEach(item => {
             const val = Math.abs(Number(item.totale) || 0);
             htmlActif += `
                 <tr class="bilan-detail-row ${immobId}" style="display: none; background: rgba(0,0,0,0.22); border-bottom: 1px dashed rgba(255,255,255,0.05); font-size: 0.84rem; color: #cbd5e1;">
@@ -2010,7 +2134,7 @@ function renderBilanTable(cumRecords, yearRecords, immob, bank, totalActif, capi
         });
     }
 
-    // 2. AVOIRS EN BANQUE (512 / 513)
+    // D. AVOIRS EN BANQUE (512 / 513)
     const bankHasItems = bankItems.length > 0;
     const bankId = 'bilan-actif-bank';
     htmlActif += `
@@ -3118,6 +3242,13 @@ function exportContabilitaPDF() {
 
     const fileSuffix = isAnyExpanded ? 'Dettagliato' : 'Sintetico';
     doc.save(`GREEN_ENERBRAS_Rapport_Comptable_${selectedYear}_${fileSuffix}.pdf`);
+}
+
+// Esporta variabili globali per interoperabilità
+if (typeof window !== 'undefined') {
+    window.CONTABILITA_RECORDS = CONTABILITA_RECORDS;
+    window.getEffectiveContabilitaRecords = getEffectiveContabilitaRecords;
+    window.renderContabilita = renderContabilita;
 }
 
 // Inizializzazione pagina

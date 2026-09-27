@@ -93,7 +93,8 @@ const DEFAULT_PAGE_VISIBILITY = {
     banca: false,
     strumenti: false,
     risultati: false,
-    contabilita: false
+    contabilita: false,
+    ammortamenti: false
 };
 
 function getPageKeyFromElement(el) {
