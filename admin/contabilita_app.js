@@ -1677,23 +1677,7 @@ function populateJournalPcnDropdown() {
 }
 
 function getEffectiveContabilitaRecords() {
-    const list = [...CONTABILITA_RECORDS];
-    try {
-        const storedMap = JSON.parse(localStorage.getItem('green_enerbras_posted_ammortamenti') || '{}');
-        Object.values(storedMap).forEach(post => {
-            if (post && Array.isArray(post.records)) {
-                post.records.forEach(r => {
-                    const exists = list.some(ex => ex.fattura === r.fattura && ex.pcnCode === r.pcnCode && ex.anno === r.anno);
-                    if (!exists) {
-                        list.push(r);
-                    }
-                });
-            }
-        });
-    } catch(e) {
-        console.error("Errore lettura ammortamenti:", e);
-    }
-    return list;
+    return [...CONTABILITA_RECORDS];
 }
 
 function renderContabilita() {

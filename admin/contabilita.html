@@ -223,10 +223,6 @@
                     <a href="contabilita.html" class="nav-item active"><i class="fa-solid fa-book-bookmark"></i> <span data-i18n="menu_contabilita">Contabilità</span></a>
                     <button type="button" class="nav-eye-btn hidden" data-page="contabilita" data-visible="false" onclick="Auth.togglePageVisibility('contabilita')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
                 </div>
-                <div class="nav-item-row" data-page="ammortamenti">
-                    <a href="ammortamenti.html" class="nav-item"><i class="fa-solid fa-calculator"></i> <span data-i18n="menu_ammortamenti">Ammortamenti (Test)</span></a>
-                    <button type="button" class="nav-eye-btn hidden" data-page="ammortamenti" data-visible="false" onclick="Auth.togglePageVisibility('ammortamenti')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
-                </div>
                 <div class="nav-item-row" data-page="strumenti">
                     <a href="strumenti.html" class="nav-item"><i class="fa-solid fa-toolbox"></i> <span data-i18n="nav_strumenti">Strumenti</span></a>
                     <button type="button" class="nav-eye-btn hidden" data-page="strumenti" data-visible="false" onclick="Auth.togglePageVisibility('strumenti')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
@@ -282,9 +278,6 @@
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-                    <a href="ammortamenti.html" class="btn-action-contab" style="background: rgba(16, 185, 129, 0.18); border-color: #10b981; color: #10b981; font-weight: 700; text-decoration: none;">
-                        <i class="fa-solid fa-calculator"></i> <span data-i18n="btn_gestione_ammortamenti">Modulo Ammortamenti</span>
-                    </a>
                     <button class="btn-action-contab" onclick="exportContabilitaExcel()"><i class="fa-solid fa-file-excel" style="color: #10b981;"></i> <span data-i18n="btn_export_excel">Esporta Excel (XLSX)</span></button>
                     <button class="btn-action-contab" onclick="exportContabilitaPDF()"><i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i> <span data-i18n="btn_export_pdf">Esporta PDF</span></button>
                 </div>

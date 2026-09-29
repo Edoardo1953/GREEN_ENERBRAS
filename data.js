@@ -683,9 +683,9 @@
                         "locatore":  "Franco TOSCANO",
                         "affitto":  "450",
                         "internet":  "",
-                        "autorizzazioneCosern":  "NO",
-                        "dataAutorizzazione":  "",
-                        "cliente":  "",
+                        "autorizzazioneCosern":  "SI",
+                        "dataAutorizzazione":  "14/08/2026",
+                        "cliente":  "ARCOIRIS - SOMBRA FLORESTA",
                         "locatario":  "TRI STAR ENERBRAS ONE SCP",
                         "empresa":  "",
                         "nomeUsinaTalita":  "",
@@ -712,9 +712,9 @@
                         "locatore":  "Franco TOSCANO",
                         "affitto":  "450",
                         "internet":  "",
-                        "autorizzazioneCosern":  "NO",
-                        "dataAutorizzazione":  "",
-                        "cliente":  "",
+                        "autorizzazioneCosern":  "SI",
+                        "dataAutorizzazione":  "28/09/2026",
+                        "cliente":  "ARCOIRIS - SOMBRA FLORESTA",
                         "locatario":  "TRI STAR ENERBRAS ONE SCP",
                         "empresa":  "",
                         "nomeUsinaTalita":  "",
@@ -844,7 +844,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "27/09/2026 18:05",
+    "lastUpdated":  "29/09/2026 20:06",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
