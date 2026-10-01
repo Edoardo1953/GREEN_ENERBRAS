@@ -491,6 +491,34 @@
                            "kwh":  3322,
                            "revenues":  2406.16,
                            "client":  "SOMBRA FLORESTA"
+                       },
+                       {
+                           "period":  "09/2026",
+                           "id":  "1",
+                           "kwh":  4699,
+                           "revenues":  3436.91,
+                           "client":  "ARCO-IRIS"
+                       },
+                       {
+                           "period":  "09/2026",
+                           "id":  "2",
+                           "kwh":  4371,
+                           "revenues":  3197.01,
+                           "client":  "SAF HOSPEDAGENS"
+                       },
+                       {
+                           "period":  "09/2026",
+                           "id":  "3",
+                           "kwh":  0,
+                           "revenues":  0,
+                           "client":  "JM EMPREENDIMENTOS"
+                       },
+                       {
+                           "period":  "09/2026",
+                           "id":  "4",
+                           "kwh":  5152,
+                           "revenues":  3768.24,
+                           "client":  "SOMBRA FLORESTA"
                        }
                    ],
     "totalTarget":  281000,
@@ -844,7 +872,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "29/09/2026 20:06",
+    "lastUpdated":  "30/09/2026 18:02",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
@@ -1712,8 +1740,16 @@
                                 "period":  "08/2026",
                                 "periodCode":  "Aug-26",
                                 "tariff":  1.0347311,
-                                "inflation":  null,
+                                "inflation":  -0.32,
                                 "tariffIndex":  109.65,
+                                "inflationIndex":  109.57
+                            },
+                            {
+                                "period":  "09/2026",
+                                "periodCode":  "Sep-26",
+                                "tariff":  1.04487662,
+                                "inflation":  null,
+                                "tariffIndex":  110.73,
                                 "inflationIndex":  null
                             }
                         ]

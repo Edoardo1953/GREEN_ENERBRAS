@@ -105,6 +105,16 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             tbody.appendChild(tr);
         });
+
+        const tableContainer = document.querySelector('.cosern-table-container');
+        if (tableContainer) {
+            requestAnimationFrame(() => {
+                tableContainer.scrollTop = tableContainer.scrollHeight;
+            });
+            setTimeout(() => {
+                tableContainer.scrollTop = tableContainer.scrollHeight;
+            }, 100);
+        }
     }
 
     // 3. Render Chart
@@ -214,8 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     },
                     y: {
-                        min: 98,
-                        max: 112,
+                        suggestedMin: 98,
+                        suggestedMax: 114,
                         grid: {
                             color: 'rgba(255, 255, 255, 0.08)',
                             drawBorder: false
