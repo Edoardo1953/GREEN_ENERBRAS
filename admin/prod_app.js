@@ -419,25 +419,77 @@ document.addEventListener('DOMContentLoaded', () => {
             window.myChart = new Chart(ctx.getContext('2d'), {
                 type: 'bar',
                 data: { labels, datasets },
+                plugins: [{
+                    id: 'topTotalBarPlugin',
+                    afterDatasetsDraw(chart) {
+                        const ctx = chart.ctx;
+                        const meta0 = chart.getDatasetMeta(0);
+                        if (!meta0 || !meta0.data || meta0.data.length === 0) return;
+                        const yScale = chart.scales.y;
+                        if (!yScale) return;
+
+                        chart.data.labels.forEach((label, index) => {
+                            let total = 0;
+                            let hasVal = false;
+                            chart.data.datasets.forEach(ds => {
+                                if (ds.data && typeof ds.data[index] === 'number' && !isNaN(ds.data[index])) {
+                                    total += ds.data[index];
+                                    hasVal = true;
+                                }
+                            });
+                            if (!hasVal || total <= 0) return;
+
+                            const barElem = meta0.data[index];
+                            if (!barElem) return;
+
+                            const isLight = document.body.classList.contains('theme-light') || 
+                                            document.documentElement.getAttribute('data-theme') === 'light' || 
+                                            (typeof ThemeManager !== 'undefined' && ThemeManager.getTheme() === 'light');
+
+                            const text = formatNumber(total) + ' kWh';
+                            const x = barElem.x;
+                            const y = yScale.getPixelForValue(total);
+
+                            ctx.save();
+                            if (isLight) {
+                                ctx.fillStyle = '#000000';
+                                ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
+                                ctx.shadowBlur = 3;
+                            } else {
+                                ctx.fillStyle = '#ffffff';
+                                ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                                ctx.shadowBlur = 4;
+                            }
+                            ctx.font = 'bold 11px Inter, sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            ctx.fillText(text, x, y - 4);
+                            ctx.restore();
+                        });
+                    }
+                }],
                 options: {
                     responsive: true,
                     interaction: { mode: 'index', intersect: false },
+                    layout: {
+                        padding: {
+                            top: 25
+                        }
+                    },
                     scales: {
                         x: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' } },
-                        y: { display: true, stacked: true, title: { display: true, text: 'kWh', color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                        y: { 
+                            display: true, 
+                            stacked: true, 
+                            title: { display: true, text: 'kWh', color: '#94a3b8' }, 
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            grace: '10%'
+                        }
                     },
                     plugins: {
                         legend: { display: false },
                         datalabels: {
-                            display: function(context) { return window.chartFilters.impianti && window.chartFilters.impianti.length === 1; },
-                            align: 'bottom',
-                            anchor: 'end',
-                            formatter: function(value) {
-                                if (value === null || value === 0) return '';
-                                return formatNumber(value);
-                            },
-                            color: '#fff',
-                            font: { weight: 'bold', size: 10 }
+                            display: false
                         }
                     }
                 }
@@ -1319,3 +1371,24 @@ window.toggleYearRows = function(year) {
         icon.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
     }
 };
+
+window.addEventListener('themeChanged', () => {
+    if (window.myChart) {
+        window.myChart.update();
+    }
+});
+
+if (typeof MutationObserver !== 'undefined') {
+    const themeObserver = new MutationObserver(() => {
+        if (window.myChart) {
+            window.myChart.update();
+        }
+    });
+    if (document.documentElement) {
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+    }
+    if (document.body) {
+        themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    }
+}
+

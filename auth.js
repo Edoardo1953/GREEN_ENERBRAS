@@ -41,6 +41,7 @@ const ThemeManager = {
         try {
             localStorage.setItem(this.STORAGE_KEY, next);
         } catch(e) {}
+        window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: next } }));
     },
     apply(theme) {
         if (theme === 'light') {
