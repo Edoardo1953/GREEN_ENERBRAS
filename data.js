@@ -453,8 +453,8 @@
                        {
                            "period":  "07/2026",
                            "id":  "3",
-                           "kwh":  579,
-                           "revenues":  418.26,
+                           "kwh":  1158,
+                           "revenues":  836.52,
                            "client":  "JM EMPREENDIMENTOS"
                        },
                        {
@@ -509,8 +509,8 @@
                        {
                            "period":  "09/2026",
                            "id":  "3",
-                           "kwh":  0,
-                           "revenues":  0,
+                           "kwh":  3223,
+                           "revenues":  2357.35,
                            "client":  "JM EMPREENDIMENTOS"
                        },
                        {
@@ -872,7 +872,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "02/10/2026 17:45",
+    "lastUpdated":  "03/10/2026 08:13",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
