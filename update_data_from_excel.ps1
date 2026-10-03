@@ -1055,27 +1055,16 @@ window.getClientColor = function(client, index, allClientsList) {
 
 window.getAvailableYears = function() {
     const dataYears = new Set();
-    if (typeof APP_DATA !== 'undefined') {
-        if (APP_DATA.production) {
-            APP_DATA.production.forEach(r => {
-                const y = String(r.period).split('/')[1];
-                if (y && !isNaN(Number(y))) dataYears.add(Number(y));
-            });
-        }
-        if (APP_DATA.transactions) {
-            APP_DATA.transactions.forEach(t => {
-                if (t.date) {
-                    const parts = t.date.split('/');
-                    const y = parts.length === 3 ? parts[2] : (t.date.split('-')[0]);
-                    if (y && !isNaN(Number(y))) dataYears.add(Number(y));
-                }
-            });
-        }
+    if (typeof APP_DATA !== 'undefined' && APP_DATA.production) {
+        APP_DATA.production.forEach(r => {
+            const y = String(r.period).split('/')[1];
+            if (y && !isNaN(Number(y)) && Number(y) >= 2026) dataYears.add(Number(y));
+        });
     }
     const currYear = new Date().getFullYear();
-    const baseYears = [2024, 2025, 2026, 2027, 2028, currYear];
-    const allNums = [...baseYears, ...Array.from(dataYears)];
-    const min = Math.min(...allNums);
+    const baseYears = [2026, 2027, 2028, Math.max(2026, currYear)];
+    const allNums = [...baseYears, ...Array.from(dataYears)].filter(y => y >= 2026);
+    const min = 2026;
     const max = Math.max(...allNums);
     const result = [];
     for (let yr = max; yr >= min; yr--) {
@@ -1085,11 +1074,15 @@ window.getAvailableYears = function() {
 };
 
 window.getAvailableMonths = function() {
-    const years = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2028', '2027', '2026', '2025', '2024'];
+    const years = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2028', '2027', '2026'];
     const allMonths = [];
     years.forEach(y => {
+        const yrNum = Number(y);
         ['12', '11', '10', '09', '08', '07', '06', '05', '04', '03', '02', '01'].forEach(m => {
-            allMonths.push(m + '/' + y);
+            const mNum = Number(m);
+            if (yrNum > 2026 || (yrNum === 2026 && mNum >= 6)) {
+                allMonths.push(m + '/' + y);
+            }
         });
     });
     return allMonths;

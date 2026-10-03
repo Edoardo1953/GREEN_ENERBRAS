@@ -1,4 +1,25 @@
 Chart.register(ChartDataLabels);
+
+window.formatNumber = function(num) {
+    return Math.round(Number(num || 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+const formatNumber = window.formatNumber;
+
+window.isPeriodValid = function(p) {
+    if (!p) return false;
+    const parts = String(p).split('/');
+    if (parts.length < 2) return false;
+    const m = Number(parts[0]);
+    const y = Number(parts[1]);
+    return y > 2026 || (y === 2026 && m >= 6);
+};
+const isPeriodValid = window.isPeriodValid;
+
+window.formatBRL = function(num) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(num || 0);
+};
+const formatBRL = window.formatBRL;
+
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof APP_DATA === 'undefined' || !APP_DATA.production) {
         console.error("Dati di produzione non trovati.");
@@ -23,9 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof Auth !== 'undefined' && typeof Auth.updateUserProfileUI === 'function') {
         Auth.updateUserProfileUI();
     }
-
-    const formatNumber = (num) => new Intl.NumberFormat('it-IT').format(num);
-    const formatBRL = (num) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(num);
     const formatEUR = (num) => {
         let parts = num.toFixed(2).split('.');
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -168,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const subtotalRevElem = document.getElementById('subtotal-rev');
 
     // Populate dropdowns
-    const uniqueMese = [...new Set(APP_DATA.production.map(r => String(r.period)))].sort();
+    const uniqueMese = [...new Set(APP_DATA.production.filter(r => isPeriodValid(r.period)).map(r => String(r.period)))].sort();
     const uniqueImp = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
     const uniqueClient = [...new Set(APP_DATA.production.map(r => String(r.client)))].sort();
 
@@ -233,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
         prodTableBody.innerHTML = '';
 
         APP_DATA.production.forEach(row => {
+            if (!isPeriodValid(row.period)) return;
             const rowMese = String(row.period);
             const rowClient = String(row.client);
             const rowImp = String(row.id);
@@ -277,12 +296,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup initial filters
     const allImp = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
     const allCli = [...new Set(APP_DATA.production.map(r => String(r.client)))].sort();
-    const allYears = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2028', '2027', '2026', '2025', '2024'];
+    const allYears = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2028', '2027', '2026'];
     
     const yearSelect = document.getElementById('chart-year-select');
     if (yearSelect) {
         allYears.forEach(y => {
-            if (!y) return;
+            if (!y || Number(y) < 2026) return;
             const opt = document.createElement('option');
             opt.value = y;
             opt.textContent = y;
@@ -292,24 +311,41 @@ document.addEventListener('DOMContentLoaded', () => {
         yearSelect.value = '2026';
     }
     
-            const cmeseContainer = document.getElementById('dropdown-chart-mese');
-    if(cmeseContainer) {
+    window.chartFilters = {
+        impianti: [...allImp],
+        clienti: [...allCli],
+        mesi: ['06','07','08','09','10','11','12']
+    };
+
+    function populateChartMesiDropdown() {
+        const cmeseContainer = document.getElementById('dropdown-chart-mese');
+        if (!cmeseContainer) return;
+        
+        let monthsList = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+        if (currentChartYear === '2026') {
+            monthsList = ['06','07','08','09','10','11','12'];
+        }
+        
         let chtml = `<div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; padding-bottom:0.4rem; border-bottom:1px solid rgba(255,255,255,0.1);">
             <span onclick="window.toggleAllChart('mesi', true)" style="font-size:0.8rem; font-weight:bold; color:#3b82f6; cursor:pointer; padding: 2px 5px; border-radius: 3px;"><span data-i18n="filter_tutti">+ Tutti</span></span>
             <span onclick="window.toggleAllChart('mesi', false)" style="font-size:0.8rem; font-weight:bold; color:#ef4444; cursor:pointer; padding: 2px 5px; border-radius: 3px;"><span data-i18n="filter_nessuno">- Nessuno</span></span>
         </div>`;
-        ['01','02','03','04','05','06','07','08','09','10','11','12'].forEach(val => {
+        monthsList.forEach(val => {
             chtml += `<label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.3rem; font-size:0.85rem; font-weight:normal; text-transform:none; cursor:pointer;">
                 <input type="checkbox" class="chart-filter-mesi" value="${val}" checked onchange="window.updateChartFilters()">
                 ${val}
             </label>`;
         });
         cmeseContainer.innerHTML = chtml;
+        window.chartFilters.mesi = [...monthsList];
     }
+
+    populateChartMesiDropdown();
 
     window.changeChartYear = function(year) {
         currentChartYear = year;
         updateKpiSalesBanner(year);
+        populateChartMesiDropdown();
         window.renderChart(false);
     };
 
@@ -781,8 +817,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const m1Select = document.getElementById('comparatore-month-1');
         const m2Select = document.getElementById('comparatore-month-2');
 
-        const years = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2028', '2027', '2026', '2025', '2024'];
-        const months = (typeof window.getAvailableMonths === 'function') ? window.getAvailableMonths() : ['08/2026', '07/2026'];
+        const years = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2028', '2027', '2026'];
+        const months = (typeof window.getAvailableMonths === 'function') ? window.getAvailableMonths() : ['08/2026', '07/2026', '06/2026'];
 
         if (type === 'two_years') {
             valueSelect.style.display = 'none';
@@ -801,9 +837,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 y2Select.appendChild(opt2);
             });
 
-            if (years.includes('2025') && years.includes('2026')) {
-                y1Select.value = '2025';
-                y2Select.value = '2026';
+            if (years.includes('2026') && years.includes('2027')) {
+                y1Select.value = '2026';
+                y2Select.value = '2027';
             } else if (years.length >= 2) {
                 y1Select.value = years[1];
                 y2Select.value = years[0];
@@ -828,9 +864,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 m2Select.appendChild(opt2);
             });
 
-            if (months.includes('07/2026') && months.includes('08/2026')) {
-                m1Select.value = '07/2026';
-                m2Select.value = '08/2026';
+            if (months.includes('06/2026') && months.includes('07/2026')) {
+                m1Select.value = '06/2026';
+                m2Select.value = '07/2026';
             } else if (months.length >= 2) {
                 m1Select.value = months[1];
                 m2Select.value = months[0];
@@ -974,8 +1010,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 datalabels: {
                                     anchor: 'end',
                                     align: 'top',
-                                    color: '#93c5fd',
-                                    font: { weight: 'bold', size: 10 },
+                                    offset: 4,
+                                    color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#1d4ed8' : '#93c5fd',
+                                    font: { weight: 'bold', size: 11 },
                                     formatter: function(value) {
                                         if (!value || value === 0) return '';
                                         return formatBrlVal(value);
@@ -991,8 +1028,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 datalabels: {
                                     anchor: 'end',
                                     align: 'top',
-                                    color: '#6ee7b7',
-                                    font: { weight: 'bold', size: 10 },
+                                    offset: 4,
+                                    color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#047857' : '#6ee7b7',
+                                    font: { weight: 'bold', size: 11 },
                                     formatter: function(value, context) {
                                         const v1 = dataY1[context.dataIndex] || 0;
                                         const v2 = value || 0;
@@ -1018,7 +1056,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                grace: '18%',
+                                grace: '20%',
                                 grid: { color: 'rgba(255,255,255,0.05)' },
                                 title: { display: true, text: 'R$', color: '#94a3b8' }
                             },
@@ -1029,7 +1067,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         plugins: {
                             legend: {
                                 display: true,
-                                labels: { color: '#fff', font: { weight: 'bold' } }
+                                labels: { color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#0f172a' : '#fff', font: { weight: 'bold' } }
                             },
                             tooltip: {
                                 callbacks: {
@@ -1060,8 +1098,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             } else {
                 // viewMode === 'by_month'
-                const monthLabels = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
-                const monthNums = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+                const is2026Involved = (y1 === '2026' || y2 === '2026');
+                const monthLabels = is2026Involved 
+                    ? ['Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic']
+                    : ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+                const monthNums = is2026Involved
+                    ? ['06', '07', '08', '09', '10', '11', '12']
+                    : ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
 
                 const dataY1 = monthNums.map(m => {
                     const pKey = `${m}/${y1}`;
@@ -1091,8 +1134,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 datalabels: {
                                     anchor: 'end',
                                     align: 'top',
-                                    color: '#93c5fd',
-                                    font: { weight: 'bold', size: 10 },
+                                    offset: 4,
+                                    color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#1d4ed8' : '#93c5fd',
+                                    font: { weight: 'bold', size: 11 },
                                     formatter: function(value) {
                                         if (!value || value === 0) return '';
                                         return formatBrlVal(value);
@@ -1108,8 +1152,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 datalabels: {
                                     anchor: 'end',
                                     align: 'top',
-                                    color: '#6ee7b7',
-                                    font: { weight: 'bold', size: 10 },
+                                    offset: 4,
+                                    color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#047857' : '#6ee7b7',
+                                    font: { weight: 'bold', size: 11 },
                                     formatter: function(value, context) {
                                         const v1 = dataY1[context.dataIndex] || 0;
                                         const v2 = value || 0;
@@ -1135,7 +1180,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         scales: {
                             y: {
                                 beginAtZero: true,
-                                grace: '18%',
+                                grace: '20%',
                                 grid: { color: 'rgba(255,255,255,0.05)' },
                                 title: { display: true, text: 'R$', color: '#94a3b8' }
                             },
@@ -1146,7 +1191,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         plugins: {
                             legend: {
                                 display: true,
-                                labels: { color: '#fff', font: { weight: 'bold' } }
+                                labels: { color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#0f172a' : '#fff', font: { weight: 'bold' } }
                             },
                             tooltip: {
                                 callbacks: {
@@ -1253,8 +1298,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             datalabels: {
                                 anchor: 'end',
                                 align: 'top',
-                                color: '#93c5fd',
-                                font: { weight: 'bold', size: 10 },
+                                offset: 4,
+                                color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#1d4ed8' : '#93c5fd',
+                                font: { weight: 'bold', size: 11 },
                                 formatter: function(value) {
                                     if (!value || value === 0) return '';
                                     return formatBrlVal(value);
@@ -1270,8 +1316,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             datalabels: {
                                 anchor: 'end',
                                 align: 'top',
-                                color: '#6ee7b7',
-                                font: { weight: 'bold', size: 10 },
+                                offset: 4,
+                                color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#047857' : '#6ee7b7',
+                                font: { weight: 'bold', size: 11 },
                                 formatter: function(value, context) {
                                     const v1 = dataM1[context.dataIndex] || 0;
                                     const v2 = value || 0;
@@ -1297,7 +1344,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grace: '18%',
+                            grace: '20%',
                             grid: { color: 'rgba(255,255,255,0.05)' },
                             title: { display: true, text: 'R$', color: '#94a3b8' }
                         },
@@ -1308,7 +1355,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     plugins: {
                         legend: {
                             display: true,
-                            labels: { color: '#fff', font: { weight: 'bold' } }
+                            labels: { color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#0f172a' : '#fff', font: { weight: 'bold' } }
                         },
                         tooltip: {
                             callbacks: {
@@ -1381,11 +1428,11 @@ document.addEventListener('DOMContentLoaded', () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: { padding: { top: 30 } },
+                layout: { padding: { top: 35 } },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grace: '15%',
+                        grace: '20%',
                         grid: { color: 'rgba(255,255,255,0.05)' },
                         title: { display: true, text: 'R$', color: '#94a3b8' }
                     },
@@ -1398,8 +1445,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     datalabels: {
                         anchor: 'end',
                         align: 'top',
-                        color: '#fff',
-                        font: { weight: 'bold', size: 10 },
+                        offset: 4,
+                        color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#0f172a' : '#ffffff',
+                        font: { weight: 'bold', size: 11 },
                         formatter: function(value) {
                             if (!value || value === 0) return '';
                             return formatBrlVal(value);
@@ -1447,13 +1495,15 @@ document.addEventListener('DOMContentLoaded', () => {
         thead.innerHTML = thHtml;
 
         const dataByYear = {};
-        ['2027', '2026', '2025'].forEach(y => {
+        const availableYearsList = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2027', '2026'];
+        availableYearsList.forEach(y => {
             dataByYear[y] = { total: {}, months: {} };
         });
 
         APP_DATA.production.forEach(row => {
             const key = (entityType === 'usina') ? String(row.id) : String(row.client);
             const period = String(row.period);
+            if (!isPeriodValid(period)) return;
             const parts = period.split('/');
             if (parts.length < 2) return;
             const year = parts[1];
@@ -1475,7 +1525,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const formatBrlSimple = (val) => val ? val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-';
         let tbHtml = '';
 
-        const years = Object.keys(dataByYear).sort((a,b) => Number(b) - Number(a));
+        const years = Object.keys(dataByYear).filter(y => Number(y) >= 2026).sort((a,b) => Number(b) - Number(a));
         const yearTotals = {};
         years.forEach(yr => {
             yearTotals[yr] = entityKeys.reduce((sum, k) => sum + (dataByYear[yr].total[k] || 0), 0);
@@ -1500,18 +1550,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 yearCells += `<td style="padding: 10px; text-align: right; ${colorStyle}">${formatBrlSimple(val)}</td>`;
             });
 
-            // YoY variation
+            // YoY variation (only for years > 2026, since 2026 is baseline starting 06/2026)
             const prevYear = String(Number(year) - 1);
             const prevTotal = yearTotals[prevYear] || 0;
             let yoyBadge = '<span style="color: #64748b;">-</span>';
-            if (prevTotal > 0 && yearTotalRow > 0) {
+            if (Number(year) > 2026 && prevTotal > 0 && yearTotalRow > 0) {
                 const pct = ((yearTotalRow - prevTotal) / prevTotal) * 100;
                 const sign = pct >= 0 ? '+' : '';
                 const col = pct >= 0 ? '#10b981' : '#ef4444';
                 yoyBadge = `<span style="color: ${col}; font-weight: bold;">${sign}${pct.toFixed(1)}%</span>`;
-            } else if (prevTotal === 0 && yearTotalRow > 0) {
+            } else if (Number(year) > 2026 && prevTotal === 0 && yearTotalRow > 0) {
                 yoyBadge = `<span style="color: #10b981; font-weight: bold;">+100%</span>`;
-            } else if (prevTotal > 0 && yearTotalRow === 0) {
+            } else if (Number(year) > 2026 && prevTotal > 0 && yearTotalRow === 0) {
                 yoyBadge = `<span style="color: #ef4444; font-weight: bold;">-100%</span>`;
             }
 
@@ -1583,12 +1633,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.myChart) {
             window.myChart.update();
         }
+        if (typeof updateComparatoreChart === 'function') {
+            updateComparatoreChart();
+        }
     });
 
     if (typeof MutationObserver !== 'undefined') {
         const themeObserver = new MutationObserver(() => {
             if (window.myChart) {
                 window.myChart.update();
+            }
+            if (typeof updateComparatoreChart === 'function') {
+                updateComparatoreChart();
             }
         });
         if (document.documentElement) {

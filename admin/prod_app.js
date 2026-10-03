@@ -1,4 +1,25 @@
 Chart.register(ChartDataLabels);
+
+window.formatNumber = function(num) {
+    return Math.round(Number(num || 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+const formatNumber = window.formatNumber;
+
+window.isPeriodValid = function(p) {
+    if (!p) return false;
+    const parts = String(p).split('/');
+    if (parts.length < 2) return false;
+    const m = Number(parts[0]);
+    const y = Number(parts[1]);
+    return y > 2026 || (y === 2026 && m >= 6);
+};
+const isPeriodValid = window.isPeriodValid;
+
+window.formatBRL = function(num) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(num || 0);
+};
+const formatBRL = window.formatBRL;
+
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof APP_DATA === 'undefined' || !APP_DATA.production) {
         console.error("Dati di produzione non trovati.");
@@ -24,9 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
         Auth.updateUserProfileUI();
     }
 
-    const formatNumber = (num) => Math.round(Number(num)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    const formatBRL = (num) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(num);
-    
     if (APP_DATA.lastUpdated) {
         const lu = document.getElementById('last-updated');
         if(lu) lu.textContent = APP_DATA.lastUpdated;
@@ -140,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const subtotalRevElem = document.getElementById('subtotal-rev');
 
     // Populate dropdowns
-    const uniqueMese = [...new Set(APP_DATA.production.map(r => String(r.period)))].sort();
+    const uniqueMese = [...new Set(APP_DATA.production.filter(r => isPeriodValid(r.period)).map(r => String(r.period)))].sort();
     const uniqueImp = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
     const uniqueClient = [...new Set(APP_DATA.production.map(r => String(r.client)))].sort();
 
@@ -205,6 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const rowImp = String(row.id);
 
             if (
+                isPeriodValid(rowMese) &&
                 checkedMese.includes(rowMese) &&
                 checkedImp.includes(rowImp)
             ) {
@@ -237,12 +256,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup initial filters
     const allImp = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
     const allCli = [...new Set(APP_DATA.production.map(r => String(r.client)))].sort();
-    const allYears = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2028', '2027', '2026', '2025', '2024'];
+    const allYears = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2028', '2027', '2026'];
     
     const yearSelect = document.getElementById('chart-year-select');
     if (yearSelect) {
+        yearSelect.innerHTML = '<option value="all" style="color: #000;" data-i18n="filter_tutti_anni">Tutti gli anni</option>';
         allYears.forEach(y => {
-            if (!y) return;
+            if (!y || Number(y) < 2026) return;
             const opt = document.createElement('option');
             opt.value = y;
             opt.textContent = y;
@@ -252,35 +272,44 @@ document.addEventListener('DOMContentLoaded', () => {
         yearSelect.value = '2026';
     }
     
-            const cmeseContainer = document.getElementById('dropdown-chart-mese');
-    if(cmeseContainer) {
+    window.chartFilters = {
+        impianti: [...allImp],
+        clienti: [...allCli],
+        mesi: ['06','07','08','09','10','11','12']
+    };
+
+    function populateChartMesiDropdown() {
+        const cmeseContainer = document.getElementById('dropdown-chart-mese');
+        if (!cmeseContainer) return;
+        let monthsList = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+        if (currentChartYear === '2026') {
+            monthsList = ['06','07','08','09','10','11','12'];
+        }
         let chtml = `<div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; padding-bottom:0.4rem; border-bottom:1px solid rgba(255,255,255,0.1);">
             <span onclick="window.toggleAllChart('mesi', true)" style="font-size:0.8rem; font-weight:bold; color:#3b82f6; cursor:pointer; padding: 2px 5px; border-radius: 3px;"><span data-i18n="filter_tutti">+ Tutti</span></span>
             <span onclick="window.toggleAllChart('mesi', false)" style="font-size:0.8rem; font-weight:bold; color:#ef4444; cursor:pointer; padding: 2px 5px; border-radius: 3px;"><span data-i18n="filter_nessuno">- Nessuno</span></span>
         </div>`;
-        ['01','02','03','04','05','06','07','08','09','10','11','12'].forEach(val => {
+        monthsList.forEach(val => {
             chtml += `<label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.3rem; font-size:0.85rem; font-weight:normal; text-transform:none; cursor:pointer;">
                 <input type="checkbox" class="chart-filter-mesi" value="${val}" checked onchange="window.updateChartFilters()">
                 ${val}
             </label>`;
         });
         cmeseContainer.innerHTML = chtml;
+        window.chartFilters.mesi = [...monthsList];
     }
+
+    populateChartMesiDropdown();
 
     window.changeChartYear = function(year) {
         currentChartYear = year;
         updateKpiProductionBanner(year);
+        populateChartMesiDropdown();
         window.renderChart(false);
     };
 
     // Initial update of the top KPI banner with the selected year
     updateKpiProductionBanner(currentChartYear);
-
-    window.chartFilters = {
-        impianti: [...allImp],
-        clienti: [...allCli],
-          mesi: ['01','02','03','04','05','06','07','08','09','10','11','12']
-      };
 
     window.toggleAllChart = function(type, isChecked) {
         document.querySelectorAll(`.chart-filter-${type}`).forEach(cb => cb.checked = isChecked);
@@ -598,8 +627,8 @@ window.updateComparatorePeriodValues = function() {
     const m1Select = document.getElementById('comparatore-month-1');
     const m2Select = document.getElementById('comparatore-month-2');
     
-    const years = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2028', '2027', '2026', '2025', '2024'];
-    const months = (typeof window.getAvailableMonths === 'function') ? window.getAvailableMonths() : ['08/2026', '07/2026'];
+    const years = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears().filter(y => Number(y) >= 2026) : ['2028', '2027', '2026'];
+    const months = (typeof window.getAvailableMonths === 'function') ? window.getAvailableMonths() : ['09/2026', '08/2026', '07/2026'];
 
     if (type === 'two_years') {
         valueSelect.style.display = 'none';
@@ -618,13 +647,12 @@ window.updateComparatorePeriodValues = function() {
             y2Select.appendChild(opt2);
         });
         
-        // Imposta di default Anno 1 = 2025 e Anno 2 = 2026 (o i due anni più recenti)
-        if (years.includes('2025') && years.includes('2026')) {
-            y1Select.value = '2025';
-            y2Select.value = '2026';
+        if (years.includes('2026') && years.includes('2027')) {
+            y1Select.value = '2026';
+            y2Select.value = '2027';
         } else if (years.length >= 2) {
-            y1Select.value = years[1];
-            y2Select.value = years[0];
+            y1Select.value = years[years.length - 1];
+            y2Select.value = years[years.length - 2];
         } else if (years.length === 1) {
             y1Select.value = years[0];
             y2Select.value = years[0];
@@ -646,7 +674,6 @@ window.updateComparatorePeriodValues = function() {
             m2Select.appendChild(opt2);
         });
 
-        // Imposta di default i due mesi più recenti con dati (es. 07/2026 e 08/2026)
         if (months.includes('07/2026') && months.includes('08/2026')) {
             m1Select.value = '07/2026';
             m2Select.value = '08/2026';
@@ -724,12 +751,12 @@ window.updateComparatoreChart = function() {
         if (summaryKpi) {
             summaryKpi.style.display = 'flex';
             document.getElementById('kpi-y1-label').textContent = `Anno ${y1}:`;
-            document.getElementById('kpi-y1-val').textContent = new Intl.NumberFormat('it-IT').format(Math.round(totalY1)) + ' kWh';
+            document.getElementById('kpi-y1-val').textContent = formatNumber(totalY1) + ' kWh';
             document.getElementById('kpi-y2-label').textContent = `Anno ${y2}:`;
-            document.getElementById('kpi-y2-val').textContent = new Intl.NumberFormat('it-IT').format(Math.round(totalY2)) + ' kWh';
+            document.getElementById('kpi-y2-val').textContent = formatNumber(totalY2) + ' kWh';
             
             const badge = document.getElementById('kpi-diff-badge');
-            badge.textContent = `${diffKwh >= 0 ? '+' : ''}${new Intl.NumberFormat('it-IT').format(Math.round(diffKwh))} kWh (${diffPctStr})`;
+            badge.textContent = `${diffKwh >= 0 ? '+' : ''}${formatNumber(diffKwh)} kWh (${diffPctStr})`;
             if (diffKwh > 0) {
                 badge.style.background = 'rgba(16, 185, 129, 0.2)';
                 badge.style.color = '#34d399';
@@ -774,11 +801,12 @@ window.updateComparatoreChart = function() {
                             datalabels: {
                                 anchor: 'end',
                                 align: 'top',
-                                color: '#93c5fd',
-                                font: { weight: 'bold', size: 10 },
+                                offset: 4,
+                                color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#1d4ed8' : '#93c5fd',
+                                font: { weight: 'bold', size: 11 },
                                 formatter: function(value) {
                                     if (!value || value === 0) return '';
-                                    return new Intl.NumberFormat('it-IT').format(Math.round(value));
+                                    return formatNumber(value) + ' kWh';
                                 }
                             }
                         },
@@ -791,8 +819,9 @@ window.updateComparatoreChart = function() {
                             datalabels: {
                                 anchor: 'end',
                                 align: 'top',
-                                color: '#6ee7b7',
-                                font: { weight: 'bold', size: 10 },
+                                offset: 4,
+                                color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#047857' : '#6ee7b7',
+                                font: { weight: 'bold', size: 11 },
                                 formatter: function(value, context) {
                                     const v1 = dataY1[context.dataIndex] || 0;
                                     const v2 = value || 0;
@@ -804,7 +833,7 @@ window.updateComparatoreChart = function() {
                                     } else if (v2 > 0) {
                                         pctText = ' (+100%)';
                                     }
-                                    return `${new Intl.NumberFormat('it-IT').format(Math.round(v2))}${pctText}`;
+                                    return `${formatNumber(v2)} kWh${pctText}`;
                                 }
                             }
                         }
@@ -818,7 +847,7 @@ window.updateComparatoreChart = function() {
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grace: '18%',
+                            grace: '20%',
                             grid: { color: 'rgba(255,255,255,0.05)' },
                             title: { display: true, text: 'kWh', color: '#94a3b8' }
                         },
@@ -829,13 +858,13 @@ window.updateComparatoreChart = function() {
                     plugins: {
                         legend: { 
                             display: true,
-                            labels: { color: '#fff', font: { weight: 'bold' } }
+                            labels: { color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#0f172a' : '#fff', font: { weight: 'bold' } }
                         },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
                                     const val = context.raw || 0;
-                                    return ` ${context.dataset.label}: ${new Intl.NumberFormat('it-IT').format(Math.round(val))} kWh`;
+                                    return ` ${context.dataset.label}: ${formatNumber(val)} kWh`;
                                 },
                                 afterBody: function(contexts) {
                                     if (contexts.length === 2) {
@@ -849,7 +878,7 @@ window.updateComparatoreChart = function() {
                                             pct = '+100.0%';
                                         }
                                         const sign = diff >= 0 ? '+' : '';
-                                        return [`Variazione: ${sign}${new Intl.NumberFormat('it-IT').format(Math.round(diff))} kWh (${sign}${pct})`];
+                                        return [`Variazione: ${sign}${formatNumber(diff)} kWh (${sign}${pct})`];
                                     }
                                     return [];
                                 }
@@ -860,8 +889,13 @@ window.updateComparatoreChart = function() {
             });
         } else {
             // viewMode === 'by_month'
-            const monthLabels = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
-            const monthNums = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+            const is2026Involved = (y1 === '2026' || y2 === '2026');
+            const monthLabels = is2026Involved 
+                ? ['Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic']
+                : ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+            const monthNums = is2026Involved
+                ? ['06', '07', '08', '09', '10', '11', '12']
+                : ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
             
             const dataY1 = monthNums.map(m => {
                 const pKey = `${m}/${y1}`;
@@ -891,11 +925,12 @@ window.updateComparatoreChart = function() {
                             datalabels: {
                                 anchor: 'end',
                                 align: 'top',
-                                color: '#93c5fd',
-                                font: { weight: 'bold', size: 10 },
+                                offset: 4,
+                                color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#1d4ed8' : '#93c5fd',
+                                font: { weight: 'bold', size: 11 },
                                 formatter: function(value) {
                                     if (!value || value === 0) return '';
-                                    return new Intl.NumberFormat('it-IT').format(Math.round(value));
+                                    return formatNumber(value) + ' kWh';
                                 }
                             }
                         },
@@ -908,8 +943,9 @@ window.updateComparatoreChart = function() {
                             datalabels: {
                                 anchor: 'end',
                                 align: 'top',
-                                color: '#6ee7b7',
-                                font: { weight: 'bold', size: 10 },
+                                offset: 4,
+                                color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#047857' : '#6ee7b7',
+                                font: { weight: 'bold', size: 11 },
                                 formatter: function(value, context) {
                                     const v1 = dataY1[context.dataIndex] || 0;
                                     const v2 = value || 0;
@@ -921,7 +957,7 @@ window.updateComparatoreChart = function() {
                                     } else if (v2 > 0) {
                                         pctText = ' (+100%)';
                                     }
-                                    return `${new Intl.NumberFormat('it-IT').format(Math.round(v2))}${pctText}`;
+                                    return `${formatNumber(v2)} kWh${pctText}`;
                                 }
                             }
                         }
@@ -935,7 +971,7 @@ window.updateComparatoreChart = function() {
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grace: '18%',
+                            grace: '20%',
                             grid: { color: 'rgba(255,255,255,0.05)' },
                             title: { display: true, text: 'kWh', color: '#94a3b8' }
                         },
@@ -946,13 +982,13 @@ window.updateComparatoreChart = function() {
                     plugins: {
                         legend: { 
                             display: true,
-                            labels: { color: '#fff', font: { weight: 'bold' } }
+                            labels: { color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#0f172a' : '#fff', font: { weight: 'bold' } }
                         },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
                                     const val = context.raw || 0;
-                                    return ` ${context.dataset.label}: ${new Intl.NumberFormat('it-IT').format(Math.round(val))} kWh`;
+                                    return ` ${context.dataset.label}: ${formatNumber(val)} kWh`;
                                 },
                                 afterBody: function(contexts) {
                                     if (contexts.length === 2) {
@@ -966,7 +1002,7 @@ window.updateComparatoreChart = function() {
                                             pct = '+100.0%';
                                         }
                                         const sign = diff >= 0 ? '+' : '';
-                                        return [`Variazione: ${sign}${new Intl.NumberFormat('it-IT').format(Math.round(diff))} kWh (${sign}${pct})`];
+                                        return [`Variazione: ${sign}${formatNumber(diff)} kWh (${sign}${pct})`];
                                     }
                                     return [];
                                 }
@@ -1007,12 +1043,12 @@ window.updateComparatoreChart = function() {
         if (summaryKpi) {
             summaryKpi.style.display = 'flex';
             document.getElementById('kpi-y1-label').textContent = `Mese ${m1}:`;
-            document.getElementById('kpi-y1-val').textContent = new Intl.NumberFormat('it-IT').format(Math.round(totalM1)) + ' kWh';
+            document.getElementById('kpi-y1-val').textContent = formatNumber(totalM1) + ' kWh';
             document.getElementById('kpi-y2-label').textContent = `Mese ${m2}:`;
-            document.getElementById('kpi-y2-val').textContent = new Intl.NumberFormat('it-IT').format(Math.round(totalM2)) + ' kWh';
+            document.getElementById('kpi-y2-val').textContent = formatNumber(totalM2) + ' kWh';
             
             const badge = document.getElementById('kpi-diff-badge');
-            badge.textContent = `${diffKwh >= 0 ? '+' : ''}${new Intl.NumberFormat('it-IT').format(Math.round(diffKwh))} kWh (${diffPctStr})`;
+            badge.textContent = `${diffKwh >= 0 ? '+' : ''}${formatNumber(diffKwh)} kWh (${diffPctStr})`;
             if (diffKwh > 0) {
                 badge.style.background = 'rgba(16, 185, 129, 0.2)';
                 badge.style.color = '#34d399';
@@ -1056,11 +1092,12 @@ window.updateComparatoreChart = function() {
                         datalabels: {
                             anchor: 'end',
                             align: 'top',
-                            color: '#93c5fd',
-                            font: { weight: 'bold', size: 10 },
+                            offset: 4,
+                            color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#1d4ed8' : '#93c5fd',
+                            font: { weight: 'bold', size: 11 },
                             formatter: function(value) {
                                 if (!value || value === 0) return '';
-                                return new Intl.NumberFormat('it-IT').format(Math.round(value));
+                                return formatNumber(value) + ' kWh';
                             }
                         }
                     },
@@ -1073,8 +1110,9 @@ window.updateComparatoreChart = function() {
                         datalabels: {
                             anchor: 'end',
                             align: 'top',
-                            color: '#6ee7b7',
-                            font: { weight: 'bold', size: 10 },
+                            offset: 4,
+                            color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#047857' : '#6ee7b7',
+                            font: { weight: 'bold', size: 11 },
                             formatter: function(value, context) {
                                 const v1 = dataM1[context.dataIndex] || 0;
                                 const v2 = value || 0;
@@ -1086,7 +1124,7 @@ window.updateComparatoreChart = function() {
                                 } else if (v2 > 0) {
                                     pctText = ' (+100%)';
                                 }
-                                return `${new Intl.NumberFormat('it-IT').format(Math.round(v2))}${pctText}`;
+                                return `${formatNumber(v2)} kWh${pctText}`;
                             }
                         }
                     }
@@ -1100,7 +1138,7 @@ window.updateComparatoreChart = function() {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grace: '18%',
+                        grace: '20%',
                         grid: { color: 'rgba(255,255,255,0.05)' },
                         title: { display: true, text: 'kWh', color: '#94a3b8' }
                     },
@@ -1111,13 +1149,13 @@ window.updateComparatoreChart = function() {
                 plugins: {
                     legend: { 
                         display: true,
-                        labels: { color: '#fff', font: { weight: 'bold' } }
+                        labels: { color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#0f172a' : '#fff', font: { weight: 'bold' } }
                     },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
                                 const val = context.raw || 0;
-                                return ` ${context.dataset.label}: ${new Intl.NumberFormat('it-IT').format(Math.round(val))} kWh`;
+                                return ` ${context.dataset.label}: ${formatNumber(val)} kWh`;
                             },
                             afterBody: function(contexts) {
                                 if (contexts.length === 2) {
@@ -1131,7 +1169,7 @@ window.updateComparatoreChart = function() {
                                         pct = '+100.0%';
                                     }
                                     const sign = diff >= 0 ? '+' : '';
-                                    return [`Variazione: ${sign}${new Intl.NumberFormat('it-IT').format(Math.round(diff))} kWh (${sign}${pct})`];
+                                    return [`Variazione: ${sign}${formatNumber(diff)} kWh (${sign}${pct})`];
                                 }
                                 return [];
                             }
@@ -1185,11 +1223,11 @@ window.updateComparatoreChart = function() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            layout: { padding: { top: 30 } },
+            layout: { padding: { top: 35 } },
             scales: {
                 y: {
                     beginAtZero: true,
-                    grace: '15%',
+                    grace: '20%',
                     grid: { color: 'rgba(255,255,255,0.05)' },
                     title: { display: true, text: 'kWh', color: '#94a3b8' }
                 },
@@ -1202,11 +1240,12 @@ window.updateComparatoreChart = function() {
                 datalabels: {
                     anchor: 'end',
                     align: 'top',
-                    color: '#fff',
-                    font: { weight: 'bold', size: 10 },
+                    offset: 4,
+                    color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#0f172a' : '#ffffff',
+                    font: { weight: 'bold', size: 11 },
                     formatter: function(value) {
                         if (!value || value === 0) return '';
-                        return new Intl.NumberFormat('it-IT').format(Math.round(value));
+                        return formatNumber(value) + ' kWh';
                     }
                 }
             }
@@ -1236,14 +1275,16 @@ window.renderComparatoreTable = function() {
 
     const dataByYear = {};
     
-    // Assicura che 2027, 2026 e 2025 siano sempre presenti nella tabella
-    ['2027', '2026', '2025'].forEach(y => {
+    // Assicura che gli anni >= 2026 siano presenti nella tabella
+    const availableYearsList = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2027', '2026'];
+    availableYearsList.forEach(y => {
         dataByYear[y] = { total: {}, months: {} };
     });
     
     APP_DATA.production.forEach(row => {
         const p = String(row.id);
         const period = String(row.period);
+        if (!isPeriodValid(period)) return;
         const parts = period.split('/');
         if (parts.length < 2) return;
         const month = parts[0];
@@ -1266,7 +1307,7 @@ window.renderComparatoreTable = function() {
     const formatValue = (val) => val ? Math.round(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : '-';
     let tbHtml = '';
     
-    const years = Object.keys(dataByYear).sort((a,b) => Number(b) - Number(a));
+    const years = Object.keys(dataByYear).filter(y => Number(y) >= 2026).sort((a,b) => Number(b) - Number(a));
     
     // Precalculate totals per year for YoY comparison
     const yearTotals = {};
@@ -1293,18 +1334,18 @@ window.renderComparatoreTable = function() {
             yearCells += `<td style="padding: 10px; text-align: right; ${colorStyle}">${formatValue(val)}</td>`;
         });
 
-        // Compute YoY variation
+        // Compute YoY variation (only for years > 2026, since 2026 is baseline starting 06/2026)
         const prevYear = String(Number(year) - 1);
         const prevTotal = yearTotals[prevYear] || 0;
         let yoyBadge = '<span style="color: #64748b;">-</span>';
-        if (prevTotal > 0 && yearTotalRow > 0) {
+        if (Number(year) > 2026 && prevTotal > 0 && yearTotalRow > 0) {
             const pct = ((yearTotalRow - prevTotal) / prevTotal) * 100;
             const sign = pct >= 0 ? '+' : '';
             const col = pct >= 0 ? '#10b981' : '#ef4444';
             yoyBadge = `<span style="color: ${col}; font-weight: bold;">${sign}${pct.toFixed(1)}%</span>`;
-        } else if (prevTotal === 0 && yearTotalRow > 0) {
+        } else if (Number(year) > 2026 && prevTotal === 0 && yearTotalRow > 0) {
             yoyBadge = `<span style="color: #10b981; font-weight: bold;">+100%</span>`;
-        } else if (prevTotal > 0 && yearTotalRow === 0) {
+        } else if (Number(year) > 2026 && prevTotal > 0 && yearTotalRow === 0) {
             yoyBadge = `<span style="color: #ef4444; font-weight: bold;">-100%</span>`;
         }
         
@@ -1376,12 +1417,18 @@ window.addEventListener('themeChanged', () => {
     if (window.myChart) {
         window.myChart.update();
     }
+    if (typeof updateComparatoreChart === 'function') {
+        updateComparatoreChart();
+    }
 });
 
 if (typeof MutationObserver !== 'undefined') {
     const themeObserver = new MutationObserver(() => {
         if (window.myChart) {
             window.myChart.update();
+        }
+        if (typeof updateComparatoreChart === 'function') {
+            updateComparatoreChart();
         }
     });
     if (document.documentElement) {
