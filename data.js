@@ -1,4 +1,4 @@
-const APP_DATA = {
+﻿const APP_DATA = {
     "transactions":  [
                          {
                              "date":  "",
@@ -872,7 +872,7 @@ const APP_DATA = {
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "03/10/2026 09:09",
+    "lastUpdated":  "05/10/2026 08:31",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
@@ -1490,7 +1490,7 @@ const APP_DATA = {
                           "categoria":  "COSTS"
                       },
                       {
-                          "descrizione":  "Facture non parvenue - Rémunération GP (Note 013/2026)",
+                          "descrizione":  "Facture non parvenue - RÃ©munÃ©ration GP (Note 013/2026)",
                           "tipologia":  "4720000 - FACTURES NON PARVENUES (DETTE GP)",
                           "partner":  "NEW LIFE Sarl",
                           "anno":  2025,
@@ -1498,7 +1498,7 @@ const APP_DATA = {
                           "categoria":  "CAPITAUX PROPRES ET PASSIF"
                       },
                       {
-                          "descrizione":  "Règlement Facture non parvenue 013/2026 - Rémunération GP",
+                          "descrizione":  "RÃ¨glement Facture non parvenue 013/2026 - RÃ©munÃ©ration GP",
                           "tipologia":  "4720000 - FACTURES NON PARVENUES (DETTE GP)",
                           "partner":  "NEW LIFE Sarl",
                           "anno":  2026,
