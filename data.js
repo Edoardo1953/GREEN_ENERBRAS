@@ -647,7 +647,7 @@
                         "lotto":  "Lote n. Q023-LOT1038",
                         "superficie":  "200 mq",
                         "investimento":  120000,
-                        "stato":  "COMPLETATO",
+                        "stato":  "IN PRODUZIONE",
                         "gruppo":  "B",
                         "contratto":  "Affitto",
                         "locatore":  "Franco TOSCANO",
@@ -676,7 +676,7 @@
                         "lotto":  "Lote n. Q023-LOT1037",
                         "superficie":  "200mq",
                         "investimento":  120000,
-                        "stato":  "COMPLETATO",
+                        "stato":  "IN PRODUZIONE",
                         "gruppo":  "B",
                         "contratto":  "Affitto",
                         "locatore":  "Franco TOSCANO",
@@ -705,7 +705,7 @@
                         "lotto":  "Lote nº: Quadra M-LOTE 0018",
                         "superficie":  "200 mq",
                         "investimento":  120000,
-                        "stato":  "COMPLETATO",
+                        "stato":  "IN PRODUZIONE",
                         "gruppo":  "C",
                         "contratto":  "Affitto",
                         "locatore":  "Franco TOSCANO",
@@ -734,7 +734,7 @@
                         "lotto":  "Lote nº: Quadra M-LOTE 0020",
                         "superficie":  "200mq",
                         "investimento":  105357.27,
-                        "stato":  "COMPLETATO",
+                        "stato":  "IN PRODUZIONE",
                         "gruppo":  "C",
                         "contratto":  "Affitto",
                         "locatore":  "Franco TOSCANO",
@@ -850,7 +850,7 @@
                         "lotto":  "Lote nº: Q017-LOT0239",
                         "superficie":  "200/800 mq",
                         "investimento":  60071.59,
-                        "stato":  "IN CORSO",
+                        "stato":  "IN PRODUZIONE",
                         "gruppo":  "A",
                         "contratto":  "Affitto",
                         "locatore":  "Franco TOSCANO",
@@ -872,7 +872,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "05/10/2026 08:31",
+    "lastUpdated":  "05/10/2026 08:47",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
