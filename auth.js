@@ -94,7 +94,8 @@ const DEFAULT_PAGE_VISIBILITY = {
     banca: false,
     strumenti: false,
     risultati: false,
-    contabilita: false
+    contabilita: false,
+    aml: false
 };
 
 function getPageKeyFromElement(el) {
@@ -114,8 +115,10 @@ function getPageKeyFromElement(el) {
     if (href.includes('reporting.html') || i18n === 'nav_reporting' || innerI18n === 'nav_reporting' || text.includes('reporting')) return 'reporting';
     if (href.includes('tristar.html') || i18n === 'nav_tristar' || innerI18n === 'nav_tristar' || text.includes('tri star')) return 'tristar';
     if (href.includes('banca.html') || i18n === 'nav_conto' || innerI18n === 'nav_conto' || text.includes('conto bancario')) return 'banca';
+    if (href.includes('aml.html') || i18n === 'nav_aml' || innerI18n === 'nav_aml' || text.includes('aml')) return 'aml';
     if (href.includes('strumenti.html') || i18n === 'nav_strumenti' || innerI18n === 'nav_strumenti' || text.includes('strumenti')) return 'strumenti';
     if (href.includes('risultati.html') || i18n === 'menu_risultati' || innerI18n === 'menu_risultati' || i18n === 'nav_risultati' || innerI18n === 'nav_risultati' || text.includes('risultati')) return 'risultati';
+    if (href.includes('contabilita.html') || i18n === 'menu_contabilita' || innerI18n === 'menu_contabilita' || text.includes('contabilit')) return 'contabilita';
     if (href.includes('index.html') || i18n === 'nav_azionariato' || innerI18n === 'nav_azionariato' || text.includes('azionariato')) return 'azionariato';
     return null;
 }
@@ -128,6 +131,8 @@ function getCurrentPageKey() {
     if (path.includes('reporting.html')) return 'reporting';
     if (path.includes('tristar.html')) return 'tristar';
     if (path.includes('banca.html')) return 'banca';
+    if (path.includes('aml.html')) return 'aml';
+    if (path.includes('contabilita.html')) return 'contabilita';
     if (path.includes('strumenti.html')) return 'strumenti';
     if (path.includes('risultati.html')) return 'risultati';
     if (path.includes('/admin/index.html') || path.endsWith('/admin/') || path.endsWith('/admin')) return 'azionariato';

@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conformità AML / LBC-FT - GREEN ENERBRAS ONE SCSp</title>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS & jsPDF -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- PWA & Favicon -->
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="../style.css?v=300">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Auth Guard -->
+    <script src="../auth.js?v=300"></script>
+    <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
+    <script src="../i18n.js?v=300"></script>
+
+    <style>
+        .aml-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (min-width: 1200px) {
+            .aml-kpi-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+        .aml-kpi-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.2rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 105px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+        .aml-kpi-card:hover {
+            border-color: var(--accent-green);
+            transform: translateY(-2px);
+        }
+        .aml-kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.6rem;
+            gap: 0.5rem;
+        }
+        .aml-kpi-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            line-height: 1.3;
+        }
+        .aml-kpi-icon {
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        .aml-kpi-icon.emerald { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .aml-kpi-icon.blue { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .aml-kpi-icon.amber { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .aml-kpi-icon.cyan { background: rgba(6, 182, 212, 0.2); color: #06b6d4; }
+        .aml-kpi-value {
+            font-size: 1.45rem;
+            font-weight: 800;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .asset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .asset-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.25rem;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .asset-card:hover {
+            border-color: var(--accent-green);
+            transform: translateY(-2px);
+        }
+        .aml-threshold-btn.active {
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+        }
+        .filter-bar {
+            padding: 1.25rem;
+            border-radius: 14px;
+            margin-bottom: 1.25rem;
+        }
+        .filter-input, .filter-select {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.6rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .filter-input:focus, .filter-select:focus {
+            border-color: var(--accent-green);
+        }
+        .btn-sm {
+            padding: 0.45rem 0.85rem;
+            font-size: 0.82rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: var(--accent-green);
+            color: white;
+            border: 1px solid var(--accent-green);
+        }
+        .btn-primary:hover {
+            background: var(--accent-green-hover);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--accent-green);
+        }
+        .charts-grid-equal {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+        .chart-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .text-emerald { color: #10b981 !important; }
+        .text-blue { color: #3b82f6 !important; }
+        .text-amber { color: #f59e0b !important; }
+        .text-cyan { color: #06b6d4 !important; }
+        .text-purple { color: #a855f7 !important; }
+
+        /* Tabs */
+        .tabs-nav {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.75rem 1.25rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+        .tab-btn.active {
+            color: var(--accent-green);
+            border-bottom-color: var(--accent-green);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Modal styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-container, .modal-content {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            width: 90%;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+        .filter-pill {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-pill.active {
+            background: var(--accent-green);
+            color: white;
+            border-color: var(--accent-green);
+        }
+
+        /* Light Theme Adaptation */
+        body.theme-light .asset-card,
+        body.theme-light .chart-card,
+        body.theme-light .filter-bar {
+            background: #ffffff !important;
+            border: 1px solid #cbd5e1 !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+        }
+        body.theme-light .filter-input,
+        body.theme-light .filter-select {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border-color: #cbd5e1 !important;
+        }
+        body.theme-light .modal-container,
+        body.theme-light .modal-content {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+        body.theme-light .table-container table {
+            color: #0f172a !important;
+        }
+        body.theme-light .table-container thead {
+            background: #f1f5f9 !important;
+        }
+        body.theme-light .table-container td,
+        body.theme-light .table-container th {
+            color: #1e293b !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass-panel">
+            <div class="logo" style="display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; padding: 0.5rem 0.25rem;">
+                <img src="Loghi/Logo Green Enerbras 01.png" alt="GREEN ENERBRAS" style="max-width: 100%; height: auto; max-height: 105px; object-fit: contain;">
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-visibility-header">
+                    <span data-i18n="nav_menu_title">PAGINA</span>
+                    <span class="user-view-col-header" data-i18n="nav_col_partner_view"><i class="fa-solid fa-users-viewfinder"></i> USER VIEW</span>
+                </div>
+                <div class="nav-item-row" data-page="azionariato">
+                    <a href="index.html" class="nav-item"><i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_azionariato">Azionariato (LPs)</span></a>
+                </div>
+                <div class="nav-item-row" data-page="produzione">
+                    <a href="produzione.html" class="nav-item"><i class="fa-solid fa-solar-panel"></i> <span data-i18n="nav_produzione">Produzione Energia</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="produzione" data-visible="true" onclick="Auth.togglePageVisibility('produzione')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="vendite">
+                    <a href="vendite.html" class="nav-item"><i class="fa-solid fa-money-bill-trend-up"></i> <span data-i18n="nav_vendite">Vendite Energia</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="vendite" data-visible="true" onclick="Auth.togglePageVisibility('vendite')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="impianti">
+                    <a href="impianti.html" class="nav-item"><i class="fa-solid fa-map-location-dot"></i> <span data-i18n="nav_impianti">Impianti e Mappa</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="impianti" data-visible="true" onclick="Auth.togglePageVisibility('impianti')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="reporting">
+                    <a href="reporting.html" class="nav-item"><i class="fa-solid fa-file-pdf"></i> <span data-i18n="nav_reporting">Documentazione GREEN_ENERBRAS</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="reporting" data-visible="true" onclick="Auth.togglePageVisibility('reporting')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="tristar">
+                    <a href="tristar.html" class="nav-item"><i class="fa-solid fa-file-contract"></i> <span data-i18n="nav_tristar">Documentazione TRI STAR</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="tristar" data-visible="true" onclick="Auth.togglePageVisibility('tristar')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="banca">
+                    <a href="banca.html" class="nav-item"><i class="fa-solid fa-building-columns"></i> <span data-i18n="nav_conto">Conto Bancario</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="banca" data-visible="false" onclick="Auth.togglePageVisibility('banca')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.8rem 0;"></div>
+                <div class="nav-item-row" data-page="risultati">
+                    <a href="risultati.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> <span data-i18n="menu_risultati">Risultati</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="risultati" data-visible="false" onclick="Auth.togglePageVisibility('risultati')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="contabilita">
+                    <a href="contabilita.html" class="nav-item"><i class="fa-solid fa-book-bookmark"></i> <span data-i18n="menu_contabilita">Contabilità</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="contabilita" data-visible="false" onclick="Auth.togglePageVisibility('contabilita')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="aml">
+                    <a href="aml.html" class="nav-item active"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="nav_aml">Conformità AML (LBC-FT)</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="aml" data-visible="false" onclick="Auth.togglePageVisibility('aml')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="strumenti">
+                    <a href="strumenti.html" class="nav-item"><i class="fa-solid fa-toolbox"></i> <span data-i18n="nav_strumenti">Strumenti</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="strumenti" data-visible="false" onclick="Auth.togglePageVisibility('strumenti')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; margin-top: 1rem; border: 1px dashed #3b82f6; justify-content: center;"><i class="fa-solid fa-right-left"></i> <span data-i18n="nav_switch_user">Switch to USER</span></a>
+                <a href="#" onclick="Auth.logout()" class="nav-item" style="color: #ef4444; margin-top: 0.5rem; justify-content: center;"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="nav_logout">Esci</span></a>
+                <div class="update-info">
+                    <p data-i18n="last_updated">Ultimo aggiornamento:</p>
+                    <p id="last-updated" class="text-bold">05/10/2026</p>
+                    <button class="btn-refresh" onclick="window.location.reload(true)" data-i18n="btn_refresh"><i class="fa-solid fa-rotate-right"></i> Ricarica Dati</button>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <header class="topbar glass-panel" style="margin-bottom: 1.5rem; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div class="topbar-title-area">
+                    <h1 data-i18n="aml_title" style="font-size: 1.45rem; font-weight: 800; margin: 0 0 0.25rem 0;">
+                        <i class="fa-solid fa-shield-halved text-emerald"></i> Registro Flussi di Capitale & Conformità AML / LBC-FT
+                    </h1>
+                    <p data-i18n="aml_desc" style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+                        Controllo antiriciclaggio dei versamenti quote dei Soci, investimenti e fascicoli KYC/RBE (Loi 12 Nov 2004 / AED / CSSF).
+                    </p>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <!-- AML Manual Button -->
+                    <button id="btn-open-aml-manual" class="btn btn-secondary btn-sm" onclick="openAmlManualModal()" style="border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.08);">
+                        <i class="fa-solid fa-book-open text-emerald"></i>
+                        <span data-i18n="btn_aml_manual">Guida & Manuale AML</span>
+                    </button>
+
+                    <!-- Language Selector -->
+                    <div class="lang-selector" style="display: flex; gap: 0.4rem; align-items: center;">
+                        <img src="https://flagcdn.com/w40/it.png" alt="IT" data-lang="it" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        <img src="https://flagcdn.com/w40/gb.png" alt="EN" data-lang="en" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        <img src="https://flagcdn.com/w40/fr.png" alt="FR" data-lang="fr" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                    </div>
+
+                    <!-- Theme Toggle -->
+                    <button type="button" class="btn-theme-toggle" onclick="ThemeManager.toggle()" title="Cambia tema" style="background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); color: white; padding: 0.45rem 0.8rem; border-radius: 8px; cursor: pointer;">
+                        <i class="fa-solid fa-wrench"></i> <span class="theme-toggle-text">TOOLS</span>
+                    </button>
+
+                    <div class="user-profile" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <img src="https://ui-avatars.com/api/?name=Edoardo+Tubia&background=3b82f6&color=fff" alt="Admin" class="avatar" style="width: 32px; height: 32px; border-radius: 50%;">
+                        <span style="font-size: 0.85rem; font-weight: 600;">Edoardo Tubia</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Summary KPI Strip -->
+            <div class="aml-kpi-grid">
+                <div class="aml-kpi-card glass-panel">
+                    <div class="aml-kpi-header">
+                        <span class="aml-kpi-title" data-i18n="aml_kpi_total_volume">Volume Totale Controllato</span>
+                        <div class="aml-kpi-icon emerald">
+                            <i class="fa-solid fa-vault"></i>
+                        </div>
+                    </div>
+                    <div class="aml-kpi-value text-emerald" id="aml-kpi-volume">261.000,00 €</div>
+                </div>
+
+                <div class="aml-kpi-card glass-panel">
+                    <div class="aml-kpi-header">
+                        <span class="aml-kpi-title" data-i18n="aml_kpi_total_ops">Apporti di Capitale</span>
+                        <div class="aml-kpi-icon blue">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                        </div>
+                    </div>
+                    <div class="aml-kpi-value text-blue" id="aml-kpi-ops">13</div>
+                </div>
+
+                <div class="aml-kpi-card glass-panel">
+                    <div class="aml-kpi-header">
+                        <span class="aml-kpi-title" data-i18n="aml_kpi_compliant_pct">Conformità KYC Soci</span>
+                        <div class="aml-kpi-icon emerald">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                    </div>
+                    <div class="aml-kpi-value text-emerald" id="aml-kpi-compliance">100%</div>
+                </div>
+
+                <div class="aml-kpi-card glass-panel">
+                    <div class="aml-kpi-header">
+                        <span class="aml-kpi-title" data-i18n="aml_kpi_attention">Vigilanza Attiva</span>
+                        <div class="aml-kpi-icon amber">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                    </div>
+                    <div class="aml-kpi-value text-amber" id="aml-kpi-attention">0</div>
+                </div>
+
+                <div class="aml-kpi-card glass-panel">
+                    <div class="aml-kpi-header">
+                        <span class="aml-kpi-title" data-i18n="aml_kpi_pep_count">Esposizione PEP / RBE</span>
+                        <div class="aml-kpi-icon cyan">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                    </div>
+                    <div class="aml-kpi-value text-cyan" id="aml-kpi-pep">0</div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="tab-aml-registry" data-i18n="tab_aml_registry">1. Registro Entrate Quote & AML</button>
+                <button class="tab-btn" data-tab="tab-aml-clients" data-i18n="tab_aml_clients">2. Mappatura Soci & Investitori</button>
+                <button class="tab-btn" data-tab="tab-aml-matrix" data-i18n="tab_aml_matrix">3. Quadro Legale SCSp & Matrice Rischi</button>
+                <button class="tab-btn" data-tab="tab-aml-simulator" data-i18n="tab_aml_simulator">4. Simulatore Due Diligence</button>
+            </div>
+
+            <!-- TAB 1: Registre des Entrées & Contrôle AML -->
+            <div class="tab-content active" id="tab-aml-registry">
+                <!-- Advanced Filter Bar -->
+                <div class="filter-bar glass-panel">
+                    <!-- Threshold Fast Buttons -->
+                    <div style="margin-bottom: 0.75rem;">
+                        <label style="font-weight: 700; color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 0.35rem;">
+                            <i class="fa-solid fa-filter text-emerald"></i> <span data-i18n="filter_aml_threshold">Soglie di Vigilanza AML</span> :
+                        </label>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn btn-primary btn-sm aml-threshold-btn active" data-threshold="0">
+                                <i class="fa-solid fa-layer-group"></i> <span data-i18n="filter_aml_all">Tutti i Versamenti (≥ 0 €)</span>
+                            </button>
+                            <button class="btn btn-secondary btn-sm aml-threshold-btn" data-threshold="5000">
+                                <i class="fa-solid fa-shield-halved text-blue"></i> <span data-i18n="filter_aml_5k">≥ 5.000 € (Standard)</span>
+                            </button>
+                            <button class="btn btn-secondary btn-sm aml-threshold-btn" data-threshold="10000">
+                                <i class="fa-solid fa-scale-balanced text-cyan"></i> <span data-i18n="filter_aml_10k">≥ 10.000 € (Soglia Legale UE)</span>
+                            </button>
+                            <button class="btn btn-secondary btn-sm aml-threshold-btn" data-threshold="25000">
+                                <i class="fa-solid fa-gem text-purple"></i> <span data-i18n="filter_aml_25k">≥ 25.000 € (Grandi Apporti/Quote)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Filters & Search -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; width: 100%;">
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Ricerca (Socio, causale, rif...)</label>
+                            <input type="text" id="aml-search-input" class="filter-input" style="width: 100%;" placeholder="Cerca...">
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;" data-i18n="filter_partner">Socio / Conferente</label>
+                            <select id="aml-filter-partner" class="filter-select" style="width: 100%;">
+                                <!-- Dinamico -->
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;" data-i18n="filter_year">Esercizio Fiscale</label>
+                            <select id="aml-filter-year" class="filter-select" style="width: 100%;">
+                                <option value="ALL">Tutti gli esercizi</option>
+                                <option value="2026">2026 (In corso)</option>
+                                <option value="2025">2025</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;" data-i18n="filter_entity_type">Tipologia Soggetto</label>
+                            <select id="aml-filter-entity-type" class="filter-select" style="width: 100%;">
+                                <option value="ALL">Tutte le forme</option>
+                                <option value="PERSONNE_PHYSIQUE">Persona Fisica (Privé)</option>
+                                <option value="SARL_COMMERCIALE">General Partner (Sàrl)</option>
+                                <option value="SCP_BRESIL">Partecipata Brasile (SCP)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;" data-i18n="filter_kyc_status">Stato KYC</label>
+                            <select id="aml-filter-kyc-status" class="filter-select" style="width: 100%;">
+                                <option value="ALL">Tutti gli stati</option>
+                                <option value="CONFORME">🟢 Conforme</option>
+                                <option value="A_COMPLETER">🟡 Da Completare</option>
+                                <option value="VIGILANCE_RENFORCEE">🔴 Vigilanza Rafforzata</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2 class="chart-title"><i class="fa-solid fa-list-check text-emerald"></i> Registro Analitico degli Apporti di Capitale Contrôlés</h2>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button id="btn-export-aml-excel" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-file-excel text-emerald"></i> <span data-i18n="btn_export_aml_excel">Excel</span>
+                            </button>
+                            <button id="btn-export-aml-csv" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-file-csv text-blue"></i> <span>CSV</span>
+                            </button>
+                            <button id="btn-export-aml-pdf" class="btn btn-primary btn-sm">
+                                <i class="fa-solid fa-file-pdf"></i> <span data-i18n="btn_export_aml_pdf">Rapporto PDF</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="custom-table" id="aml-registry-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th data-i18n="th_partner_investor">Socio / Conferente</th>
+                                    <th data-i18n="th_share_purpose">Causale Apporto / Quota</th>
+                                    <th data-i18n="th_transfer_ref">Riferimento / Contratto</th>
+                                    <th class="text-right" data-i18n="th_amount_paid">Importo Versato (€)</th>
+                                    <th class="text-right" data-i18n="th_detention_pct">Quota SCSp (%)</th>
+                                    <th style="text-align: center;" data-i18n="th_aml_level">Soglia AML</th>
+                                    <th style="text-align: center;" data-i18n="th_aml_risk">Rischio</th>
+                                    <th style="text-align: center;" data-i18n="th_kyc_status">Stato KYC</th>
+                                    <th style="text-align: center;" data-i18n="th_action_kyc">Fascicolo</th>
+                                </tr>
+                            </thead>
+                            <tbody id="aml-registry-tbody">
+                                <!-- Injected dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: Cartographie des Associés & Investisseurs -->
+            <div class="tab-content" id="tab-aml-clients">
+                <div class="asset-grid" id="aml-clients-container">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- TAB 3: Cadre Légal & Matrice des Risques -->
+            <div class="tab-content" id="tab-aml-matrix">
+                <div id="aml-matrix-content">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- TAB 4: Simulateur Due Diligence -->
+            <div class="tab-content" id="tab-aml-simulator">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2 class="chart-title"><i class="fa-solid fa-wand-magic-sparkles text-emerald"></i> Simulatore di Valutazione del Rischio Socio / Investitore (Due Diligence Tool)</h2>
+                    </div>
+
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+                        Valuta istantaneamente il punteggio di rischio LBC-FT (da 0 a 100) e determina il livello di adeguata verifica richiesto (Standard, Attiva o Rafforzata) per ogni nuovo socio, quota sottoscritta o investimento in rinnovabili.
+                    </p>
+
+                    <div class="charts-grid-equal" style="margin-bottom: 1.5rem;">
+                        <div>
+                            <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Tipologia del Soggetto</label>
+                            <select id="sim-entity-type" class="filter-select" style="width: 100%;">
+                                <option value="PERSONNE_PHYSIQUE" selected>Persona Fisica Privata (Rischio Standard)</option>
+                                <option value="SARL_COMMERCIALE">Società Commerciale (SA / Sàrl)</option>
+                                <option value="SCSP_INVESTISSEMENT">Società in Accomandita (SCSp / Partnership)</option>
+                                <option value="ENTITE_INTERNATIONALE">Entità Estera / Veicolo Internazionale</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Paese di Residenza / Sede Legale</label>
+                            <select id="sim-country" class="filter-select" style="width: 100%;">
+                                <option value="LU" selected>Lussemburgo (Piazza finanziaria vigilata)</option>
+                                <option value="IT">Italia (Unione Europea)</option>
+                                <option value="ES">Spagna (Unione Europea)</option>
+                                <option value="FR">Francia (Unione Europea)</option>
+                                <option value="DE">Germania (Unione Europea)</option>
+                                <option value="CH">Svizzera (Paese terzo equivalente GAFI)</option>
+                                <option value="BR">Brasile (Vigilanza investimenti internazionali)</option>
+                                <option value="OTHER">Altro Paese Terzo (Extra UE)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Persona Politicamente Esposta (PEP)</label>
+                            <select id="sim-is-pep" class="filter-select" style="width: 100%;">
+                                <option value="NO" selected>No (Nessun investitore o titolare effettivo è PEP)</option>
+                                <option value="YES">Sì (Socio o Titolare Effettivo PEP / Famigliare PEP)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Origine dei Fondi Conferiti (Source of Wealth)</label>
+                            <select id="sim-source" class="filter-select" style="width: 100%;">
+                                <option value="SALARY_SAVINGS" selected>Redditi di lavoro / Risparmi personali diretti</option>
+                                <option value="BUSINESS_SALE">Disinvestimenti aziendali / Vendita quote / Dividendi</option>
+                                <option value="TRUST_FIDUCIARY">Trust / Struttura fiduciaria / Fondi terzi</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">Importo Quota Sottoscritta (€)</label>
+                            <input type="number" id="sim-volume" class="filter-input" style="width: 100%;" value="20000" placeholder="20000">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <button id="btn-calc-due-diligence" class="btn btn-primary">
+                            <i class="fa-solid fa-calculator"></i> Calcola Valutazione Due Diligence
+                        </button>
+                    </div>
+
+                    <div id="sim-results-box">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Dossier KYC / AML -->
+    <div class="modal-overlay" id="aml-kyc-modal">
+        <div class="modal-container" style="max-width: 750px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-kyc-title"><i class="fa-solid fa-shield-halved text-emerald"></i> Dossier KYC / AML Socio</h3>
+                <button class="modal-close-btn" onclick="closeAmlKycModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-kyc-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Nome & Cognome / Ragione Sociale</label>
+                        <input type="text" id="kyc-input-legal-name" class="filter-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Forma Giuridica / Ruolo</label>
+                        <select id="kyc-input-entity-type" class="filter-select" style="width: 100%;">
+                            <option value="PERSONNE_PHYSIQUE">Persona Fisica Privata (LP)</option>
+                            <option value="SARL_COMMERCIALE">General Partner (Sàrl)</option>
+                            <option value="SA_COMMERCIALE">Società Anonyme (SA)</option>
+                            <option value="SCSP_INVESTISSEMENT">Société en Commandite Spéciale (SCSp)</option>
+                            <option value="SCP_BRESIL">Sociedade em Conta de Participação (Brasile)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">N° RCSL / Registro Imprese</label>
+                        <input type="text" id="kyc-input-rcs" class="filter-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Codice Fiscale / Matricola Nazionale</label>
+                        <input type="text" id="kyc-input-matricule" class="filter-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Partita IVA / N° Fiscale</label>
+                        <input type="text" id="kyc-input-tva" class="filter-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Paese di Residenza / Sede</label>
+                        <input type="text" id="kyc-input-country" class="filter-input" style="width: 100%;">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Indirizzo di Residenza / Sede</label>
+                        <input type="text" id="kyc-input-address" class="filter-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">CAP</label>
+                        <input type="text" id="kyc-input-postal-code" class="filter-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Città</label>
+                        <input type="text" id="kyc-input-city" class="filter-input" style="width: 100%;">
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Natura della Sottoscrizione / Rapporto</label>
+                        <input type="text" id="kyc-input-mandate" class="filter-input" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Livello di Rischio LBC-FT</label>
+                        <select id="kyc-input-risk-level" class="filter-select" style="width: 100%;">
+                            <option value="LOW">🟢 Basso (Low Risk)</option>
+                            <option value="MEDIUM">🟡 Medio (Medium Risk)</option>
+                            <option value="HIGH">🔴 Elevato (High Risk / EDD)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Stato di Conformità Fascicolo</label>
+                        <select id="kyc-input-kyc-status" class="filter-select" style="width: 100%;">
+                            <option value="CONFORME">🟢 Conforme (Completo)</option>
+                            <option value="A_COMPLETER">🟡 Da Completare</option>
+                            <option value="VIGILANCE_RENFORCEE">🔴 Vigilanza Rafforzata</option>
+                        </select>
+                    </div>
+                    <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 8px;">
+                        <input type="checkbox" id="kyc-input-is-pep" style="width: 18px; height: 18px;">
+                        <label for="kyc-input-is-pep" style="font-weight: 600; font-size: 0.85rem; cursor: pointer;">
+                            Persona Politicamente Esposta (PEP) o legata a una PEP
+                        </label>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Dettagli PEP (Carica pubblica, ente, paese...)</label>
+                        <input type="text" id="kyc-input-pep-details" class="filter-input" style="width: 100%;" placeholder="Lasciare vuoto se non PEP">
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-weight: 700; font-size: 0.85rem; color: var(--text-main); display: block; margin-bottom: 0.5rem;">
+                        <i class="fa-solid fa-users text-emerald"></i> Titolari Effettivi (UBO / RBE) :
+                    </label>
+                    <div id="kyc-ubo-list-container">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Note di Audit & Giustificativi di Conformità</label>
+                    <textarea id="kyc-input-notes" class="filter-input" style="width: 100%; height: 75px;" placeholder="Commenti di Due Diligence..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAmlKycModal()">Annulla</button>
+                <button class="btn btn-primary" onclick="saveAmlKycModalData()">
+                    <i class="fa-solid fa-floppy-disk"></i> <span data-i18n="btn_save_kyc">Salva Fascicolo KYC</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Manuale / Guide AML LBC-FT -->
+    <div class="modal-overlay" id="aml-manual-modal" style="display: none;">
+        <div class="modal-content glass-panel" style="max-width: 950px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fa-solid fa-book-bookmark text-emerald" style="font-size: 1.4rem;"></i>
+                    <div>
+                        <h3 data-i18n="modal_manual_title" style="margin: 0; font-size: 1.15rem; font-weight: 700;">Guida Metodologica & Manuale d'Uso AML / LBC-FT</h3>
+                        <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);">GREEN ENERBRAS ONE SCSp • Loi du 12 Nov. 2004 • AED • Apporti Soci & Due Diligence</p>
+                    </div>
+                </div>
+                <button class="btn-close" onclick="closeAmlManualModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.25rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Toolbar in modal: Language selector + Actions -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.5rem;">
+                <div class="filter-group-pills" style="margin: 0; display: flex; gap: 0.35rem;">
+                    <button class="filter-pill manual-lang-pill active" data-manual-lang="it" onclick="setManualModalLang('it')">🇮🇹 Italiano</button>
+                    <button class="filter-pill manual-lang-pill" data-manual-lang="fr" onclick="setManualModalLang('fr')">🇫🇷 Français</button>
+                    <button class="filter-pill manual-lang-pill" data-manual-lang="en" onclick="setManualModalLang('en')">🇬🇧 English</button>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary btn-sm" onclick="printManualContent()">
+                        <i class="fa-solid fa-print"></i> <span data-i18n="btn_print_manual">Stampa</span>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="openManualPdfTab()">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> <span data-i18n="btn_open_pdf_tab">Apri PDF</span>
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="downloadCurrentManualPdf()">
+                        <i class="fa-solid fa-file-pdf"></i> <span data-i18n="btn_download_manual_pdf">Scarica PDF</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reader Body -->
+            <div class="modal-body" id="aml-manual-reader-body" style="overflow-y: auto; padding: 1.5rem; flex: 1; line-height: 1.6; font-size: 0.9rem; color: var(--text-main);">
+                <!-- Dynamically populated via JS -->
+            </div>
+
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                <span id="manual-footer-pdf-name" style="font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">docs/Manuale_Conformita_AML_Antiriciclaggio_GREEN_ENERBRAS_IT.pdf</span>
+                <button class="btn btn-secondary" onclick="closeAmlManualModal()">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data & Scripts -->
+    <script src="../data.js?v=300"></script>
+    <script src="aml_data.js?v=300"></script>
+    <script src="aml_app.js?v=300"></script>
+</body>
+</html>
