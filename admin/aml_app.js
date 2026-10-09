@@ -222,31 +222,31 @@ function getLocalizedMandate(mandateKey) {
 function getLocalizedRiskBadge(riskLevel) {
     const lvl = riskLevel || 'LOW';
     if (lvl === 'HIGH') {
-        return `<span class="badge badge-danger" style="background: rgba(239, 68, 68, 0.15); color: #f87171; font-size: 0.75rem;"><i class="fa-solid fa-radiation"></i> ${t('risk_high', 'Elevato')}</span>`;
+        return `<span class="badge badge-danger" style="display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; flex-shrink: 0; background: rgba(239, 68, 68, 0.15); color: #f87171; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 20px;"><i class="fa-solid fa-radiation"></i> <span>${t('risk_high', 'Elevato')}</span></span>`;
     }
     if (lvl === 'MEDIUM') {
-        return `<span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-size: 0.75rem;"><i class="fa-solid fa-triangle-exclamation"></i> ${t('risk_medium', 'Medio')}</span>`;
+        return `<span class="badge badge-warning" style="display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; flex-shrink: 0; background: rgba(245, 158, 11, 0.15); color: #fbbf24; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 20px;"><i class="fa-solid fa-triangle-exclamation"></i> <span>${t('risk_medium', 'Medio')}</span></span>`;
     }
-    return `<span class="badge badge-success" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 0.75rem;"><i class="fa-solid fa-shield-check"></i> ${t('risk_low', 'Basso')}</span>`;
+    return `<span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; flex-shrink: 0; background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 20px;"><i class="fa-solid fa-shield-check"></i> <span>${t('risk_low', 'Basso')}</span></span>`;
 }
 
 function getLocalizedKycBadge(kycStatus) {
     const status = kycStatus || 'CONFORME';
     if (status === 'VIGILANCE_RENFORCEE') {
-        return `<span class="badge badge-danger" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 0.75rem;"><i class="fa-solid fa-triangle-exclamation"></i> ${t('kyc_enhanced', 'Rafforzata')}</span>`;
+        return `<span class="badge badge-danger" style="display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; flex-shrink: 0; background: rgba(239, 68, 68, 0.2); color: #ef4444; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 20px;"><i class="fa-solid fa-triangle-exclamation"></i> <span>${t('kyc_enhanced', 'Rafforzata')}</span></span>`;
     }
     if (status === 'A_COMPLETER') {
-        return `<span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; font-size: 0.75rem;"><i class="fa-solid fa-clock-rotate-left"></i> ${t('kyc_to_complete', 'Da Completare')}</span>`;
+        return `<span class="badge badge-warning" style="display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; flex-shrink: 0; background: rgba(245, 158, 11, 0.2); color: #f59e0b; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 20px;"><i class="fa-solid fa-clock-rotate-left"></i> <span>${t('kyc_to_complete', 'Da Completare')}</span></span>`;
     }
-    return `<span class="badge badge-success" style="background: rgba(16, 185, 129, 0.2); color: #10b981; font-size: 0.75rem;"><i class="fa-solid fa-circle-check"></i> ${t('kyc_compliant', 'Conforme')}</span>`;
+    return `<span class="badge badge-success" style="display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; flex-shrink: 0; background: rgba(16, 185, 129, 0.2); color: #10b981; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 20px;"><i class="fa-solid fa-circle-check"></i> <span>${t('kyc_compliant', 'Conforme')}</span></span>`;
 }
 
 function getLocalizedThresholdBadge(thresholdLevel) {
     if (thresholdLevel === 'MAJOR_25K') {
-        return `<span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); font-size: 0.72rem;">${t('threshold_25k_badge', '≥ 25k€ (Grandi Apporti)')}</span>`;
+        return `<span class="badge" style="display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; flex-shrink: 0; background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); font-size: 0.72rem; padding: 0.25rem 0.65rem; border-radius: 20px;">${t('threshold_25k_badge', '≥ 25k€ (Grandi Apporti)')}</span>`;
     }
     if (thresholdLevel === 'DUE_DILIGENCE_10K') {
-        return `<span class="badge" style="background: rgba(6, 182, 212, 0.2); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.4); font-size: 0.72rem;">${t('threshold_10k_badge', '≥ 10k€ (Legale)')}</span>`;
+        return `<span class="badge" style="display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; flex-shrink: 0; background: rgba(6, 182, 212, 0.2); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.4); font-size: 0.72rem; padding: 0.25rem 0.65rem; border-radius: 20px;">${t('threshold_10k_badge', '≥ 10k€ (Legale)')}</span>`;
     }
     if (thresholdLevel === 'VIGILANCE_5K') {
         return `<span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); font-size: 0.72rem;">${t('threshold_5k_badge', '≥ 5k€')}</span>`;
@@ -846,10 +846,36 @@ function getEnrichedPartner(partnerName) {
         };
     }
 
+    let res = base;
     if (customStorage[partnerName] || (base.name && customStorage[base.name])) {
-        return { ...base, ...(customStorage[partnerName] || customStorage[base.name]) };
+        res = { ...base, ...(customStorage[partnerName] || customStorage[base.name]) };
     }
-    return base;
+
+    // Auto-correzione numero RCS e titoli documenti per NEW LIFE Sàrl
+    if (res.name && res.name.toLowerCase().includes('new life')) {
+        if (res.rcs_number === 'B 225.643' || !res.rcs_number) {
+            res.rcs_number = 'B 17790';
+        }
+        if (res.documents) {
+            res.documents.forEach(d => {
+                if (d.name && d.name.includes('B 225.643')) {
+                    d.name = d.name.replace('B 225.643', 'B 17790');
+                }
+            });
+        }
+        if (res.kyc_documents) {
+            res.kyc_documents.forEach(d => {
+                if (d.title && d.title.includes('B 225.643')) {
+                    d.title = d.title.replace('B 225.643', 'B 17790');
+                }
+                if (d.doc_number === 'B 225.643' || d.doc_number === 'RCSL-2026-B225643') {
+                    d.doc_number = 'B 17790';
+                }
+            });
+        }
+    }
+
+    return res;
 }
 
 // Récupérer toutes les entrées réelles de capitaux des associés et futurs flux de dividendes
@@ -1473,7 +1499,7 @@ function renderAmlPartnersCards() {
         if (!partnerDocs || partnerDocs.length === 0) {
             docsListHtml = `<div style="font-size: 0.75rem; color: var(--text-muted); font-style: italic; padding: 0.25rem 0;">${t('kyc_no_docs', 'Nessun documento registrato.')}</div>`;
         } else {
-            partnerDocs.forEach(doc => {
+            partnerDocs.forEach((doc, docIdx) => {
                 const isUploaded = !!doc.file;
                 const isMandatory = doc.mandatory !== false;
                 
@@ -1488,24 +1514,48 @@ function renderAmlPartnersCards() {
                     statusTitle = t('kyc_doc_status_missing_mandatory', 'Documento obbligatorio mancante');
                 }
 
-                const expiryInfo = getKycDocExpiryStatus(doc.expiry_date);
+                const expiryInfo = getKycDocExpiryStatus(doc.expiry_date, doc);
                 const docTitle = doc.title || doc.type || 'Documento';
                 const formattedExp = formatExpiryDateDisplay(doc.expiry_date);
 
                 docsListHtml += `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0.55rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 0.35rem; font-size: 0.75rem; gap: 0.5rem;">
+                    <div class="kyc-card-doc-row" 
+                         id="kyc-card-row-${escapeQuotes(p.name)}-${docIdx}"
+                         ondragover="handleCardKycDocDragOver(event, this)" 
+                         ondragleave="handleCardKycDocDragLeave(event, this)" 
+                         ondrop="handleCardKycDocDrop(event, '${escapeQuotes(p.name)}', ${docIdx})"
+                         style="display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0.55rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 0.35rem; font-size: 0.75rem; gap: 0.5rem; transition: all 0.2s ease;">
                         <div style="display: flex; align-items: center; gap: 0.45rem; min-width: 0; flex: 1;">
-                            <span class="kyc-dot ${dotClass}" style="width: 9px; height: 9px; margin-right: 0;" title="${statusTitle}"></span>
+                            <span class="kyc-dot ${dotClass}" style="width: 10px; height: 10px; min-width: 10px; margin-right: 0;" title="${statusTitle}"></span>
                             <span style="font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(docTitle)}">
                                 ${escapeHtml(docTitle)}
                             </span>
                             ${doc.doc_number ? `<span style="font-family: monospace; font-size: 0.68rem; color: var(--text-muted); background: rgba(255,255,255,0.06); padding: 0.1rem 0.35rem; border-radius: 4px; white-space: nowrap;">N° ${escapeHtml(doc.doc_number)}</span>` : ''}
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0;">
-                            <span class="kyc-expiry-badge ${expiryInfo.badgeClass}" style="margin: 0; font-size: 0.68rem; padding: 0.15rem 0.45rem;">
-                                ${formattedExp ? `${formattedExp} • ${expiryInfo.label}` : expiryInfo.label}
-                            </span>
-                            ${isUploaded ? `<i class="fa-solid fa-paperclip text-emerald" title="${t('kyc_doc_status_uploaded', 'Documento allegato')}" style="font-size: 0.75rem;"></i>` : ''}
+                            ${formattedExp ? `
+                                <span class="kyc-expiry-badge ${expiryInfo.badgeClass}" style="margin: 0; font-size: 0.68rem; padding: 0.12rem 0.4rem;" title="${expiryInfo.label}">
+                                    ${formattedExp}
+                                </span>
+                            ` : ''}
+                            
+                            ${isUploaded ? `
+                                <button type="button" class="btn-action" onclick="previewPartnerKycDocDirect('${escapeQuotes(p.name)}', ${docIdx})" title="${t('docs_action_preview', 'Visualizza / Leggi')}" style="padding: 3px 6px; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; cursor: pointer; font-size: 0.72rem;">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                <button type="button" class="btn-action" onclick="downloadPartnerKycDocDirect('${escapeQuotes(p.name)}', ${docIdx})" title="${t('docs_action_download', 'Scarica')}" style="padding: 3px 6px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 4px; cursor: pointer; font-size: 0.72rem;">
+                                    <i class="fa-solid fa-download"></i>
+                                </button>
+                                <button type="button" class="btn-action" onclick="deletePartnerKycDocDirect('${escapeQuotes(p.name)}', ${docIdx})" title="${t('docs_action_delete', 'Elimina')}" style="padding: 3px 6px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; cursor: pointer; font-size: 0.72rem;">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            ` : `
+                                <label style="margin: 0; display: inline-flex; align-items: center; gap: 0.25rem; padding: 2px 7px; background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px dashed rgba(16, 185, 129, 0.45); border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: 600; transition: all 0.2s ease;" title="${t('kyc_doc_dropzone_hint', 'Trascina qui il file (PDF, JPG, PNG) o clicca per caricare')}">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    <span>${t('docs_action_upload', 'Carica')}</span>
+                                    <input type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" style="display: none;" onchange="handlePartnerKycFileInputDirect('${escapeQuotes(p.name)}', ${docIdx}, event)">
+                                </label>
+                            `}
                         </div>
                     </div>
                 `;
@@ -1552,15 +1602,15 @@ function renderAmlPartnersCards() {
 
         html += `
             <div class="asset-card">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
-                    <div>
-                        <div style="font-size: 0.72rem; text-transform: uppercase; color: #10b981; font-weight: 700;">${roleLabel}</div>
-                        <h3 style="margin: 0.15rem 0; font-size: 1.1rem; font-weight: 800; color: var(--text-main);">${escapeHtml(p.name)}</h3>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem;">
+                    <div style="min-width: 0; flex: 1;">
+                        <div style="font-size: 0.72rem; text-transform: uppercase; color: #10b981; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${roleLabel}</div>
+                        <h3 style="margin: 0.15rem 0; font-size: 1.1rem; font-weight: 800; color: var(--text-main); word-break: break-word;">${escapeHtml(p.name)}</h3>
                         <div style="font-size: 0.78rem; color: var(--text-muted);">
                             <i class="fa-solid fa-location-dot"></i> ${escapeHtml(p.city)} (${localizedCountry}) • <span style="color: var(--text-main); font-weight: 600;">${localizedNat}</span>
                         </div>
                     </div>
-                    <div>${riskBadge}</div>
+                    <div style="flex-shrink: 0; display: flex; align-items: flex-start;">${riskBadge}</div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; background: rgba(255,255,255,0.03); padding: 0.65rem; border-radius: 8px; margin-bottom: 0.75rem;">
@@ -1987,8 +2037,53 @@ function applyAmlFilters() {
 
 let currentKycDocuments = [];
 
+// Helper per identificare documenti senza vera e propria scadenza (Residenza, Utility, Estratto RCS, RBE, Statuti, Contratti)
+function isDocumentDateOnly(doc) {
+    if (!doc) return false;
+    const str = `${doc.type || ''} ${doc.title || ''} ${doc.name || ''}`.toLowerCase();
+    return str.includes('residenz') || 
+           str.includes('utility') || 
+           str.includes('domicile') || 
+           str.includes('bolletta') || 
+           str.includes('utenza') || 
+           str.includes('certificat de résid') ||
+           str.includes('rcs') ||
+           str.includes('rcsl') ||
+           str.includes('rbe') ||
+           str.includes('ubo') ||
+           str.includes('registre de commerce') ||
+           str.includes('bénéficiaires effectifs') ||
+           str.includes('beneficiari effettiv') ||
+           str.includes('visura') ||
+           str.includes('statut') ||
+           str.includes('contrat social') ||
+           str.includes('souscription') ||
+           str.includes('sow') ||
+           str.includes('origine fondi');
+}
+
+function isResidenceOrUtilityDoc(doc) {
+    return isDocumentDateOnly(doc);
+}
+
 // Calcolo dinamico dello stato di scadenza documento (Verde / Arancio / Rosso / Grigio)
-function getKycDocExpiryStatus(expiryDateStr) {
+function getKycDocExpiryStatus(expiryDateStr, doc = null) {
+    // Per certificati di residenza, bollette, estratti RCS ed RBE: la data inserita è la Data del Documento / Emissione (resta sempre verde, rinnovo solo su richiesta Banca/AML)
+    if (doc && isDocumentDateOnly(doc)) {
+        if (!expiryDateStr || String(expiryDateStr).trim() === '') {
+            return {
+                status: 'VALID',
+                label: t('kyc_doc_residence_no_date', 'Data emissione da registrare'),
+                badgeClass: 'kyc-expiry-grey'
+            };
+        }
+        return {
+            status: 'VALID',
+            label: t('kyc_doc_residence_valid_hint', 'Valido (Rinnovo solo su richiesta Banca/AML)'),
+            badgeClass: 'kyc-expiry-green'
+        };
+    }
+
     if (!expiryDateStr || String(expiryDateStr).trim() === '') {
         return {
             status: 'NONE',
@@ -2051,30 +2146,30 @@ function generateDefaultKycDocuments(partner) {
                 id: 'KYC-DOC-1',
                 mandatory: true,
                 type: 'Statuts Coordonnés Sàrl',
-                title: 'Statuts Coordonnés Sàrl',
-                doc_number: partner.rcs_number || 'B 225.643',
+                title: 'Statuts Coordonnés Sàrl 2025',
+                doc_number: partner.rcs_number || 'B 17790',
                 authority: 'Notaire / RCSL Luxembourg',
-                expiry_date: '',
+                expiry_date: '2025-05-15',
                 file: null
             },
             {
                 id: 'KYC-DOC-2',
                 mandatory: true,
                 type: 'Extrait RCSL Récent (< 3 mesi)',
-                title: 'Extrait RCSL Récent (< 3 mesi)',
-                doc_number: 'RCSL-2026-B225643',
+                title: 'Extrait RCSL Récent B 17790',
+                doc_number: 'B 17790',
                 authority: 'LBR / Registre de Commerce et des Sociétés',
-                expiry_date: '2026-12-31',
+                expiry_date: '2025-10-06',
                 file: null
             },
             {
                 id: 'KYC-DOC-3',
                 mandatory: true,
                 type: 'Déclaration RBE (UBO)',
-                title: 'Déclaration RBE (Bénéficiaires Effectifs)',
+                title: 'Déclaration RBE Déposée LBR',
                 doc_number: 'RBE-LU-2025',
                 authority: 'LBR / Registre des Bénéficiaires Effectifs',
-                expiry_date: '2027-12-31',
+                expiry_date: '2025-10-06',
                 file: null
             },
             {
@@ -2094,7 +2189,7 @@ function generateDefaultKycDocuments(partner) {
                 title: 'Justificatif Domicile Gérant / Sede',
                 doc_number: '',
                 authority: 'Comune / Ente Erogatore',
-                expiry_date: '2027-06-30',
+                expiry_date: '2025-10-06',
                 file: null
             },
             {
@@ -2104,7 +2199,7 @@ function generateDefaultKycDocuments(partner) {
                 title: 'Contrat Social GREEN ENERBRAS ONE SCSp',
                 doc_number: 'SCSp-2025-01',
                 authority: 'Associés Fondateurs SCSp',
-                expiry_date: '',
+                expiry_date: '2025-01-10',
                 file: null
             }
         ];
@@ -2248,7 +2343,10 @@ function renderKycDocumentsChecklist() {
             statusTitle = t('kyc_doc_status_missing_mandatory', 'Documento obbligatorio mancante');
         }
 
-        const expiryInfo = getKycDocExpiryStatus(doc.expiry_date);
+        const isResidence = isResidenceOrUtilityDoc(doc);
+        const expiryInfo = getKycDocExpiryStatus(doc.expiry_date, doc);
+        const dateFieldLabel = isResidence ? t('kyc_doc_issue_date', 'Data del Documento (Emissione)') : t('kyc_doc_expiry', 'Data di Scadenza');
+        const dateIcon = isResidence ? 'fa-calendar-check text-emerald' : 'fa-clock';
 
         // Select tipo documento
         let optionsHtml = '';
@@ -2336,7 +2434,11 @@ function renderKycDocumentsChecklist() {
                     </div>
                 </div>
 
-                <div class="kyc-doc-grid">
+                <div class="kyc-doc-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.65rem; margin-bottom: 0.65rem;">
+                    <div>
+                        <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;" data-i18n="kyc_doc_title">Titolo / Denominazione</label>
+                        <input type="text" id="kyc-doc-title-${idx}" class="filter-input" style="width: 100%; font-size: 0.8rem; padding: 0.4rem 0.6rem;" placeholder="es. Extrait RCSL Récent B 17790" value="${escapeHtml(doc.title || doc.type || '')}" oninput="updateKycDocField(${idx}, 'title', this.value)">
+                    </div>
                     <div>
                         <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;" data-i18n="kyc_doc_type">Tipo Documento</label>
                         <select id="kyc-doc-type-${idx}" class="filter-select" style="width: 100%; font-size: 0.8rem; padding: 0.4rem 0.6rem;" onchange="updateKycDocField(${idx}, 'type', this.value)">
@@ -2344,19 +2446,19 @@ function renderKycDocumentsChecklist() {
                         </select>
                     </div>
                     <div>
-                        <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;" data-i18n="kyc_doc_number">Nr. Documento</label>
-                        <input type="text" id="kyc-doc-num-${idx}" class="filter-input" style="width: 100%; font-size: 0.8rem; padding: 0.4rem 0.6rem;" placeholder="es. CA12345AA" value="${escapeHtml(doc.doc_number || '')}" oninput="updateKycDocField(${idx}, 'doc_number', this.value)">
+                        <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;" data-i18n="kyc_doc_number">Nr. Documento / Rif.</label>
+                        <input type="text" id="kyc-doc-num-${idx}" class="filter-input" style="width: 100%; font-size: 0.8rem; padding: 0.4rem 0.6rem;" placeholder="es. B 17790, CA12345AA" value="${escapeHtml(doc.doc_number || '')}" oninput="updateKycDocField(${idx}, 'doc_number', this.value)">
                     </div>
                     <div>
                         <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;" data-i18n="kyc_doc_authority">Rilasciato da: (Autorità)</label>
                         <input type="text" id="kyc-doc-auth-${idx}" class="filter-input" style="width: 100%; font-size: 0.8rem; padding: 0.4rem 0.6rem;" placeholder="es. Comune, Questura, LBR" value="${escapeHtml(doc.authority || '')}" oninput="updateKycDocField(${idx}, 'authority', this.value)">
                     </div>
                     <div>
-                        <label style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;" data-i18n="kyc_doc_expiry">Data di Scadenza</label>
+                        <label id="kyc-doc-date-label-${idx}" style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;">${escapeHtml(dateFieldLabel)}</label>
                         <input type="date" id="kyc-doc-exp-${idx}" class="filter-input" style="width: 100%; font-size: 0.8rem; padding: 0.4rem 0.6rem;" value="${doc.expiry_date || ''}" onchange="handleKycDocExpiryChange(${idx}, this.value)">
                         <div id="kyc-doc-expiry-badge-${idx}">
                             <span class="kyc-expiry-badge ${expiryInfo.badgeClass}">
-                                <i class="fa-solid fa-clock"></i> ${expiryInfo.label}
+                                <i class="fa-solid ${dateIcon}"></i> ${expiryInfo.label}
                             </span>
                         </div>
                     </div>
@@ -2374,10 +2476,15 @@ function renderKycDocumentsChecklist() {
 window.updateKycDocField = function(idx, field, val) {
     if (currentKycDocuments[idx]) {
         currentKycDocuments[idx][field] = val;
-        if (field === 'type') {
-            currentKycDocuments[idx].title = val;
+        if (field === 'title') {
             const headerTitleEl = document.querySelector(`#kyc-doc-card-${idx} .kyc-doc-header span:nth-child(2)`);
-            if (headerTitleEl) headerTitleEl.textContent = val;
+            if (headerTitleEl) headerTitleEl.textContent = val || currentKycDocuments[idx].type || 'Documento';
+        }
+        if (field === 'type') {
+            if (!currentKycDocuments[idx].title || docTypeOptions.includes(currentKycDocuments[idx].title)) {
+                currentKycDocuments[idx].title = val;
+            }
+            renderKycDocumentsChecklist();
         }
     }
 };
@@ -2386,12 +2493,14 @@ window.updateKycDocField = function(idx, field, val) {
 window.handleKycDocExpiryChange = function(idx, val) {
     if (!currentKycDocuments[idx]) return;
     currentKycDocuments[idx].expiry_date = val;
-    const expiryInfo = getKycDocExpiryStatus(val);
+    const doc = currentKycDocuments[idx];
+    const isResidence = isDocumentDateOnly(doc);
+    const expiryInfo = getKycDocExpiryStatus(val, doc);
     const badgeContainer = document.getElementById(`kyc-doc-expiry-badge-${idx}`);
     if (badgeContainer) {
         badgeContainer.innerHTML = `
             <span class="kyc-expiry-badge ${expiryInfo.badgeClass}">
-                <i class="fa-solid fa-clock"></i> ${expiryInfo.label}
+                <i class="fa-solid ${isResidence ? 'fa-calendar-check text-emerald' : 'fa-clock'}"></i> ${expiryInfo.label}
             </span>
         `;
     }
@@ -2451,7 +2560,8 @@ async function processKycDocFile(idx, file) {
             size: file.size,
             type: file.type || 'application/pdf',
             dataUrl: base64,
-            uploadDate: new Date().toISOString()
+            uploadDate: new Date().toISOString(),
+            folderPath: `uploads/Documenti SOCI/${currentKycPartnerName}/${file.name}`
         };
         syncCurrentKycDocsFromDOM();
         renderKycDocumentsChecklist();
@@ -2464,16 +2574,217 @@ async function processKycDocFile(idx, file) {
 // Sincronizza lo stato corrente con gli input HTML
 function syncCurrentKycDocsFromDOM() {
     currentKycDocuments.forEach((doc, idx) => {
+        const titleEl = document.getElementById(`kyc-doc-title-${idx}`);
         const typeEl = document.getElementById(`kyc-doc-type-${idx}`);
         const numEl = document.getElementById(`kyc-doc-num-${idx}`);
         const authEl = document.getElementById(`kyc-doc-auth-${idx}`);
         const expEl = document.getElementById(`kyc-doc-exp-${idx}`);
+        if (titleEl) doc.title = titleEl.value;
         if (typeEl) doc.type = typeEl.value;
         if (numEl) doc.doc_number = numEl.value;
         if (authEl) doc.authority = authEl.value;
         if (expEl) doc.expiry_date = expEl.value;
     });
 }
+
+// =============================================================================
+// AZIONI DIRETTE SU CARD SOCI (Tab Mappatura Soci & Investitori)
+// =============================================================================
+
+window.handleCardKycDocDragOver = function(event, el) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (el) {
+        el.style.borderColor = '#10b981';
+        el.style.background = 'rgba(16, 185, 129, 0.12)';
+    }
+};
+
+window.handleCardKycDocDragLeave = function(event, el) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (el) {
+        el.style.borderColor = 'rgba(255, 255, 255, 0.05)';
+        el.style.background = 'rgba(255, 255, 255, 0.02)';
+    }
+};
+
+window.handleCardKycDocDrop = async function(event, partnerName, docIdx) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dt = event.dataTransfer;
+    if (dt && dt.files && dt.files.length > 0) {
+        await uploadPartnerKycDocDirect(partnerName, docIdx, dt.files[0]);
+    }
+};
+
+window.handlePartnerKycFileInputDirect = async function(partnerName, docIdx, event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    await uploadPartnerKycDocDirect(partnerName, docIdx, files[0]);
+    event.target.value = '';
+};
+
+window.uploadPartnerKycDocDirect = async function(partnerName, docIdx, file) {
+    try {
+        const base64 = await readFileAsDataURL(file);
+        const customStorage = getAmlCustomStorage();
+        const p = getEnrichedPartner(partnerName);
+        const partnerDocs = initPartnerKycDocuments(p);
+
+        if (!partnerDocs[docIdx]) {
+            alert('Slot documento non trovato.');
+            return;
+        }
+
+        const fileRecord = {
+            name: file.name,
+            size: file.size,
+            type: file.type || 'application/pdf',
+            dataUrl: base64,
+            uploadDate: new Date().toISOString(),
+            folderPath: `uploads/Documenti SOCI/${p.name || partnerName}/${file.name}`
+        };
+
+        partnerDocs[docIdx].file = fileRecord;
+
+        const summaryDocs = partnerDocs.map(d => ({
+            name: d.title || d.type || 'Documento',
+            status: d.file ? 'VALID' : (d.mandatory ? 'MISSING' : 'OPTIONAL'),
+            date: d.expiry_date || '',
+            file: d.file
+        }));
+
+        const mandatoryMissing = partnerDocs.some(d => (d.mandatory !== false) && !d.file);
+        const kycStatus = mandatoryMissing ? 'A_COMPLETER' : 'CONFORME';
+
+        const updated = {
+            ...p,
+            aml_kyc_status: kycStatus,
+            last_review_date: new Date().toISOString().split('T')[0],
+            kyc_documents: partnerDocs,
+            documents: summaryDocs
+        };
+
+        customStorage[partnerName] = updated;
+        if (p.name && p.name !== partnerName) {
+            customStorage[p.name] = updated;
+        }
+        saveAmlCustomStorage(customStorage);
+
+        renderAmlPartnersCards();
+        if (typeof applyAmlFilters === 'function') applyAmlFilters();
+
+    } catch (e) {
+        console.error('Errore durante il caricamento del documento KYC:', e);
+        alert('Errore durante il caricamento del documento.');
+    }
+};
+
+window.previewPartnerKycDocDirect = function(partnerName, docIdx) {
+    const p = getEnrichedPartner(partnerName);
+    const partnerDocs = initPartnerKycDocuments(p);
+    const doc = partnerDocs[docIdx];
+    if (!doc || !doc.file) {
+        alert('Nessun file presente per questo documento.');
+        return;
+    }
+
+    const modal = document.getElementById('aml-doc-viewer-modal');
+    const titleEl = document.getElementById('aml-viewer-doc-title');
+    const subtitleEl = document.getElementById('aml-viewer-doc-subtitle');
+    const bodyEl = document.getElementById('aml-doc-viewer-body');
+    const downloadBtn = document.getElementById('aml-viewer-download-btn');
+
+    if (!modal || !bodyEl) return;
+
+    if (titleEl) titleEl.textContent = `${doc.title || doc.type} - ${doc.file.name}`;
+    if (subtitleEl) subtitleEl.textContent = doc.file.folderPath || `uploads/Documenti SOCI/${p.name || partnerName}/${doc.file.name}`;
+
+    if (downloadBtn) {
+        downloadBtn.onclick = () => downloadPartnerKycDocDirect(partnerName, docIdx);
+    }
+
+    const nameLower = (doc.file.name || '').toLowerCase();
+    const isImage = nameLower.endsWith('.png') || nameLower.endsWith('.jpg') || nameLower.endsWith('.jpeg') || nameLower.endsWith('.webp');
+    const isPdf = nameLower.endsWith('.pdf') || (doc.file.type && doc.file.type.includes('pdf'));
+
+    if (isImage) {
+        bodyEl.innerHTML = `<img src="${doc.file.dataUrl}" alt="${escapeHtml(doc.file.name)}" style="max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">`;
+    } else if (isPdf) {
+        bodyEl.innerHTML = `<iframe src="${doc.file.dataUrl}" style="width: 100%; height: 100%; border: none;"></iframe>`;
+    } else {
+        bodyEl.innerHTML = `
+            <div style="text-align: center; padding: 3rem; color: var(--text-main);">
+                <i class="fa-solid fa-file-lines text-emerald" style="font-size: 3.5rem; margin-bottom: 1rem; display: block;"></i>
+                <h3 style="margin-bottom: 0.5rem;">${escapeHtml(doc.file.name)}</h3>
+                <p style="color: var(--text-muted); max-width: 450px; margin: 0 auto 1.5rem auto; font-size: 0.85rem;">
+                    ${t('docs_preview_error', 'Impossibile visualizzare l\'anteprima diretta per questo formato. Clicca su Scarica per aprirlo sul tuo dispositivo.')}
+                </p>
+                <button class="btn btn-primary" onclick="downloadPartnerKycDocDirect('${escapeQuotes(partnerName)}', ${docIdx})">
+                    <i class="fa-solid fa-download"></i> ${t('docs_action_download', 'Scarica')}
+                </button>
+            </div>
+        `;
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.downloadPartnerKycDocDirect = function(partnerName, docIdx) {
+    const p = getEnrichedPartner(partnerName);
+    const partnerDocs = initPartnerKycDocuments(p);
+    const doc = partnerDocs[docIdx];
+    if (!doc || !doc.file || !doc.file.dataUrl) return;
+
+    const a = document.createElement('a');
+    a.href = doc.file.dataUrl;
+    a.download = doc.file.name || `${doc.type || 'documento'}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+};
+
+window.deletePartnerKycDocDirect = function(partnerName, docIdx) {
+    const p = getEnrichedPartner(partnerName);
+    const partnerDocs = initPartnerKycDocuments(p);
+    const doc = partnerDocs[docIdx];
+    if (!doc || !doc.file) return;
+
+    const docName = doc.file.name || doc.title || 'questo documento';
+    const confirmed = confirm(`Sei sicuro di voler eliminare il file "${docName}"?`);
+    if (!confirmed) return;
+
+    const customStorage = getAmlCustomStorage();
+    partnerDocs[docIdx].file = null;
+
+    const summaryDocs = partnerDocs.map(d => ({
+        name: d.title || d.type || 'Documento',
+        status: d.file ? 'VALID' : (d.mandatory ? 'MISSING' : 'OPTIONAL'),
+        date: d.expiry_date || '',
+        file: d.file
+    }));
+
+    const mandatoryMissing = partnerDocs.some(d => (d.mandatory !== false) && !d.file);
+    const kycStatus = mandatoryMissing ? 'A_COMPLETER' : 'CONFORME';
+
+    const updated = {
+        ...p,
+        aml_kyc_status: kycStatus,
+        last_review_date: new Date().toISOString().split('T')[0],
+        kyc_documents: partnerDocs,
+        documents: summaryDocs
+    };
+
+    customStorage[partnerName] = updated;
+    if (p.name && p.name !== partnerName) {
+        customStorage[p.name] = updated;
+    }
+    saveAmlCustomStorage(customStorage);
+
+    renderAmlPartnersCards();
+    if (typeof applyAmlFilters === 'function') applyAmlFilters();
+};
 
 // Anteprima documento KYC nel visualizzatore
 window.previewAmlKycDoc = function(idx) {
@@ -2489,7 +2800,7 @@ window.previewAmlKycDoc = function(idx) {
     if (!modal || !bodyEl) return;
 
     if (titleEl) titleEl.textContent = doc.file.name;
-    if (subtitleEl) subtitleEl.textContent = `uploads/AML Giustificativi/${currentKycPartnerName}/${doc.file.name}`;
+    if (subtitleEl) subtitleEl.textContent = doc.file.folderPath || `uploads/Documenti SOCI/${currentKycPartnerName}/${doc.file.name}`;
 
     if (downloadBtn) {
         downloadBtn.onclick = () => downloadAmlKycDoc(idx);

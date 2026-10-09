@@ -11,7 +11,7 @@ window.GREEN_ENERBRAS_AML_PARTNERS = {
         "entity_type": "SARL_COMMERCIALE",
         "entity_type_label": "General Partner & Gérant Commandité (Sàrl)",
         "role_type": "General Partner",
-        "rcs_number": "B 225.643",
+        "rcs_number": "B 17790",
         "matricule": "2018 2432 026",
         "tva_number": "LU 30348912",
         "address": "12, Rue Robert Stümper",
@@ -35,7 +35,7 @@ window.GREEN_ENERBRAS_AML_PARTNERS = {
         "next_review_date": "2027-01-15",
         "documents": [
             { "name": "Statuts Coordonnés NEW LIFE Sàrl 2025", "status": "VALID", "date": "2025-05-15" },
-            { "name": "Extrait RCSL Récent B 225.643", "status": "VALID", "date": "2025-10-06" },
+            { "name": "Extrait RCSL Récent B 17790", "status": "VALID", "date": "2025-10-06" },
             { "name": "Déclaration RBE Déposée LBR", "status": "VALID", "date": "2025-10-06" },
             { "name": "Contrat Social GREEN ENERBRAS ONE SCSp", "status": "VALID", "date": "2025-01-10" },
             { "name": "Pièce d'Identité Gérant & Justificatif Domicile", "status": "VALID", "date": "2025-10-06" }
