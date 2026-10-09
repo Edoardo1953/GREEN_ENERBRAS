@@ -277,11 +277,11 @@ window.GREEN_ENERBRAS_AML_PARTNERS = {
         "rcs_number": "N/A (Personne Physique)",
         "matricule": "1975 1205 987",
         "tva_number": "N/A",
-        "address": "Via Dante Alighieri, 21",
-        "postal_code": "31100",
-        "city": "Treviso",
-        "country": "Italie",
-        "country_code": "IT",
+        "address": "2 Connaught Place, Central",
+        "postal_code": "999077",
+        "city": "Hong Kong",
+        "country": "Hong Kong",
+        "country_code": "HK",
         "mandate_nature": "Souscription de Parts Sociales d'Associé Commanditaire (LP)",
         "mandate_start_date": "2025-12-03",
         "contribution_committed": 20000.0,
@@ -297,11 +297,11 @@ window.GREEN_ENERBRAS_AML_PARTNERS = {
         "last_review_date": "2025-12-03",
         "next_review_date": "2026-12-03",
         "documents": [
-            { "name": "Pièce d'Identité Officielle", "status": "VALID", "date": "2025-11-25" },
-            { "name": "Justificatif de Domicile", "status": "VALID", "date": "2025-11-25" },
+            { "name": "Pièce d'Identité Officielle (Passeport)", "status": "VALID", "date": "2025-11-25" },
+            { "name": "Justificatif de Domicile (Hong Kong)", "status": "VALID", "date": "2025-11-25" },
             { "name": "Bulletin de Souscription de Parts SCSp", "status": "VALID", "date": "2025-12-03" }
         ],
-        "notes": "Associé commanditaire. Apport de 20.000 € reçu le 03/12/2025. KYC conforme."
+        "notes": "Associé commanditaire résident fiscal à Hong Kong (HK). Apport de 20.000 € reçu le 03/12/2025. KYC conforme."
     },
     "Greta ZANIBONI": {
         "id": "PART-009",

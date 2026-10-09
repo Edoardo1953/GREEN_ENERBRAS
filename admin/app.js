@@ -188,6 +188,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const baseColors = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#14b8a6', '#f43f5e', '#84cc16', '#64748b', '#ef4444', '#a855f7'];
 
+    // Helper escapeHtml
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    // Helper per recuperare la residenza fiscale da AML Custom o AML Partners
+    function getPartnerFiscalResidence(partnerName) {
+        if (!partnerName) return 'Italia';
+        
+        // 1. Controlla custom storage AML (localStorage)
+        try {
+            const rawCustom = localStorage.getItem('green_enerbras_aml_custom_partners');
+            if (rawCustom) {
+                const customPartners = JSON.parse(rawCustom);
+                for (const k in customPartners) {
+                    if (k.toLowerCase().includes(partnerName.toLowerCase()) || partnerName.toLowerCase().includes(k.toLowerCase())) {
+                        if (customPartners[k].country) return customPartners[k].country;
+                    }
+                }
+            }
+        } catch (e) {}
+
+        // 2. Controlla registry statico AML (window.GREEN_ENERBRAS_AML_PARTNERS)
+        if (typeof window.GREEN_ENERBRAS_AML_PARTNERS !== 'undefined') {
+            const defaultReg = window.GREEN_ENERBRAS_AML_PARTNERS;
+            for (const k in defaultReg) {
+                if (k.toLowerCase().includes(partnerName.toLowerCase()) || partnerName.toLowerCase().includes(k.toLowerCase())) {
+                    if (defaultReg[k].country) return defaultReg[k].country;
+                }
+            }
+        }
+
+        // 3. Fallback intelligente per nome
+        const pLower = partnerName.toLowerCase();
+        if (pLower.includes('enrico tubia') || pLower.includes('tubia enrico')) {
+            return 'Hong Kong';
+        }
+        if (pLower.includes('new life') || pLower.includes('tubia edoardo') || pLower.includes('edoardo tubia')) {
+            return 'Luxembourg';
+        }
+        if (pLower.includes('miguel')) {
+            return 'Espagne';
+        }
+        if (pLower.includes('tri star')) {
+            return 'Brésil';
+        }
+        return 'Italie';
+    }
+
+    // Helper per determinare il codice bandiera del paese
+    function getCountryFlagCode(countryStr) {
+        if (!countryStr) return 'it';
+        const c = countryStr.toLowerCase();
+        if (c.includes('hong') || c.includes('hk')) return 'hk';
+        if (c.includes('lux') || c.includes('lussemb')) return 'lu';
+        if (c.includes('ita') || c.includes('italy')) return 'it';
+        if (c.includes('esp') || c.includes('spa') || c.includes('spag')) return 'es';
+        if (c.includes('br') || c.includes('bra')) return 'br';
+        if (c.includes('ch') || c.includes('sviz') || c.includes('swit') || c.includes('suis')) return 'ch';
+        if (c.includes('fr') || c.includes('fran')) return 'fr';
+        if (c.includes('de') || c.includes('germ') || c.includes('alle')) return 'de';
+        if (c.includes('gb') || c.includes('uk') || c.includes('unit')) return 'gb';
+        if (c.includes('us') || c.includes('stat') || c.includes('amer')) return 'us';
+        return 'it';
+    }
+
+    function getCountryFlagHtml(countryStr) {
+        const code = getCountryFlagCode(countryStr);
+        return `<img src="https://flagcdn.com/w40/${code}.png" alt="${code.toUpperCase()}" style="width: 17px; height: 12px; object-fit: cover; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); vertical-align: middle; display: inline-block;">`;
+    }
+
     // 4. Popola Tabella Partner con Colori
     const tableBody = document.getElementById('partners-table-body');
     let sumContribution = 0;
@@ -204,13 +281,25 @@ document.addEventListener('DOMContentLoaded', () => {
         sumDetention += p.detention;
 
         const indexStr = String(index + 1).padStart(2, '0');
+        const residenceRaw = getPartnerFiscalResidence(p.name);
+        const localizedResidence = (typeof getLocalizedCountry === 'function') ? getLocalizedCountry(residenceRaw) : residenceRaw;
+        const resLabel = (typeof t === 'function') ? t('label_fiscal_residence', 'Residenza Fiscale') : 'Residenza Fiscale';
+        const flagHtml = getCountryFlagHtml(residenceRaw);
+
         tr.innerHTML = `
-            <td><div style="width: 16px; height: 16px; border-radius: 4px; background-color: ${color};"></div></td>
-            <td class="text-bold"><span style="color:var(--text-muted); margin-right: 8px;">${indexStr}</span>${p.name}</td>
-            <td><span class="badge ${badgeClass}">${p.type}</span></td>
-            <td class="text-bold">${p.detention.toFixed(2)}%</td>
-            <td>${formatCurrency(p.contribution)}</td>
-            <td class="text-green">${formatCurrency(p.paid)}</td>
+            <td style="vertical-align: middle;"><div style="width: 16px; height: 16px; border-radius: 4px; background-color: ${color};"></div></td>
+            <td>
+                <div class="text-bold" style="font-size: 0.95rem;"><span style="color:var(--text-muted); margin-right: 8px;">${indexStr}</span>${escapeHtml(p.name)}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; padding-left: 1.6rem; display: flex; align-items: center; gap: 0.4rem;">
+                    <i class="fa-solid fa-location-dot" style="font-size: 0.72rem; color: #10b981;"></i>
+                    <span>${resLabel}: <strong style="color: var(--text-main); font-weight: 600;">${escapeHtml(localizedResidence)}</strong></span>
+                    ${flagHtml}
+                </div>
+            </td>
+            <td style="vertical-align: middle;"><span class="badge ${badgeClass}">${p.type}</span></td>
+            <td class="text-bold" style="vertical-align: middle;">${p.detention.toFixed(2)}%</td>
+            <td style="vertical-align: middle;">${formatCurrency(p.contribution)}</td>
+            <td class="text-green" style="vertical-align: middle;">${formatCurrency(p.paid)}</td>
         `;
         tableBody.appendChild(tr);
     });

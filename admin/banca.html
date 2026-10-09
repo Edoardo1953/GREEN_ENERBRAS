@@ -13,6 +13,105 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     
     <link rel="stylesheet" href="../style.css?v=300">
+    <style>
+        /* Modals & Glass Panels */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal-content {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            color: var(--text-main, #f3f4f6);
+            animation: modalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.96) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Bank Document Dropzone & Cards */
+        .bank-dropzone {
+            border: 2px dashed rgba(16, 185, 129, 0.4);
+            background: rgba(16, 185, 129, 0.03);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 1.25rem;
+        }
+        .bank-dropzone:hover, .bank-dropzone.dragover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.08);
+            transform: scale(1.005);
+        }
+        .bank-doc-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            margin-bottom: 0.65rem;
+            transition: all 0.2s;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        .bank-doc-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        .bank-doc-info {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            flex: 1;
+            min-width: 200px;
+        }
+        .bank-doc-icon {
+            font-size: 1.8rem;
+            width: 40px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .bank-doc-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Light Theme Adaptation */
+        body.theme-light .bank-dropzone {
+            background: #f0fdf4 !important;
+            border-color: #86efac !important;
+        }
+        body.theme-light .bank-doc-card {
+            background: #f8fafc !important;
+            border-color: #cbd5e1 !important;
+        }
+        body.theme-light .bank-doc-card:hover {
+            background: #f1f5f9 !important;
+        }
+        body.theme-light .modal-content {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            border: 1px solid #cbd5e1 !important;
+        }
+    </style>
 
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
@@ -204,6 +303,7 @@
                                     </th>
                                     <th style="text-align: right; vertical-align: top;"><span data-i18n="table_importo">Importo (€)</span></th>
                                     <th id="col-progressivo" style="text-align: right; vertical-align: top;"><span data-i18n="table_progressivo">Progressivo (€)</span></th>
+                                    <th style="text-align: center; vertical-align: top; width: 140px;"><span data-i18n="th_giustificativi">Giustificativi</span></th>
                                 </tr>
                             </thead>
                             <tbody id="bank-table-body">
@@ -213,11 +313,97 @@
                     </div>
                     <div class="subtotal-container" style="display: flex; justify-content: flex-end; align-items: center; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 1rem;">
                         <span style="font-weight: bold; margin-right: 1rem;">Subtotale Filtrato:</span>
-                        <span id="subtotal-amount" class="text-bold" style="font-size: 1.2rem;">â‚¬ 0,00</span>
+                        <span id="subtotal-amount" class="text-bold" style="font-size: 1.2rem;">€ 0,00</span>
                     </div>
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- Modal Giustificativi Bancari (uploads/Bank Giustificativi) -->
+    <div class="modal-overlay" id="bank-docs-modal" style="display: none;">
+        <div class="modal-content glass-panel" style="max-width: 850px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding: 1rem 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fa-solid fa-file-invoice-dollar text-emerald" style="font-size: 1.4rem; color: #10b981;"></i>
+                    <div>
+                        <h3 data-i18n="modal_docs_title" style="margin: 0; font-size: 1.15rem; font-weight: 700;">Giustificativi Bancari & Contabili di Versamento</h3>
+                        <p id="bank-docs-modal-subtitle" style="margin: 0.2rem 0 0 0; font-size: 0.78rem; color: var(--text-muted); font-family: monospace;">Operazione...</p>
+                    </div>
+                </div>
+                <button class="btn-close" onclick="closeBankDocsModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.25rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="modal-body" style="overflow-y: auto; padding: 1.25rem; flex: 1;">
+                <!-- Info Folder Box -->
+                <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 0.65rem;">
+                        <i class="fa-solid fa-folder-tree text-emerald" style="font-size: 1.3rem; color: #10b981;"></i>
+                        <div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;" data-i18n="docs_folder_info">Archiviazione di Conformità & Bancaria (5 Anni) :</div>
+                            <div id="bank-docs-folder-indicator" style="font-family: monospace; font-size: 0.85rem; font-weight: 700; color: #10b981;">uploads/Bank Giustificativi/</div>
+                        </div>
+                    </div>
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 0.75rem;">
+                        <i class="fa-solid fa-building-columns"></i> Banque de Luxembourg
+                    </span>
+                </div>
+
+                <!-- Dropzone Area -->
+                <div class="bank-dropzone" id="bank-docs-dropzone" onclick="triggerBankDocFileInput()">
+                    <input type="file" id="bank-doc-file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx" style="display: none;" onchange="handleBankDocFileSelect(event)">
+                    <i class="fa-solid fa-cloud-arrow-up text-emerald" style="font-size: 2.2rem; margin-bottom: 0.5rem; display: block; color: #10b981;"></i>
+                    <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main); margin-bottom: 0.25rem;" data-i18n="docs_dropzone_title">
+                        Trascina qui le contabili o clicca per selezionare i file
+                    </div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);" data-i18n="docs_dropzone_hint">
+                        Supporta PDF, JPEG, PNG, Excel, Word (fino a 5 documenti per operazione)
+                    </div>
+                </div>
+
+                <!-- Attached Documents Header & Counter -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                    <h4 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.4rem;">
+                        <i class="fa-solid fa-paperclip text-emerald" style="color: #10b981;"></i>
+                        <span data-i18n="docs_attached_list_title">Documenti Allegati a questa Operazione :</span>
+                    </h4>
+                    <span id="bank-docs-counter-badge" class="badge" style="background: rgba(255,255,255,0.08); font-size: 0.75rem;">0 / 5 doc</span>
+                </div>
+
+                <!-- Attached Documents List Container -->
+                <div id="bank-docs-list-container">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; align-items: center; border-top: 1px solid var(--border-color); padding: 0.85rem 1.25rem;">
+                <button class="btn btn-secondary" onclick="closeBankDocsModal()" data-i18n="btn_close">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Document / PDF / Image Viewer -->
+    <div class="modal-overlay" id="bank-doc-viewer-modal" style="display: none;">
+        <div class="modal-content glass-panel" style="max-width: 1000px; width: 95%; height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding: 0.85rem 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fa-solid fa-eye text-emerald" style="font-size: 1.3rem; color: #10b981;"></i>
+                    <div>
+                        <h3 id="bank-viewer-doc-title" style="margin: 0; font-size: 1.1rem; font-weight: 700;">Visualizzatore Documento</h3>
+                        <p id="bank-viewer-doc-subtitle" style="margin: 0; font-size: 0.75rem; color: var(--text-muted); font-family: monospace;">uploads/Bank Giustificativi/...</p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button class="btn btn-secondary btn-sm" id="bank-viewer-download-btn">
+                        <i class="fa-solid fa-download"></i> <span data-i18n="docs_action_download">Scarica</span>
+                    </button>
+                    <button class="btn-close" onclick="closeBankDocViewerModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.25rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div class="modal-body" id="bank-doc-viewer-body" style="padding: 0; flex: 1; overflow: hidden; background: #0b0f19; display: flex; align-items: center; justify-content: center;">
+                <!-- Embedded Viewer / Frame / Image injected dynamically -->
+            </div>
+        </div>
     </div>
 
     <!-- Data script -->
