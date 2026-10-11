@@ -421,7 +421,7 @@ window.GREEN_ENERBRAS_AML_PARTNERS = {
         "entity_type": "SCP_BRESIL",
         "entity_type_label": "Véhicule d'Investissement & Parcs Solaires (SCP Brésil)",
         "role_type": "Investissement Target",
-        "rcs_number": "CNPJ 48.912.450/0001-89",
+        "rcs_number": "CNPJ: 61.284.818/0001-78",
         "matricule": "SCP RN-2025-01",
         "tva_number": "Inscricao Estadual RN",
         "address": "Av. Hermes da Fonseca, 1200",
@@ -429,13 +429,14 @@ window.GREEN_ENERBRAS_AML_PARTNERS = {
         "city": "Natal (RN)",
         "country": "Brésil",
         "country_code": "BR",
+        "nationality": "Brésilienne",
         "mandate_nature": "Participation Financement & Exploitation Parcs Photovoltaïques",
         "mandate_start_date": "2025-11-12",
         "contribution_committed": 240000.0,
         "contribution_paid": 240000.0,
-        "detention_pct": 100.0,
+        "detention_pct": 99.78,
         "ubo_list": [
-            { "name": "GREEN ENERBRAS ONE SCSp", "nationality": "Luxembourgeoise", "percentage": 100, "rbe_verified": true }
+            { "name": "GREEN ENERBRAS ONE SCSp", "nationality": "Luxembourgeoise", "percentage": 99.78, "rbe_verified": true }
         ],
         "is_pep": false,
         "pep_details": "",
@@ -449,7 +450,7 @@ window.GREEN_ENERBRAS_AML_PARTNERS = {
             { "name": "Dossiers Techniques & Homologations COSERN", "status": "VALID", "date": "2026-06-30" },
             { "name": "Convention de Gestion de Projet", "status": "VALID", "date": "2025-11-12" }
         ],
-        "notes": "Véhicule de projet opérationnel détenant les parcs solaires photovoltaïques dans l'État du Rio Grande do Norte (Brésil). Risque moyen en raison de la juridiction internationale. Due Diligence renforcée effectuée et validée."
+        "notes": "Véhicule de projet opérationnel détenant les parcs solaires (SCP Brésil). Contrôlé à 99,78% par GREEN ENERBRAS ONE SCSp (Luxembourg) en qualité de Socio Partecipante (2.400.000 R$) avec TRI STAR ENERGY LTDA en qualité de Socio Ostensivo / GP (0,22% - 5.250 R$ - CNPJ: 59.950.505/0001-60). Risque moyen en raison de la juridiction internationale. Due Diligence renforcée effectuée et validée."
     }
 };
 

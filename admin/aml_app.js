@@ -853,6 +853,7 @@ function getEnrichedPartner(partnerName) {
 
     // Auto-correzione numero RCS e titoli documenti per NEW LIFE Sàrl
     if (res.name && res.name.toLowerCase().includes('new life')) {
+        res.nationality = 'Luxembourgeoise';
         if (res.rcs_number === 'B 225.643' || !res.rcs_number) {
             res.rcs_number = 'B 17790';
         }
@@ -871,6 +872,33 @@ function getEnrichedPartner(partnerName) {
                 if (d.doc_number === 'B 225.643' || d.doc_number === 'RCSL-2026-B225643') {
                     d.doc_number = 'B 17790';
                 }
+            });
+        }
+        if (res.ubo_list && res.ubo_list.length > 0) {
+            res.ubo_list = res.ubo_list.map(u => {
+                if (u.name && u.name.toLowerCase().includes('tubia')) {
+                    return { ...u, nationality: 'Italienne' };
+                }
+                return u;
+            });
+        }
+    }
+
+    // Auto-correzione per Tri Star Enerbras One SCP (Partecipata Brasiliana con UBO Lussemburghese)
+    if (res.name && (res.name.toLowerCase().includes('tri star') || res.entity_type === 'SCP_BRESIL')) {
+        res.nationality = 'Brésilienne';
+        res.country = 'Brésil';
+        res.country_code = 'BR';
+        res.rcs_number = 'CNPJ: 61.284.818/0001-78';
+        res.detention_pct = 99.78;
+        if (!res.ubo_list || res.ubo_list.length === 0) {
+            res.ubo_list = [{ name: 'GREEN ENERBRAS ONE SCSp', nationality: 'Luxembourgeoise', percentage: 99.78, rbe_verified: true }];
+        } else {
+            res.ubo_list = res.ubo_list.map(u => {
+                if (u.name && (u.name.toUpperCase().includes('GREEN ENERBRAS') || u.name.toUpperCase().includes('ENERBRAS'))) {
+                    return { ...u, name: 'GREEN ENERBRAS ONE SCSp', nationality: 'Luxembourgeoise', percentage: 99.78 };
+                }
+                return u;
             });
         }
     }
@@ -1296,16 +1324,16 @@ function renderAmlRegistryTable(inflows) {
         }
 
         const isCorporate = g.partner_data.entity_type !== 'PERSONNE_PHYSIQUE' && g.partner_data.entity_type !== 'INDIVIDUO';
-        const partnerNat = g.partner_data.nationality || g.partner_data.ubo_list[0]?.nationality || 'Italienne';
+        const partnerNat = g.partner_data.nationality || (isCorporate ? (g.partner_data.country_code === 'BR' ? 'Brésilienne' : 'Luxembourgeoise') : (g.partner_data.ubo_list[0]?.nationality || 'Italienne'));
         const localizedNat = getLocalizedNationality(partnerNat);
 
         let subInfoHtml = '';
         if (isCorporate) {
             const uboObj = g.partner_data.ubo_list[0] || {};
             const uboName = uboObj.name || '';
-            const uboNat = getLocalizedNationality(uboObj.nationality || 'Italienne');
+            const uboNat = getLocalizedNationality(uboObj.nationality || (g.partner_data.name && g.partner_data.name.toLowerCase().includes('tri star') ? 'Luxembourgeoise' : 'Italienne'));
             subInfoHtml = `
-                <span>${t('label_nationality', 'Nazionalità')}: <strong>${getLocalizedNationality('Luxembourgeoise')}</strong></span>
+                <span>${t('label_nationality', 'Nazionalità')}: <strong>${localizedNat}</strong></span>
                 <span style="margin: 0 0.35rem; opacity: 0.5;">•</span>
                 <span>${t('label_fiscal_residence', 'Residenza Fiscale')}: <strong>${localizedCountry}</strong></span>
                 <span style="margin: 0 0.35rem; opacity: 0.5;">•</span>
@@ -1569,14 +1597,14 @@ function renderAmlPartnersCards() {
         else if (isTarget) roleLabel = t('role_invest_target', 'Veicolo di Investimento Operativo');
 
         const localizedCountry = getLocalizedCountry(p.country);
-        const partnerNat = p.nationality || p.ubo_list[0]?.nationality || 'Italiana';
-        const localizedNat = getLocalizedNationality(partnerNat);
         const isCorporate = p.entity_type !== 'PERSONNE_PHYSIQUE' && p.entity_type !== 'INDIVIDUO';
+        const partnerNat = p.nationality || (isCorporate ? (p.country_code === 'BR' ? 'Brésilienne' : 'Luxembourgeoise') : (p.ubo_list[0]?.nationality || 'Italiana'));
+        const localizedNat = getLocalizedNationality(partnerNat);
 
         let uboSectionHtml = '';
         if (isCorporate) {
             const uboObj = p.ubo_list[0] || {};
-            const uboNat = getLocalizedNationality(uboObj.nationality || 'Italiana');
+            const uboNat = getLocalizedNationality(uboObj.nationality || (p.name && p.name.toLowerCase().includes('tri star') ? 'Luxembourgeoise' : 'Italienne'));
             uboSectionHtml = `
                 <div style="font-size: 0.8rem; margin-bottom: 0.75rem;">
                     <div style="color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; font-weight: 600;">${t('card_beneficiari', 'Titolari Effettivi (UBO / RBE) :')}</div>
@@ -2900,7 +2928,8 @@ window.openAmlKycModal = function(partnerName) {
     document.getElementById('kyc-input-matricule').value = p.matricule || '';
     document.getElementById('kyc-input-tva').value = p.tva_number || '';
     
-    const partnerNat = p.nationality || p.ubo_list[0]?.nationality || 'Italiana';
+    const isCorporate = p.entity_type !== 'PERSONNE_PHYSIQUE' && p.entity_type !== 'INDIVIDUO';
+    const partnerNat = p.nationality || (isCorporate ? (p.country_code === 'BR' ? 'Brésilienne' : 'Luxembourgeoise') : (p.ubo_list[0]?.nationality || 'Italiana'));
     const natInput = document.getElementById('kyc-input-nationality');
     if (natInput) natInput.value = getLocalizedNationality(partnerNat) || partnerNat;
 
@@ -2920,7 +2949,7 @@ window.openAmlKycModal = function(partnerName) {
     if (uboContainer) {
         let uboHtml = '';
         (p.ubo_list || []).forEach(ubo => {
-            const uboNat = getLocalizedNationality(ubo.nationality);
+            const uboNat = getLocalizedNationality(ubo.nationality || (p.name && p.name.toLowerCase().includes('tri star') ? 'Luxembourgeoise' : 'Italienne'));
             uboHtml += `
                 <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.04); padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 0.35rem;">
                     <div>
@@ -2958,9 +2987,10 @@ window.saveAmlKycModalData = function() {
 
     const natValue = document.getElementById('kyc-input-nationality') ? document.getElementById('kyc-input-nationality').value : (currentData.nationality || 'Italiana');
     const countryValue = document.getElementById('kyc-input-country').value;
+    const isPhysical = currentData.entity_type === 'PERSONNE_PHYSIQUE' || currentData.entity_type === 'INDIVIDUO';
 
     let updatedUboList = currentData.ubo_list ? [...currentData.ubo_list] : [];
-    if (updatedUboList.length > 0) {
+    if (updatedUboList.length > 0 && isPhysical) {
         updatedUboList[0] = {
             ...updatedUboList[0],
             nationality: natValue
@@ -3080,29 +3110,56 @@ const MANUAL_CONTENTS = {
         pdf_path: "docs/Manuel_Conformite_AML_LBC-FT_GREEN_ENERBRAS_FR.pdf",
         sections: [
             {
-                title: "1. Cadre Légal Luxembourgeois & Supervision de l'AED",
+                title: "1. Cadre Réglementaire Luxembourgeois & Surveillance de l'AED",
                 html: `
-                    <p>Au Grand-Duché de Luxembourg, la lutte contre le blanchiment de capitaux et le financement du terrorisme (LBC/FT) est régie par la <strong>Loi modifiée du 12 novembre 2004</strong>.</p>
-                    <p><strong>GREEN ENERBRAS ONE SCSp</strong> est une Société en Commandite Spéciale (SCSp) de droit luxembourgeois dédiée aux investissements dans les énergies renouvelables. Elle n'est pas un établissement financier régulé par la CSSF.</p>
-                    <p>L'autorité de contrôle légalement compétente pour GREEN ENERBRAS ONE SCSp est l'<strong>AED (Administration de l'Enregistrement, des Domaines et de la TVA)</strong>.</p>
+                    <p>Au Grand-Duché de Luxembourg, la prévention du blanchiment de capitaux et du financement du terrorisme (AML / LBC-FT) est régie par la <strong>Loi modifiée du 12 novembre 2004</strong>.</p>
+                    <p><strong>GREEN ENERBRAS ONE SCSp</strong> est une Société en Commandite Spéciale (SCSp) de droit luxembourgeois dédiée aux investissements et à la détention d'actifs dans le secteur des énergies renouvelables. La société n'est pas un établissement de crédit ni un intermédiaire financier soumis à la surveillance de la CSSF.</p>
+                    <p>L'autorité de contrôle légalement compétente pour GREEN ENERBRAS ONE SCSp est l'<strong>AED (Administration de l'Enregistrement, des Domaines et de la TVA)</strong>, conformément à la Loi du 12 novembre 2004 régissant les sociétés commerciales et les véhicules sociétaires non financiers.</p>
+                    <ul>
+                        <li><strong>Loi du 12 novembre 2004 :</strong> Réglementation fondamentale sur la vigilance à l'égard de la clientèle (CDD), l'organisation interne et la déclaration d'opérations suspectes.</li>
+                        <li><strong>Loi du 13 janvier 2019 (RBE) :</strong> Obligation d'immatriculation et de vérification des Bénéficiaires Effectifs (UBO) auprès du registre LBR.</li>
+                        <li><strong>Loi du 10 août 1915 :</strong> Régime des sociétés commerciales et des SCSp, transparence contractuelle et rôles du General Partner et des Limited Partners.</li>
+                        <li><strong>Circulaires AED 779 & 800 :</strong> Lignes directrices opérationnelles et questionnaire annuel d'évaluation du risque de blanchiment.</li>
+                    </ul>
                 `
             },
             {
-                title: "2. Obligations Pratiques de Conformité",
+                title: "2. Obligations de Conformité pour GREEN ENERBRAS ONE SCSp",
                 html: `
-                    <p>GREEN ENERBRAS ONE SCSp applique une approche fondée sur les risques (Risk-Based Approach) articulée autour de 5 obligations majeures :</p>
+                    <p>GREEN ENERBRAS ONE SCSp applique une approche fondée sur les risques (Risk-Based Approach) articulée autour de 5 obligations fondamentales :</p>
                     <ul>
-                        <li><strong>Identification Associés (CDD) :</strong> Obtention systématique des pièces d'identité et fiche KYC pour chaque associé.</li>
-                        <li><strong>Vérification des UBO / RBE :</strong> Identification de toute personne physique détenant > 25% des parts ou le contrôle effectif.</li>
-                        <li><strong>Traçabilité des Apports :</strong> Contrôle des 261.000 € versés par les associés sur le compte bancaire (Banque de Luxembourg).</li>
-                        <li><strong>Conservation 5 Ans :</strong> Conservation légale de l'intégralité des dossiers KYC pendant au moins 5 ans.</li>
+                        <li><strong>Vigilance à l'Égard des Associés (CDD) :</strong> Obtention de la pièce d'identité, du numéro fiscal, du justificatif de domicile et de la fiche KYC pour chaque associé.</li>
+                        <li><strong>Vérification des Bénéficiaires Effectifs (RBE) :</strong> Identification de toute personne physique détenant plus de 25% des parts ou exerçant le contrôle effectif.</li>
+                        <li><strong>Traçabilité des Apports en Capital :</strong> Contrôle documentaire et bancaire des 261.000 € versés par les associés sur le compte courant (Banque de Luxembourg).</li>
+                        <li><strong>Suivi des Revenus Futurs :</strong> Mise en place des contrôles sur les futurs dividendes et flux financiers provenant des parcs solaires au Brésil (Tri Star SCP).</li>
+                        <li><strong>Conservation Obligatoire (5 Ans) :</strong> Obligation de conservation intégrale de l'ensemble des dossiers KYC pendant au moins 5 ans.</li>
                     </ul>
                 `
             },
             {
                 title: "3. Guide d'Utilisation du Module dans l'Application",
                 html: `
-                    <p>Le module aml.html reflète fidèlement l'actionnariat et les flux de capitaux de GREEN ENERBRAS ONE SCSp avec tri chronologique récent, filtres multicritères, fiche KYC modale et exports Excel/PDF.</p>
+                    <p>Le module <code>aml.html</code> a été expressément conçu pour refléter l'actionnariat et les apports en capital de GREEN ENERBRAS ONE SCSp :</p>
+                    <ul>
+                        <li><strong>Tri Chronologique Décroissant :</strong> Les opérations de 2026 et les versements les plus récents sont affichés en tête de registre.</li>
+                        <li><strong>Périmètre Traçable :</strong> Comprend les 13 versements effectifs de capital des associés totalisant 261.000 € (en excluant les flux internes de gestion et les frais).</li>
+                        <li><strong>Dossier KYC Interactif :</strong> Accès en un clic à la fiche d'audit de l'associé avec sauvegarde persistante dans <code>localStorage</code>.</li>
+                        <li><strong>Cartographie des Associés & Actifs :</strong> Fiches signalétiques complètes pour les 11 associés de la SCSp et pour la participation Tri Star SCP (Brésil).</li>
+                        <li><strong>Exportations Multi-Formats :</strong> Génération instantanée de fichiers Excel (25 colonnes normées), CSV et Rapports Officiels PDF.</li>
+                    </ul>
+                `
+            },
+            {
+                title: "4. Simulateur de Due Diligence (Risk-Based Approach)",
+                html: `
+                    <p>La section <strong>« 4. Simulateur Due Diligence »</strong> permet de calculer le score de risque (0 à 100) pour chaque nouvel associé, investisseur ou projet selon 5 paramètres :</p>
+                    <ul>
+                        <li><strong>Forme Juridique :</strong> Personne Physique UE (+5 pt), Société Commerciale (+10 pt), SCSp (+15 pt), Société Internationale (+25 pt).</li>
+                        <li><strong>Juridiction Siège / Résidence :</strong> Luxembourg / Zone Euro (+5 pt), Suisse / UK / USA (+10 pt), Brésil (+30 pt).</li>
+                        <li><strong>Facteur PEP :</strong> Présence d'une Personne Politiquement Exposée (+35 pt et déclenchement automatique de la Vigilance Renforcée).</li>
+                        <li><strong>Origine des Fonds :</strong> Revenus personnels directs (+0 pt), Cessions patrimoniales (+10 pt), Trust / Fiducie (+30 pt).</li>
+                        <li><strong>Volume de la Part :</strong> &lt; 25.000 € (+0 pt), 25.000 € - 50.000 € (+10 pt), ≥ 50.000 € (+15 pt).</li>
+                    </ul>
                 `
             }
         ]
@@ -3114,13 +3171,54 @@ const MANUAL_CONTENTS = {
             {
                 title: "1. Luxembourg Legal Framework & AED Oversight",
                 html: `
-                    <p>In the Grand Duchy of Luxembourg, AML / CFT oversight for Special Limited Partnerships (SCSp) not supervised by CSSF is statutorily allocated to the <strong>AED (Administration de l'Enregistrement, des Domaines et de la TVA)</strong> pursuant to the amended Law of 12 November 2004.</p>
+                    <p>In the Grand Duchy of Luxembourg, the prevention of money laundering and terrorist financing (AML / CFT) is governed by the <strong>amended Law of 12 November 2004</strong>.</p>
+                    <p><strong>GREEN ENERBRAS ONE SCSp</strong> is a Special Limited Partnership (SCSp) governed by Luxembourg law, dedicated to clean energy investments and asset holding. The partnership is not a credit institution or financial intermediary supervised by the CSSF.</p>
+                    <p>The statutorily designated supervisory authority for GREEN ENERBRAS ONE SCSp is the <strong>AED (Administration de l'Enregistrement, des Domaines et de la TVA)</strong>, pursuant to the Law of 12 November 2004 which encompasses commercial companies and non-financial corporate vehicles.</p>
+                    <ul>
+                        <li><strong>Law of 12 November 2004:</strong> Cornerstone legislation establishing Customer Due Diligence (CDD) obligations, internal organization, and suspicious transaction reporting.</li>
+                        <li><strong>Law of 13 January 2019 (RBE):</strong> Mandatory registration and ongoing verification of Ultimate Beneficial Owners (UBO) with the official LBR register.</li>
+                        <li><strong>Law of 10 August 1915:</strong> Corporate framework governing Luxembourg SCSp partnerships, contractual transparency, and the roles of the General Partner and Limited Partners.</li>
+                        <li><strong>AED Circulars 779 & 800:</strong> Operational compliance guidelines and mandatory annual AML risk assessment questionnaire.</li>
+                    </ul>
                 `
             },
             {
                 title: "2. Compliance Obligations for GREEN ENERBRAS ONE SCSp",
                 html: `
-                    <p>GREEN ENERBRAS ONE SCSp enforces rigorous Customer Due Diligence (CDD) across its 11 partners, auditing €261,000 of paid-in capital contributions, maintaining mandatory RBE filings, and securing 5-year record retention.</p>
+                    <p>GREEN ENERBRAS ONE SCSp implements a Risk-Based Approach (RBA) structured across 5 core compliance obligations:</p>
+                    <ul>
+                        <li><strong>Partner Customer Due Diligence (CDD):</strong> Collection of identity documents, tax identification number, proof of address, and KYC form for each partner.</li>
+                        <li><strong>Beneficial Ownership Verification (RBE):</strong> Identification of any natural person holding more than 25% of partnership units or exercising effective control.</li>
+                        <li><strong>Capital Contribution Traceability:</strong> Documented banking audit trail for the €261,000 paid in by partners into the corporate bank account (Banque de Luxembourg).</li>
+                        <li><strong>Future Revenue Monitoring:</strong> Setup of audit and verification controls on forthcoming dividends and revenues from solar parks in Brazil (Tri Star SCP).</li>
+                        <li><strong>Mandatory Record Retention (5 Years):</strong> Statutory obligation to preserve all complete KYC dossiers and supporting documents for at least 5 years.</li>
+                    </ul>
+                `
+            },
+            {
+                title: "3. User Guide for the AML Module in the Application",
+                html: `
+                    <p>The <code>aml.html</code> module has been specifically designed to reflect the partnership structure and capital contributions of GREEN ENERBRAS ONE SCSp:</p>
+                    <ul>
+                        <li><strong>Descending Chronological Order:</strong> Operations from 2026 and the latest capital contributions are displayed at the top of the register.</li>
+                        <li><strong>Clean Scope:</strong> Exclusively includes the 13 authentic partner capital installments totaling €261,000 (excluding internal transfers and management fees).</li>
+                        <li><strong>Interactive KYC Dossier:</strong> One-click direct access to each partner's compliance audit sheet with persistent local browser storage in <code>localStorage</code>.</li>
+                        <li><strong>Partners & Assets Mapping:</strong> Comprehensive profiles for all 11 partners of the SCSp and the Brazilian investee entity Tri Star SCP.</li>
+                        <li><strong>Multi-Format Exports:</strong> Instant generation of 25-column compliance Excel spreadsheets, CSV files, and Official PDF Audit Reports.</li>
+                    </ul>
+                `
+            },
+            {
+                title: "4. Due Diligence Risk Simulator (Risk-Based Approach)",
+                html: `
+                    <p>The <strong>"4. Simulateur Due Diligence"</strong> section calculates the AML/CFT risk score (0 to 100) for any prospective partner, investor, or project across 5 parameters:</p>
+                    <ul>
+                        <li><strong>Legal Form:</strong> Natural Person EU (+5 pt), Commercial Company (+10 pt), SCSp (+15 pt), International Entity (+25 pt).</li>
+                        <li><strong>Headquarters / Residence Jurisdiction:</strong> Luxembourg / Eurozone (+5 pt), Switzerland / UK / USA (+10 pt), Brazil (+30 pt).</li>
+                        <li><strong>PEP Factor:</strong> Presence of a Politically Exposed Person (+35 pt and automatic trigger of Enhanced Due Diligence).</li>
+                        <li><strong>Source of Funds:</strong> Direct personal employment income (+0 pt), Asset divestment (+10 pt), Trust / Fiduciary (+30 pt).</li>
+                        <li><strong>Subscription Volume:</strong> &lt; €25,000 (+0 pt), €25,000 - €50,000 (+10 pt), ≥ €50,000 (+15 pt).</li>
+                    </ul>
                 `
             }
         ]
