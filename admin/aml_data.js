@@ -75,7 +75,7 @@ window.GREEN_ENERBRAS_AML_PARTNERS = {
             { "name": "Pièce d'Identité Officielle (Passeport/CNI)", "status": "VALID", "date": "2025-01-15" },
             { "name": "Justificatif de Domicile Récent", "status": "VALID", "date": "2025-01-15" },
             { "name": "Bulletin de Souscription de Parts SCSp", "status": "VALID", "date": "2025-01-01" },
-            { "name": "Déclaration RBE SCSp", "status": "VALID", "date": "2025-04-07" },
+            { "name": "Fiche d'Auto-Évaluation KYC & Déclaration SOW", "status": "VALID", "date": "2025-01-15" },
             { "name": "Justificatifs Bancaires de Transfert", "status": "VALID", "date": "2025-10-01" }
         ],
         "notes": "Associé commanditaire fondateur. Apports de 10.000 € (01/09/2025), 10.000 € (09/09/2025) et 20.000 € (01/10/2025). Origine des fonds documentée et certifiée."

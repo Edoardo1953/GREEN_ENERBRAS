@@ -355,6 +355,31 @@
             background: rgba(16, 185, 129, 0.08);
             transform: scale(1.005);
         }
+        .aml-dropzone * {
+            pointer-events: none;
+        }
+        .aml-dropzone input {
+            pointer-events: auto;
+        }
+        .kyc-card-doc-row {
+            transition: all 0.2s ease;
+        }
+        .kyc-card-doc-row.drag-active {
+            border-color: #10b981 !important;
+            background: rgba(16, 185, 129, 0.18) !important;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.3) !important;
+        }
+        .kyc-card-doc-row.drag-active * {
+            pointer-events: none !important;
+        }
+        .kyc-dropzone.dragover {
+            border-color: #10b981 !important;
+            background: rgba(16, 185, 129, 0.18) !important;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.3) !important;
+        }
+        .kyc-dropzone.dragover * {
+            pointer-events: none !important;
+        }
         .aml-doc-card {
             display: flex;
             align-items: center;
@@ -1129,8 +1154,8 @@
     </div>
 
     <!-- Data & Scripts -->
-    <script src="../data.js?v=300"></script>
-    <script src="aml_data.js?v=300"></script>
-    <script src="aml_app.js?v=300"></script>
+    <script src="../data.js?v=301"></script>
+    <script src="aml_data.js?v=301"></script>
+    <script src="aml_app.js?v=301"></script>
 </body>
 </html>

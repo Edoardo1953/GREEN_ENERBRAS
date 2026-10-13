@@ -264,9 +264,53 @@ function getAmlCustomStorage() {
     }
 }
 
+// Rimuove i dati pesanti Base64 prima di salvare su localStorage, poiché i file binari risiedono in IndexedDB
+function stripDataUrlsForLocalStorage(data) {
+    if (!data || typeof data !== 'object') return data;
+    try {
+        const cloned = JSON.parse(JSON.stringify(data));
+        Object.keys(cloned).forEach(pKey => {
+            const p = cloned[pKey];
+            if (p && Array.isArray(p.kyc_documents)) {
+                p.kyc_documents.forEach(doc => {
+                    if (doc && doc.file && doc.file.dataUrl) {
+                        // Preserva metadati leggeri, rimuove il payload pesante Base64 da localStorage
+                        doc.file = {
+                            name: doc.file.name,
+                            size: doc.file.size,
+                            type: doc.file.type,
+                            uploadDate: doc.file.uploadDate,
+                            folderPath: doc.file.folderPath,
+                            hasFile: true
+                        };
+                    }
+                });
+            }
+            if (p && Array.isArray(p.documents)) {
+                p.documents.forEach(doc => {
+                    if (doc && doc.file && doc.file.dataUrl) {
+                        doc.file = {
+                            name: doc.file.name,
+                            size: doc.file.size,
+                            type: doc.file.type,
+                            uploadDate: doc.file.uploadDate,
+                            folderPath: doc.file.folderPath,
+                            hasFile: true
+                        };
+                    }
+                });
+            }
+        });
+        return cloned;
+    } catch (e) {
+        return data;
+    }
+}
+
 function saveAmlCustomStorage(data) {
     try {
-        localStorage.setItem('green_enerbras_aml_custom_partners', JSON.stringify(data));
+        const lightData = stripDataUrlsForLocalStorage(data);
+        localStorage.setItem('green_enerbras_aml_custom_partners', JSON.stringify(lightData));
     } catch (e) {
         console.error('Error saving AML storage:', e);
     }
@@ -294,8 +338,10 @@ function escapeQuotes(str) {
 
 const AML_DB_NAME = 'GreenEnerbrasAML_DB';
 const AML_STORE_NAME = 'aml_giustificativi';
+const AML_KYC_STORE_NAME = 'aml_kyc_documents';
 let amlDbInstance = null;
-window.amlDocsCache = {}; // Memoria rapida indicizzata per ID documento
+window.amlDocsCache = {}; // Memoria rapida indicizzata per ID documento (giustificativi bancari)
+window.amlKycFilesCache = {}; // Memoria rapida indicizzata per chiave socio__docId (documenti KYC)
 
 function openAmlDb() {
     return new Promise((resolve) => {
@@ -305,13 +351,17 @@ function openAmlDb() {
             return resolve(null);
         }
         try {
-            const req = indexedDB.open(AML_DB_NAME, 1);
+            const req = indexedDB.open(AML_DB_NAME, 2);
             req.onupgradeneeded = (e) => {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains(AML_STORE_NAME)) {
                     const store = db.createObjectStore(AML_STORE_NAME, { keyPath: 'id' });
                     store.createIndex('inflowId', 'inflowId', { unique: false });
                     store.createIndex('partnerName', 'partnerName', { unique: false });
+                }
+                if (!db.objectStoreNames.contains(AML_KYC_STORE_NAME)) {
+                    const kycStore = db.createObjectStore(AML_KYC_STORE_NAME, { keyPath: 'docKey' });
+                    kycStore.createIndex('partnerName', 'partnerName', { unique: false });
                 }
             };
             req.onsuccess = (e) => {
@@ -327,6 +377,101 @@ function openAmlDb() {
             resolve(null);
         }
     });
+}
+
+// Caricamento completo documenti KYC da IndexedDB in memoria
+async function loadAllAmlKycFiles() {
+    try {
+        const db = await openAmlDb();
+        if (db && db.objectStoreNames.contains(AML_KYC_STORE_NAME)) {
+            return new Promise((resolve) => {
+                try {
+                    const tx = db.transaction(AML_KYC_STORE_NAME, 'readonly');
+                    const store = tx.objectStore(AML_KYC_STORE_NAME);
+                    const req = store.getAll();
+                    req.onsuccess = () => {
+                        const list = req.result || [];
+                        window.amlKycFilesCache = {};
+                        list.forEach(item => {
+                            window.amlKycFilesCache[item.docKey] = item;
+                        });
+                        resolve(window.amlKycFilesCache);
+                    };
+                    req.onerror = () => resolve({});
+                } catch (txErr) {
+                    resolve({});
+                }
+            });
+        }
+    } catch (e) {
+        console.warn('Errore lettura KYC da IndexedDB:', e);
+    }
+    return {};
+}
+
+// Salva singolo file KYC (Base64 / blob) in IndexedDB
+async function saveKycFileToIndexedDb(partnerName, docId, fileRecord) {
+    if (!fileRecord) return;
+    const docKey = `${partnerName}__${docId}`;
+    const item = {
+        docKey: docKey,
+        partnerName: partnerName,
+        docId: docId,
+        name: fileRecord.name,
+        size: fileRecord.size,
+        type: fileRecord.type || 'application/pdf',
+        dataUrl: fileRecord.dataUrl || '',
+        uploadDate: fileRecord.uploadDate || new Date().toISOString(),
+        folderPath: fileRecord.folderPath || `uploads/Documenti SOCI/${partnerName}/${fileRecord.name}`
+    };
+    if (!window.amlKycFilesCache) window.amlKycFilesCache = {};
+    window.amlKycFilesCache[docKey] = item;
+
+    try {
+        const db = await openAmlDb();
+        if (db && db.objectStoreNames.contains(AML_KYC_STORE_NAME)) {
+            const tx = db.transaction(AML_KYC_STORE_NAME, 'readwrite');
+            const store = tx.objectStore(AML_KYC_STORE_NAME);
+            store.put(item);
+        }
+    } catch (e) {
+        console.warn('Errore salvataggio KYC su IndexedDB:', e);
+    }
+}
+
+// Elimina singolo file KYC da IndexedDB
+async function deleteKycFileFromIndexedDb(partnerName, docId) {
+    const docKey = `${partnerName}__${docId}`;
+    if (window.amlKycFilesCache) {
+        delete window.amlKycFilesCache[docKey];
+    }
+    try {
+        const db = await openAmlDb();
+        if (db && db.objectStoreNames.contains(AML_KYC_STORE_NAME)) {
+            const tx = db.transaction(AML_KYC_STORE_NAME, 'readwrite');
+            const store = tx.objectStore(AML_KYC_STORE_NAME);
+            store.delete(docKey);
+        }
+    } catch (e) {
+        console.warn('Errore eliminazione KYC da IndexedDB:', e);
+    }
+}
+
+// Recupera il payload dataUrl di un documento KYC da cache IndexedDB
+function getKycFileDataUrl(partnerName, doc, docIdx) {
+    if (doc && doc.file && doc.file.dataUrl) return doc.file.dataUrl;
+    const pName = partnerName || '';
+    const docId = (doc && doc.id) ? doc.id : (docIdx !== undefined ? `KYC-DOC-${docIdx + 1}` : '');
+    
+    if (window.amlKycFilesCache) {
+        if (docId && window.amlKycFilesCache[`${pName}__${docId}`]?.dataUrl) {
+            return window.amlKycFilesCache[`${pName}__${docId}`].dataUrl;
+        }
+        if (docIdx !== undefined && window.amlKycFilesCache[`${pName}__${docIdx}`]?.dataUrl) {
+            return window.amlKycFilesCache[`${pName}__${docIdx}`].dataUrl;
+        }
+    }
+    return null;
 }
 
 async function loadAllAmlDocs() {
@@ -623,6 +768,7 @@ function renderAmlDocsList() {
 }
 
 window.triggerAmlDocFileInput = function() {
+    if (window._isAmlDropping) return;
     const input = document.getElementById('aml-doc-file-input');
     if (input) input.click();
 };
@@ -765,7 +911,84 @@ window.deleteAmlDoc = async function(docId) {
     renderAmlRegistryTable(activeInflows);
 };
 
+// Helper robusto per estrarre il primo file da un evento Drop (DataTransfer files o items)
+function getDroppedFile(event) {
+    if (!event || !event.dataTransfer) return null;
+    const dt = event.dataTransfer;
+    if (dt.files && dt.files.length > 0) {
+        return dt.files[0];
+    }
+    if (dt.items && dt.items.length > 0) {
+        for (let i = 0; i < dt.items.length; i++) {
+            const item = dt.items[i];
+            if (item.kind === 'file') {
+                const f = item.getAsFile();
+                if (f) return f;
+            }
+        }
+    }
+    return null;
+}
+
+// Helper robusto per estrarre tutti i file da un evento Drop
+function getDroppedFiles(event) {
+    if (!event || !event.dataTransfer) return [];
+    const dt = event.dataTransfer;
+    if (dt.files && dt.files.length > 0) {
+        return Array.from(dt.files);
+    }
+    const files = [];
+    if (dt.items && dt.items.length > 0) {
+        for (let i = 0; i < dt.items.length; i++) {
+            const item = dt.items[i];
+            if (item.kind === 'file') {
+                const f = item.getAsFile();
+                if (f) files.push(f);
+            }
+        }
+    }
+    return files;
+}
+
+// Flag globale per prevenire click sintetici subito dopo un drop
+window._isAmlDropping = false;
+function markAmlDropping() {
+    window._isAmlDropping = true;
+    setTimeout(() => {
+        window._isAmlDropping = false;
+    }, 350);
+}
+
 function setupAmlDropzone() {
+    // Prevenzione globale standard per file trascinati da Windows Explorer / Mac / Linux
+    if (!window._amlGlobalDragSetup) {
+        window._amlGlobalDragSetup = true;
+
+        window.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const isManagedDropzone = e.target && e.target.closest && (
+                e.target.closest('.aml-dropzone') || 
+                e.target.closest('.kyc-card-doc-row') || 
+                e.target.closest('.kyc-dropzone')
+            );
+            if (e.dataTransfer) {
+                e.dataTransfer.dropEffect = isManagedDropzone ? 'copy' : 'none';
+            }
+        }, false);
+
+        window.addEventListener('drop', (e) => {
+            const isManagedDropzone = e.target && e.target.closest && (
+                e.target.closest('.aml-dropzone') || 
+                e.target.closest('.kyc-card-doc-row') || 
+                e.target.closest('.kyc-dropzone')
+            );
+            if (!isManagedDropzone) {
+                // Impedisce al browser di aprire il file in una nuova scheda
+                e.preventDefault();
+            }
+        }, false);
+    }
+
     const dropzone = document.getElementById('aml-docs-dropzone');
     if (!dropzone) return;
 
@@ -785,10 +1008,10 @@ function setupAmlDropzone() {
     });
 
     dropzone.addEventListener('drop', (e) => {
-        const dt = e.dataTransfer;
-        const files = dt.files;
+        markAmlDropping();
+        const files = getDroppedFiles(e);
         if (files && files.length > 0) {
-            processAmlDocFiles(Array.from(files));
+            processAmlDocFiles(files);
         }
     });
 }
@@ -1546,14 +1769,21 @@ function renderAmlPartnersCards() {
                 const docTitle = doc.title || doc.type || 'Documento';
                 const formattedExp = formatExpiryDateDisplay(doc.expiry_date);
 
+                const cleanPartnerId = String(p.name).replace(/[^a-zA-Z0-9]/g, '_');
+                const rowId = `kyc-card-row-${cleanPartnerId}-${docIdx}`;
+                const fileInputId = `card-file-input-${cleanPartnerId}-${docIdx}`;
+
                 docsListHtml += `
                     <div class="kyc-card-doc-row" 
-                         id="kyc-card-row-${escapeQuotes(p.name)}-${docIdx}"
+                         id="${rowId}"
+                         data-partner-name="${escapeQuotes(p.name)}"
+                         data-doc-idx="${docIdx}"
+                         ondragenter="handleCardKycDocDragEnter(event, this)"
                          ondragover="handleCardKycDocDragOver(event, this)" 
                          ondragleave="handleCardKycDocDragLeave(event, this)" 
-                         ondrop="handleCardKycDocDrop(event, '${escapeQuotes(p.name)}', ${docIdx})"
-                         style="display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0.55rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 0.35rem; font-size: 0.75rem; gap: 0.5rem; transition: all 0.2s ease;">
-                        <div style="display: flex; align-items: center; gap: 0.45rem; min-width: 0; flex: 1;">
+                         ondrop="handleCardKycDocDrop(event, this, '${escapeQuotes(p.name)}', ${docIdx})"
+                         ${!isUploaded ? `onclick="triggerPartnerKycFileInputDirect('${escapeQuotes(p.name)}', ${docIdx})" style="display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0.55rem; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.12); border-radius: 6px; margin-bottom: 0.35rem; font-size: 0.75rem; gap: 0.5rem; cursor: pointer; transition: all 0.2s ease;" title="${t('kyc_doc_dropzone_hint', 'Trascina qui il file (PDF, JPG, PNG) o clicca per caricare')}"` : `style="display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0.55rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; margin-bottom: 0.35rem; font-size: 0.75rem; gap: 0.5rem; transition: all 0.2s ease;"`}>
+                        <div style="display: flex; align-items: center; gap: 0.45rem; min-width: 0; flex: 1; pointer-events: none;">
                             <span class="kyc-dot ${dotClass}" style="width: 10px; height: 10px; min-width: 10px; margin-right: 0;" title="${statusTitle}"></span>
                             <span style="font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(docTitle)}">
                                 ${escapeHtml(docTitle)}
@@ -1562,27 +1792,29 @@ function renderAmlPartnersCards() {
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0;">
                             ${formattedExp ? `
-                                <span class="kyc-expiry-badge ${expiryInfo.badgeClass}" style="margin: 0; font-size: 0.68rem; padding: 0.12rem 0.4rem;" title="${expiryInfo.label}">
+                                <span class="kyc-expiry-badge ${expiryInfo.badgeClass}" style="margin: 0; font-size: 0.68rem; padding: 0.12rem 0.4rem; pointer-events: none;" title="${expiryInfo.label}">
                                     ${formattedExp}
                                 </span>
                             ` : ''}
                             
                             ${isUploaded ? `
-                                <button type="button" class="btn-action" onclick="previewPartnerKycDocDirect('${escapeQuotes(p.name)}', ${docIdx})" title="${t('docs_action_preview', 'Visualizza / Leggi')}" style="padding: 3px 6px; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; cursor: pointer; font-size: 0.72rem;">
+                                <button type="button" class="btn-action" onclick="event.stopPropagation(); previewPartnerKycDocDirect('${escapeQuotes(p.name)}', ${docIdx})" title="${t('docs_action_preview', 'Visualizza / Leggi')}" style="padding: 3px 6px; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; cursor: pointer; font-size: 0.72rem;">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
-                                <button type="button" class="btn-action" onclick="downloadPartnerKycDocDirect('${escapeQuotes(p.name)}', ${docIdx})" title="${t('docs_action_download', 'Scarica')}" style="padding: 3px 6px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 4px; cursor: pointer; font-size: 0.72rem;">
+                                <button type="button" class="btn-action" onclick="event.stopPropagation(); downloadPartnerKycDocDirect('${escapeQuotes(p.name)}', ${docIdx})" title="${t('docs_action_download', 'Scarica')}" style="padding: 3px 6px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 4px; cursor: pointer; font-size: 0.72rem;">
                                     <i class="fa-solid fa-download"></i>
                                 </button>
-                                <button type="button" class="btn-action" onclick="deletePartnerKycDocDirect('${escapeQuotes(p.name)}', ${docIdx})" title="${t('docs_action_delete', 'Elimina')}" style="padding: 3px 6px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; cursor: pointer; font-size: 0.72rem;">
+                                <button type="button" class="btn-action" onclick="event.stopPropagation(); deletePartnerKycDocDirect('${escapeQuotes(p.name)}', ${docIdx})" title="${t('docs_action_delete', 'Elimina')}" style="padding: 3px 6px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; cursor: pointer; font-size: 0.72rem;">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             ` : `
-                                <label style="margin: 0; display: inline-flex; align-items: center; gap: 0.25rem; padding: 2px 7px; background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px dashed rgba(16, 185, 129, 0.45); border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: 600; transition: all 0.2s ease;" title="${t('kyc_doc_dropzone_hint', 'Trascina qui il file (PDF, JPG, PNG) o clicca per caricare')}">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                                    <span>${t('docs_action_upload', 'Carica')}</span>
-                                    <input type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" style="display: none;" onchange="handlePartnerKycFileInputDirect('${escapeQuotes(p.name)}', ${docIdx}, event)">
-                                </label>
+                                <button type="button" class="btn-action" onclick="event.stopPropagation(); triggerPartnerKycFileInputDirect('${escapeQuotes(p.name)}', ${docIdx})" 
+                                        style="margin: 0; display: inline-flex; align-items: center; gap: 0.25rem; padding: 2px 7px; background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px dashed rgba(16, 185, 129, 0.45); border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: 600; transition: all 0.2s ease;" 
+                                        title="${t('kyc_doc_dropzone_hint', 'Trascina qui il file (PDF, JPG, PNG) o clicca per caricare')}">
+                                    <i class="fa-solid fa-cloud-arrow-up" style="pointer-events: none;"></i>
+                                    <span style="pointer-events: none;">${t('docs_action_upload', 'Carica')}</span>
+                                </button>
+                                <input type="file" id="${fileInputId}" accept=".pdf,.png,.jpg,.jpeg,.webp" style="display: none;" onchange="handlePartnerKycFileInputDirect('${escapeQuotes(p.name)}', ${docIdx}, event)">
                             `}
                         </div>
                     </div>
@@ -2287,16 +2519,14 @@ function generateDefaultKycDocuments(partner) {
     }
 }
 
-// Inizializzazione e riconciliazione documenti partner
+// Inizializzazione e riconciliazione documenti partner con IndexedDB
 function initPartnerKycDocuments(partner) {
+    let list = [];
     if (partner.kyc_documents && Array.isArray(partner.kyc_documents) && partner.kyc_documents.length > 0) {
-        return JSON.parse(JSON.stringify(partner.kyc_documents));
-    }
-    
-    // Se ha vecchi record in partner.documents
-    if (partner.documents && Array.isArray(partner.documents) && partner.documents.length > 0) {
+        list = JSON.parse(JSON.stringify(partner.kyc_documents));
+    } else if (partner.documents && Array.isArray(partner.documents) && partner.documents.length > 0) {
         const defaults = generateDefaultKycDocuments(partner);
-        return defaults.map((d, i) => {
+        list = defaults.map((d, i) => {
             const match = partner.documents[i] || partner.documents.find(doc => (doc.name || '').toLowerCase().includes((d.type || '').toLowerCase().substring(0, 5)));
             if (match) {
                 return {
@@ -2308,9 +2538,34 @@ function initPartnerKycDocuments(partner) {
             }
             return d;
         });
+    } else {
+        list = generateDefaultKycDocuments(partner);
     }
 
-    return generateDefaultKycDocuments(partner);
+    // Riconcilia i file da IndexedDB in memoria
+    const pName = partner.name || '';
+    list.forEach((doc, idx) => {
+        const docId = doc.id || `KYC-DOC-${idx + 1}`;
+        doc.id = docId;
+        const cachedPayload = getKycFileDataUrl(pName, doc, idx);
+        if (cachedPayload) {
+            if (!doc.file) {
+                const cachedMeta = (window.amlKycFilesCache && (window.amlKycFilesCache[`${pName}__${docId}`] || window.amlKycFilesCache[`${pName}__${idx}`])) || {};
+                doc.file = {
+                    name: cachedMeta.name || doc.title || 'documento.pdf',
+                    size: cachedMeta.size || 1024,
+                    type: cachedMeta.type || 'application/pdf',
+                    uploadDate: cachedMeta.uploadDate || new Date().toISOString(),
+                    folderPath: cachedMeta.folderPath || `uploads/Documenti SOCI/${pName}/${cachedMeta.name || 'doc.pdf'}`,
+                    dataUrl: cachedPayload
+                };
+            } else {
+                doc.file.dataUrl = cachedPayload;
+            }
+        }
+    });
+
+    return list;
 }
 
 // Render dinamico della checklist documentale
@@ -2427,13 +2682,14 @@ function renderKycDocumentsChecklist() {
         } else {
             fileBoxHtml = `
                 <div class="aml-dropzone kyc-dropzone" id="kyc-dropzone-${idx}" 
+                     ondragenter="handleKycDropzoneDragEnter(event, ${idx})"
                      ondragover="handleKycDropzoneDragOver(event, ${idx})" 
                      ondragleave="handleKycDropzoneDragLeave(event, ${idx})" 
                      ondrop="handleKycDocDrop(event, ${idx})" 
                      onclick="triggerKycDocFileInput(${idx})"
                      style="margin-top: 0.5rem; padding: 0.65rem 1rem; border: 1px dashed rgba(255,255,255,0.2); border-radius: 8px; text-align: center; cursor: pointer; background: rgba(255,255,255,0.015); transition: all 0.2s ease;">
                     <input type="file" id="kyc-file-input-${idx}" style="display: none;" onchange="handleKycDocFileInput(${idx}, event)">
-                    <div style="font-size: 0.8rem; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 0.5rem; pointer-events: none;">
                         <i class="fa-solid fa-cloud-arrow-up text-emerald"></i>
                         <span>${t('kyc_doc_dropzone_hint', 'Trascina qui il file o clicca per caricare (PDF, JPG, PNG)')}</span>
                     </div>
@@ -2536,6 +2792,7 @@ window.handleKycDocExpiryChange = function(idx, val) {
 
 // Trigger input file da click su dropzone
 window.triggerKycDocFileInput = function(idx) {
+    if (window._isAmlDropping) return;
     const input = document.getElementById(`kyc-file-input-${idx}`);
     if (input) input.click();
 };
@@ -2549,13 +2806,23 @@ window.handleKycDocFileInput = async function(idx, event) {
 };
 
 // Drag and drop events per dropzone KYC
+window.handleKycDropzoneDragEnter = function(event, idx) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    const dropzone = document.getElementById(`kyc-dropzone-${idx}`);
+    if (dropzone) {
+        dropzone.classList.add('dragover');
+    }
+};
+
 window.handleKycDropzoneDragOver = function(event, idx) {
     event.preventDefault();
     event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
     const dropzone = document.getElementById(`kyc-dropzone-${idx}`);
-    if (dropzone) {
-        dropzone.style.borderColor = '#10b981';
-        dropzone.style.background = 'rgba(16, 185, 129, 0.08)';
+    if (dropzone && !dropzone.classList.contains('dragover')) {
+        dropzone.classList.add('dragover');
     }
 };
 
@@ -2564,26 +2831,35 @@ window.handleKycDropzoneDragLeave = function(event, idx) {
     event.stopPropagation();
     const dropzone = document.getElementById(`kyc-dropzone-${idx}`);
     if (dropzone) {
-        dropzone.style.borderColor = 'rgba(255,255,255,0.2)';
-        dropzone.style.background = 'rgba(255,255,255,0.015)';
+        if (event.relatedTarget && dropzone.contains(event.relatedTarget)) return;
+        dropzone.classList.remove('dragover');
     }
 };
 
 window.handleKycDocDrop = async function(event, idx) {
     event.preventDefault();
     event.stopPropagation();
-    const dt = event.dataTransfer;
-    if (dt && dt.files && dt.files.length > 0) {
-        await processKycDocFile(idx, dt.files[0]);
+    markAmlDropping();
+
+    const dropzone = document.getElementById(`kyc-dropzone-${idx}`);
+    if (dropzone) {
+        dropzone.classList.remove('dragover');
+    }
+    const file = getDroppedFile(event);
+    if (file) {
+        await processKycDocFile(idx, file);
     }
 };
 
-// Elaborazione file e memorizzazione DataURL
+// Elaborazione file e memorizzazione in IndexedDB
 async function processKycDocFile(idx, file) {
     if (!currentKycDocuments[idx]) return;
     try {
         const base64 = await readFileAsDataURL(file);
-        currentKycDocuments[idx].file = {
+        const docId = currentKycDocuments[idx].id || `KYC-DOC-${idx + 1}`;
+        currentKycDocuments[idx].id = docId;
+
+        const fileRecord = {
             name: file.name,
             size: file.size,
             type: file.type || 'application/pdf',
@@ -2591,6 +2867,12 @@ async function processKycDocFile(idx, file) {
             uploadDate: new Date().toISOString(),
             folderPath: `uploads/Documenti SOCI/${currentKycPartnerName}/${file.name}`
         };
+
+        if (currentKycPartnerName) {
+            await saveKycFileToIndexedDb(currentKycPartnerName, docId, fileRecord);
+        }
+
+        currentKycDocuments[idx].file = fileRecord;
         syncCurrentKycDocsFromDOM();
         renderKycDocumentsChecklist();
     } catch (e) {
@@ -2619,30 +2901,59 @@ function syncCurrentKycDocsFromDOM() {
 // AZIONI DIRETTE SU CARD SOCI (Tab Mappatura Soci & Investitori)
 // =============================================================================
 
+window.triggerPartnerKycFileInputDirect = function(partnerName, docIdx) {
+    if (window._isAmlDropping) return;
+    const cleanPartnerId = String(partnerName).replace(/[^a-zA-Z0-9]/g, '_');
+    const input = document.getElementById(`card-file-input-${cleanPartnerId}-${docIdx}`);
+    if (input) input.click();
+};
+
+window.handleCardKycDocDragEnter = function(event, el) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    const row = el ? (el.closest('.kyc-card-doc-row') || el) : null;
+    if (row) {
+        row.classList.add('drag-active');
+    }
+};
+
 window.handleCardKycDocDragOver = function(event, el) {
     event.preventDefault();
     event.stopPropagation();
-    if (el) {
-        el.style.borderColor = '#10b981';
-        el.style.background = 'rgba(16, 185, 129, 0.12)';
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    const row = el ? (el.closest('.kyc-card-doc-row') || el) : null;
+    if (row && !row.classList.contains('drag-active')) {
+        row.classList.add('drag-active');
     }
 };
 
 window.handleCardKycDocDragLeave = function(event, el) {
     event.preventDefault();
     event.stopPropagation();
-    if (el) {
-        el.style.borderColor = 'rgba(255, 255, 255, 0.05)';
-        el.style.background = 'rgba(255, 255, 255, 0.02)';
+    const row = el ? (el.closest('.kyc-card-doc-row') || el) : null;
+    if (row) {
+        if (event.relatedTarget && row.contains(event.relatedTarget)) return;
+        row.classList.remove('drag-active');
     }
 };
 
-window.handleCardKycDocDrop = async function(event, partnerName, docIdx) {
+window.handleCardKycDocDrop = async function(event, el, partnerName, docIdx) {
     event.preventDefault();
     event.stopPropagation();
-    const dt = event.dataTransfer;
-    if (dt && dt.files && dt.files.length > 0) {
-        await uploadPartnerKycDocDirect(partnerName, docIdx, dt.files[0]);
+    markAmlDropping();
+
+    const row = el ? (el.closest('.kyc-card-doc-row') || el) : null;
+    if (row) {
+        row.classList.remove('drag-active');
+    }
+
+    const pName = partnerName || (row && row.getAttribute('data-partner-name'));
+    const dIdx = (docIdx !== undefined && docIdx !== null) ? docIdx : (row ? parseInt(row.getAttribute('data-doc-idx'), 10) : null);
+
+    const file = getDroppedFile(event);
+    if (file && pName !== null && dIdx !== null) {
+        await uploadPartnerKycDocDirect(pName, dIdx, file);
     }
 };
 
@@ -2665,6 +2976,9 @@ window.uploadPartnerKycDocDirect = async function(partnerName, docIdx, file) {
             return;
         }
 
+        const docId = partnerDocs[docIdx].id || `KYC-DOC-${docIdx + 1}`;
+        partnerDocs[docIdx].id = docId;
+
         const fileRecord = {
             name: file.name,
             size: file.size,
@@ -2673,6 +2987,9 @@ window.uploadPartnerKycDocDirect = async function(partnerName, docIdx, file) {
             uploadDate: new Date().toISOString(),
             folderPath: `uploads/Documenti SOCI/${p.name || partnerName}/${file.name}`
         };
+
+        // Salva il file pesante in IndexedDB (senza sovraccaricare il limite di localStorage)
+        await saveKycFileToIndexedDb(p.name || partnerName, docId, fileRecord);
 
         partnerDocs[docIdx].file = fileRecord;
 
@@ -2718,6 +3035,12 @@ window.previewPartnerKycDocDirect = function(partnerName, docIdx) {
         return;
     }
 
+    const dataUrl = getKycFileDataUrl(p.name || partnerName, doc, docIdx) || doc.file.dataUrl;
+    if (!dataUrl) {
+        alert('File non disponibile in archivio.');
+        return;
+    }
+
     const modal = document.getElementById('aml-doc-viewer-modal');
     const titleEl = document.getElementById('aml-viewer-doc-title');
     const subtitleEl = document.getElementById('aml-viewer-doc-subtitle');
@@ -2738,9 +3061,9 @@ window.previewPartnerKycDocDirect = function(partnerName, docIdx) {
     const isPdf = nameLower.endsWith('.pdf') || (doc.file.type && doc.file.type.includes('pdf'));
 
     if (isImage) {
-        bodyEl.innerHTML = `<img src="${doc.file.dataUrl}" alt="${escapeHtml(doc.file.name)}" style="max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">`;
+        bodyEl.innerHTML = `<img src="${dataUrl}" alt="${escapeHtml(doc.file.name)}" style="max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">`;
     } else if (isPdf) {
-        bodyEl.innerHTML = `<iframe src="${doc.file.dataUrl}" style="width: 100%; height: 100%; border: none;"></iframe>`;
+        bodyEl.innerHTML = `<iframe src="${dataUrl}" style="width: 100%; height: 100%; border: none;"></iframe>`;
     } else {
         bodyEl.innerHTML = `
             <div style="text-align: center; padding: 3rem; color: var(--text-main);">
@@ -2763,17 +3086,20 @@ window.downloadPartnerKycDocDirect = function(partnerName, docIdx) {
     const p = getEnrichedPartner(partnerName);
     const partnerDocs = initPartnerKycDocuments(p);
     const doc = partnerDocs[docIdx];
-    if (!doc || !doc.file || !doc.file.dataUrl) return;
+    if (!doc || !doc.file) return;
+
+    const dataUrl = getKycFileDataUrl(p.name || partnerName, doc, docIdx) || doc.file.dataUrl;
+    if (!dataUrl) return;
 
     const a = document.createElement('a');
-    a.href = doc.file.dataUrl;
+    a.href = dataUrl;
     a.download = doc.file.name || `${doc.type || 'documento'}.pdf`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
 };
 
-window.deletePartnerKycDocDirect = function(partnerName, docIdx) {
+window.deletePartnerKycDocDirect = async function(partnerName, docIdx) {
     const p = getEnrichedPartner(partnerName);
     const partnerDocs = initPartnerKycDocuments(p);
     const doc = partnerDocs[docIdx];
@@ -2782,6 +3108,10 @@ window.deletePartnerKycDocDirect = function(partnerName, docIdx) {
     const docName = doc.file.name || doc.title || 'questo documento';
     const confirmed = confirm(`Sei sicuro di voler eliminare il file "${docName}"?`);
     if (!confirmed) return;
+
+    const docId = doc.id || `KYC-DOC-${docIdx + 1}`;
+    // Rimuove da IndexedDB
+    await deleteKycFileFromIndexedDb(p.name || partnerName, docId);
 
     const customStorage = getAmlCustomStorage();
     partnerDocs[docIdx].file = null;
@@ -2819,6 +3149,12 @@ window.previewAmlKycDoc = function(idx) {
     const doc = currentKycDocuments[idx];
     if (!doc || !doc.file) return;
 
+    const dataUrl = getKycFileDataUrl(currentKycPartnerName, doc, idx) || doc.file.dataUrl;
+    if (!dataUrl) {
+        alert('File non disponibile in archivio.');
+        return;
+    }
+
     const modal = document.getElementById('aml-doc-viewer-modal');
     const titleEl = document.getElementById('aml-viewer-doc-title');
     const subtitleEl = document.getElementById('aml-viewer-doc-subtitle');
@@ -2839,9 +3175,9 @@ window.previewAmlKycDoc = function(idx) {
     const isPdf = nameLower.endsWith('.pdf') || (doc.file.type && doc.file.type.includes('pdf'));
 
     if (isImage) {
-        bodyEl.innerHTML = `<img src="${doc.file.dataUrl}" alt="${escapeHtml(doc.file.name)}" style="max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">`;
+        bodyEl.innerHTML = `<img src="${dataUrl}" alt="${escapeHtml(doc.file.name)}" style="max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">`;
     } else if (isPdf) {
-        bodyEl.innerHTML = `<iframe src="${doc.file.dataUrl}" style="width: 100%; height: 100%; border: none;"></iframe>`;
+        bodyEl.innerHTML = `<iframe src="${dataUrl}" style="width: 100%; height: 100%; border: none;"></iframe>`;
     } else {
         bodyEl.innerHTML = `
             <div style="text-align: center; padding: 3rem; color: var(--text-main);">
@@ -2863,9 +3199,12 @@ window.previewAmlKycDoc = function(idx) {
 // Download documento KYC
 window.downloadAmlKycDoc = function(idx) {
     const doc = currentKycDocuments[idx];
-    if (!doc || !doc.file || !doc.file.dataUrl) return;
+    if (!doc || !doc.file) return;
+    const dataUrl = getKycFileDataUrl(currentKycPartnerName, doc, idx) || doc.file.dataUrl;
+    if (!dataUrl) return;
+
     const a = document.createElement('a');
-    a.href = doc.file.dataUrl;
+    a.href = dataUrl;
     a.download = doc.file.name || 'documento_kyc.pdf';
     document.body.appendChild(a);
     a.click();
@@ -2873,10 +3212,14 @@ window.downloadAmlKycDoc = function(idx) {
 };
 
 // Rimozione solo del file allegato (il record rimane con bollino rosso/grigio)
-window.removeKycDocFile = function(idx) {
+window.removeKycDocFile = async function(idx) {
     if (!confirm(t('kyc_doc_delete_confirm', 'Sei sicuro di voler rimuovere questo file allegato?'))) return;
     if (currentKycDocuments[idx]) {
         syncCurrentKycDocsFromDOM();
+        const docId = currentKycDocuments[idx].id || `KYC-DOC-${idx + 1}`;
+        if (currentKycPartnerName) {
+            await deleteKycFileFromIndexedDb(currentKycPartnerName, docId);
+        }
         currentKycDocuments[idx].file = null;
         renderKycDocumentsChecklist();
     }
@@ -2976,11 +3319,23 @@ window.closeAmlKycModal = function() {
     if (modal) modal.style.display = 'none';
 };
 
-window.saveAmlKycModalData = function() {
+window.saveAmlKycModalData = async function() {
     if (!currentKycPartnerName) return;
 
     // Sincronizza i dati dai campi della checklist
     syncCurrentKycDocsFromDOM();
+
+    // Salva in IndexedDB i file della modale
+    if (currentKycDocuments && currentKycDocuments.length > 0) {
+        for (let i = 0; i < currentKycDocuments.length; i++) {
+            const d = currentKycDocuments[i];
+            if (d.file && d.file.dataUrl) {
+                const docId = d.id || `KYC-DOC-${i + 1}`;
+                d.id = docId;
+                await saveKycFileToIndexedDb(currentKycPartnerName, docId, d.file);
+            }
+        }
+    }
 
     const customStorage = getAmlCustomStorage();
     const currentData = getEnrichedPartner(currentKycPartnerName);
@@ -3489,13 +3844,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialiser les dropdowns
     populateAmlFilterDropdowns(inflows);
 
-    // Initialiser le système de stockage des justificatifs (IndexedDB/localStorage)
-    loadAllAmlDocs().then(() => {
+    // Initialiser le système de stockage des justificatifs & documents KYC (IndexedDB)
+    Promise.all([loadAllAmlDocs(), loadAllAmlKycFiles()]).then(() => {
         applyAmlFilters();
+        renderAmlPartnersCards();
+        calculateDueDiligenceScore();
     });
     setupAmlDropzone();
 
-    // Mettre à jour KPIs & Table
+    // Mettre à jour KPIs & Table iniziali
     applyAmlFilters();
     renderAmlPartnersCards();
     renderAmlRiskMatrix();
