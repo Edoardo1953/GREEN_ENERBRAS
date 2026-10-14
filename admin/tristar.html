@@ -170,13 +170,9 @@
                     <a href="impianti.html" class="nav-item"><i class="fa-solid fa-map-location-dot"></i> <span data-i18n="nav_impianti">Impianti e Mappa</span></a>
                     <button type="button" class="nav-eye-btn visible" data-page="impianti" data-visible="true" onclick="Auth.togglePageVisibility('impianti')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
                 </div>
-                <div class="nav-item-row" data-page="reporting">
-                    <a href="reporting.html" class="nav-item"><i class="fa-solid fa-file-pdf"></i> <span data-i18n="nav_reporting">Documentazione GREEN_ENERBRAS</span></a>
-                    <button type="button" class="nav-eye-btn visible" data-page="reporting" data-visible="true" onclick="Auth.togglePageVisibility('reporting')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
-                </div>
-                <div class="nav-item-row" data-page="tristar">
-                    <a href="tristar.html" class="nav-item active"><i class="fa-solid fa-file-contract"></i> <span data-i18n="nav_tristar">Documentazione TRI STAR</span></a>
-                    <button type="button" class="nav-eye-btn visible" data-page="tristar" data-visible="true" onclick="Auth.togglePageVisibility('tristar')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                <div class="nav-item-row" data-page="documentazione">
+                    <a href="documentazione.html" class="nav-item active"><i class="fa-solid fa-folder-open"></i> <span data-i18n="nav_documentazione">Documentazione</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="documentazione" data-visible="true" onclick="Auth.togglePageVisibility('documentazione')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
                 </div>
                 <div class="nav-item-row" data-page="banca">
                     <a href="banca.html" class="nav-item"><i class="fa-solid fa-building-columns"></i> <span data-i18n="nav_conto">Conto Bancario</span></a>
@@ -212,7 +208,9 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="topbar">
-                <h1 data-i18n="title_tristar_doc">Gestione Documentale (TRI STAR)</h1>
+                <div>
+                    <h1 data-i18n="title_tristar_doc">Documentazione - TRI STAR ENERBRAS ONE SCP</h1>
+                </div>
                 
                 <div style="display: flex; align-items: center; gap: 1.5rem;">
                     <div class="lang-tools-wrapper">
@@ -231,6 +229,12 @@
                 </div>
                 </div>
             </header>
+
+            <div style="margin-bottom: 1.5rem;">
+                <a href="documentazione.html" style="display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; padding: 0.65rem 1.25rem; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 10px; color: var(--text-main); font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
+                    <i class="fa-solid fa-arrow-left"></i> <span data-i18n="btn_torna_documentazione">Torna a Documentazione</span>
+                </a>
+            </div>
 
             <section class="dashboard-grid" style="grid-template-columns: 1fr;">
                 

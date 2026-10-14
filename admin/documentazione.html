@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentazione - GREEN ENERBRAS ONE SCSp</title>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="../manifest.json">
+    <meta name="theme-color" content="#10b981">
+    <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../style.css?v=301">
+    
+    <!-- Firebase SDKs v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Auth Logic -->
+    <script src="../auth.js?v=301"></script>
+    <!-- i18n Translation Logic -->
+    <script src="../i18n.js?v=301"></script>
+
+    <style>
+        .doc-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2.5rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 992px) {
+            .doc-cards-grid {
+                grid-template-columns: 1fr;
+                gap: 1.75rem;
+            }
+        }
+
+        .doc-big-card {
+            display: flex;
+            flex-direction: column;
+            padding: 2.5rem 2.25rem;
+            border-radius: 20px;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            min-height: 440px;
+        }
+
+        .doc-big-card:hover {
+            transform: translateY(-8px);
+        }
+
+        .doc-big-card.card-ge {
+            border: 2px solid rgba(16, 185, 129, 0.28);
+        }
+
+        .doc-big-card.card-ge:hover {
+            border-color: #10b981;
+            box-shadow: 0 22px 45px -10px rgba(16, 185, 129, 0.38);
+        }
+
+        .doc-big-card.card-ts {
+            border: 2px solid rgba(59, 130, 246, 0.28);
+        }
+
+        .doc-big-card.card-ts:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 22px 45px -10px rgba(59, 130, 246, 0.38);
+        }
+
+        .doc-logo-container {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            height: 145px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+            margin-bottom: 1.75rem;
+            transition: transform 0.3s ease;
+        }
+
+        .doc-big-card:hover .doc-logo-container {
+            transform: scale(1.025);
+        }
+
+        .doc-logo-img {
+            max-width: 100%;
+            height: auto;
+            max-height: 95px;
+            object-fit: contain;
+        }
+
+        .doc-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-badge-ge {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+
+        .doc-badge-ts {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.35);
+        }
+
+        .doc-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin: 1.15rem 0 0.6rem 0;
+            color: var(--text-main);
+            letter-spacing: -0.5px;
+        }
+
+        .doc-desc {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 1.75rem;
+            flex-grow: 1;
+        }
+
+        .doc-meta-pill {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 1.25rem;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.75rem;
+        }
+
+        .card-action-btn {
+            padding: 1.1rem 1.75rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .card-action-btn-ge {
+            background: linear-gradient(135deg, #10b981, #047857);
+            color: #ffffff;
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .card-action-btn-ts {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #ffffff;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .doc-big-card:hover .card-action-btn {
+            transform: translateX(4px);
+        }
+
+        /* Light mode adjustments */
+        body.theme-light .doc-meta-pill {
+            background: rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body>
+    <script src="../data.js"></script>
+    <script>
+        Auth.requireRole(['admin', 'partner', 'visitor']);
+    </script>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass-panel">
+            <div class="logo" style="display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; padding: 0.5rem 0.25rem;">
+                <img src="Loghi/Logo Green Enerbras 01.png" alt="GREEN ENERBRAS" style="max-width: 100%; height: auto; max-height: 105px; object-fit: contain;">
+            </div>
+            <nav class="nav-menu">
+                <div class="nav-visibility-header">
+                    <span data-i18n="nav_menu_title">PAGINA</span>
+                    <span class="user-view-col-header" data-i18n="nav_col_partner_view"><i class="fa-solid fa-users-viewfinder"></i> USER VIEW</span>
+                </div>
+                <div class="nav-item-row" data-page="azionariato">
+                    <a href="index.html" class="nav-item"><i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_azionariato">Azionariato (LPs)</span></a>
+                </div>
+                <div class="nav-item-row" data-page="produzione">
+                    <a href="produzione.html" class="nav-item"><i class="fa-solid fa-solar-panel"></i> <span data-i18n="nav_produzione">Produzione Energia</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="produzione" data-visible="true" onclick="Auth.togglePageVisibility('produzione')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="vendite">
+                    <a href="vendite.html" class="nav-item"><i class="fa-solid fa-money-bill-trend-up"></i> <span data-i18n="nav_vendite">Vendite Energia</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="vendite" data-visible="true" onclick="Auth.togglePageVisibility('vendite')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="impianti">
+                    <a href="impianti.html" class="nav-item"><i class="fa-solid fa-map-location-dot"></i> <span data-i18n="nav_impianti">Impianti e Mappa</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="impianti" data-visible="true" onclick="Auth.togglePageVisibility('impianti')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="documentazione">
+                    <a href="documentazione.html" class="nav-item active"><i class="fa-solid fa-folder-open"></i> <span data-i18n="nav_documentazione">Documentazione</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="documentazione" data-visible="true" onclick="Auth.togglePageVisibility('documentazione')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="banca">
+                    <a href="banca.html" class="nav-item"><i class="fa-solid fa-building-columns"></i> <span data-i18n="nav_conto">Conto Bancario</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="banca" data-visible="false" onclick="Auth.togglePageVisibility('banca')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.8rem 0;"></div>
+                <div class="nav-item-row" data-page="risultati">
+                    <a href="risultati.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> <span data-i18n="menu_risultati">Risultati</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="risultati" data-visible="false" onclick="Auth.togglePageVisibility('risultati')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="contabilita">
+                    <a href="contabilita.html" class="nav-item"><i class="fa-solid fa-book-bookmark"></i> <span data-i18n="menu_contabilita">Contabilità</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="contabilita" data-visible="false" onclick="Auth.togglePageVisibility('contabilita')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="aml">
+                    <a href="aml.html" class="nav-item"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="nav_aml">Conformità AML (LBC-FT)</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="aml" data-visible="false" onclick="Auth.togglePageVisibility('aml')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="strumenti">
+                    <a href="strumenti.html" class="nav-item"><i class="fa-solid fa-toolbox"></i> <span data-i18n="nav_strumenti">Strumenti</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="strumenti" data-visible="false" onclick="Auth.togglePageVisibility('strumenti')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; margin-top: 1rem; border: 1px dashed #3b82f6; justify-content: center;"><i class="fa-solid fa-right-left"></i> <span data-i18n="nav_switch_user">Switch to USER</span></a>
+                <a href="#" onclick="Auth.logout()" class="nav-item" style="color: #ef4444; margin-top: 0.5rem; justify-content: center;"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="nav_logout">Esci</span></a>
+                <div class="update-info">
+                    <p data-i18n="last_updated">Ultimo aggiornamento:</p>
+                    <p id="last-updated" class="text-bold">--/--/----</p>
+                    <button class="btn-refresh" onclick="if(window.location.hostname==='localhost'){fetch('http://localhost:8081/update').then(function(r){window.location.reload()}).catch(function(){alert('Errore: Il server locale non è avviato.')})}else{window.location.reload(true)}" data-i18n="btn_refresh"><i class="fa-solid fa-rotate-right"></i> Ricarica Dati</button>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <h1 data-i18n="nav_documentazione">Documentazione</h1>
+                
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    <div class="lang-tools-wrapper">
+                        <div class="lang-selector" style="display: flex; gap: 0.5rem; align-items: center;">
+                            <img src="https://flagcdn.com/w40/it.png" alt="IT" data-lang="it" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                            <img src="https://flagcdn.com/w40/gb.png" alt="EN" data-lang="en" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                            <img src="https://flagcdn.com/w40/fr.png" alt="FR" data-lang="fr" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        </div>
+                        <button type="button" class="btn-theme-toggle" onclick="ThemeManager.toggle()" title="Cambia tema: Scuro / Grigio chiaro">
+                            <i class="fa-solid fa-wrench"></i> <span class="theme-toggle-text">TOOLS</span>
+                        </button>
+                    </div>
+                    <div class="user-profile">
+                        <img src="https://ui-avatars.com/api/?name=Edoardo+Tubia&background=3b82f6&color=fff" alt="Admin" class="avatar">
+                        <span>Edoardo Tubia (Admin)</span>
+                    </div>
+                </div>
+            </header>
+
+            <div style="margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.45rem; font-weight: 700; margin-bottom: 0.35rem;" data-i18n="title_documentazione_hub">Archivio Documentale</h2>
+                <p style="color: var(--text-muted); font-size: 1.05rem;" data-i18n="subtitle_documentazione_hub">Seleziona una società per accedere all'archivio documentale</p>
+            </div>
+
+            <!-- Two Large Selection Rectangles -->
+            <div class="doc-cards-grid">
+                
+                <!-- RECTANGLE 1: GREEN ENERBRAS ONE SCSp -->
+                <a href="reporting.html" class="doc-big-card card-ge glass-panel">
+                    <div class="doc-logo-container">
+                        <img src="Loghi/Logo Green Enerbras 01.png" alt="GREEN ENERBRAS" class="doc-logo-img">
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span class="doc-badge doc-badge-ge">
+                            <img src="https://flagcdn.com/w20/lu.png" alt="LU" style="width: 18px; border-radius: 2px;">
+                            <span data-i18n="doc_card_ge_badge">LUSSEMBURGO • SCSp</span>
+                        </span>
+                        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">
+                            <i class="fa-solid fa-cloud-arrow-up text-green"></i> Cloud
+                        </span>
+                    </div>
+
+                    <h2 class="doc-title" data-i18n="doc_card_ge_title">GREEN ENERBRAS ONE SCSp</h2>
+                    
+                    <p class="doc-desc" data-i18n="doc_card_ge_desc">
+                        Documentazione societaria, contabilità, contratti costitutivi e reporting della holding lussemburghese.
+                    </p>
+
+                    <div class="doc-meta-pill">
+                        <div style="display: flex; align-items: center; gap: 0.65rem;">
+                            <i class="fa-solid fa-folder-open text-green" style="font-size: 1.25rem;"></i>
+                            <span style="font-size: 0.95rem; color: var(--text-muted);">Stato Archivio</span>
+                        </div>
+                        <div style="font-weight: 700;">
+                            <span id="ge-doc-count" style="font-size: 1.2rem; color: #10b981;">--</span>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);" data-i18n="doc_card_docs_count">documenti</span>
+                        </div>
+                    </div>
+
+                    <div class="card-action-btn card-action-btn-ge">
+                        <span data-i18n="doc_card_access_btn">Apri Archivio Documenti</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
+
+                <!-- RECTANGLE 2: TRI STAR ENERBRAS ONE SCP -->
+                <a href="tristar.html" class="doc-big-card card-ts glass-panel">
+                    <div class="doc-logo-container">
+                        <img src="Loghi/Logo Tri Star.png" alt="TRI STAR" class="doc-logo-img">
+                    </div>
+
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span class="doc-badge doc-badge-ts">
+                            <img src="https://flagcdn.com/w20/br.png" alt="BR" style="width: 18px; border-radius: 2px;">
+                            <span data-i18n="doc_card_ts_badge">BRASILE • SCP</span>
+                        </span>
+                        <span style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">
+                            <i class="fa-solid fa-cloud-arrow-up text-blue"></i> Cloud
+                        </span>
+                    </div>
+
+                    <h2 class="doc-title" data-i18n="doc_card_ts_title">TRI STAR ENERBRAS ONE SCP</h2>
+                    
+                    <p class="doc-desc" data-i18n="doc_card_ts_desc">
+                        Documentazione operativa, contratti di affitto terreni, gestione GD e autorizzazioni della controllata brasiliana.
+                    </p>
+
+                    <div class="doc-meta-pill">
+                        <div style="display: flex; align-items: center; gap: 0.65rem;">
+                            <i class="fa-solid fa-folder-open text-blue" style="font-size: 1.25rem;"></i>
+                            <span style="font-size: 0.95rem; color: var(--text-muted);">Stato Archivio</span>
+                        </div>
+                        <div style="font-weight: 700;">
+                            <span id="ts-doc-count" style="font-size: 1.2rem; color: #3b82f6;">--</span>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);" data-i18n="doc_card_docs_count">documenti</span>
+                        </div>
+                    </div>
+
+                    <div class="card-action-btn card-action-btn-ts">
+                        <span data-i18n="doc_card_access_btn">Apri Archivio Documenti</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </a>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Live Document Count Fetcher -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const lastUpdatedEl = document.getElementById('last-updated');
+            if (lastUpdatedEl) lastUpdatedEl.textContent = today.toLocaleDateString('it-IT');
+
+            try {
+                if (typeof firebase !== 'undefined' && firebase.database) {
+                    firebase.database().ref('green_enerbras_reports').once('value').then(snap => {
+                        if (snap.exists()) {
+                            const data = snap.val() || {};
+                            const getCount = (val) => {
+                                if (!val) return 0;
+                                if (Array.isArray(val)) return val.length;
+                                return Object.keys(val).length;
+                            };
+                            const geCount = getCount(data['green-enerbras']);
+                            const tsCount = getCount(data['tri-star']);
+                            const geEl = document.getElementById('ge-doc-count');
+                            const tsEl = document.getElementById('ts-doc-count');
+                            if (geEl) geEl.textContent = geCount;
+                            if (tsEl) tsEl.textContent = tsCount;
+                        }
+                    }).catch(err => {
+                        console.warn("Doc count fetch error:", err);
+                    });
+                }
+            } catch(e) {
+                console.warn(e);
+            }
+        });
+    </script>
+</body>
+</html>

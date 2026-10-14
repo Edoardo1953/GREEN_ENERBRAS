@@ -88,6 +88,7 @@ const DEFAULT_PAGE_VISIBILITY = {
     produzione: true,
     vendite: true,
     impianti: true,
+    documentazione: true,
     reporting: true,
     tristar: true,
     azionariato: false,
@@ -112,6 +113,7 @@ function getPageKeyFromElement(el) {
     if (href.includes('produzione.html') || i18n === 'nav_produzione' || innerI18n === 'nav_produzione' || text.includes('produzione')) return 'produzione';
     if (href.includes('vendite.html') || i18n === 'nav_vendite' || innerI18n === 'nav_vendite' || text.includes('vendite')) return 'vendite';
     if (href.includes('impianti.html') || i18n === 'nav_impianti' || innerI18n === 'nav_impianti' || text.includes('impianti')) return 'impianti';
+    if (href.includes('documentazione.html') || i18n === 'nav_documentazione' || innerI18n === 'nav_documentazione' || text.includes('documentazione')) return 'documentazione';
     if (href.includes('reporting.html') || i18n === 'nav_reporting' || innerI18n === 'nav_reporting' || text.includes('reporting')) return 'reporting';
     if (href.includes('tristar.html') || i18n === 'nav_tristar' || innerI18n === 'nav_tristar' || text.includes('tri star')) return 'tristar';
     if (href.includes('banca.html') || i18n === 'nav_conto' || innerI18n === 'nav_conto' || text.includes('conto bancario')) return 'banca';
@@ -128,6 +130,7 @@ function getCurrentPageKey() {
     if (path.includes('produzione.html')) return 'produzione';
     if (path.includes('vendite.html')) return 'vendite';
     if (path.includes('impianti.html')) return 'impianti';
+    if (path.includes('documentazione.html')) return 'documentazione';
     if (path.includes('reporting.html')) return 'reporting';
     if (path.includes('tristar.html')) return 'tristar';
     if (path.includes('banca.html')) return 'banca';
@@ -168,6 +171,7 @@ function showToastNotification(pageKey, isVisible) {
         'produzione': 'Produzione Energia',
         'vendite': 'Vendite Energia',
         'impianti': 'Impianti e Mappa',
+        'documentazione': 'Documentazione',
         'reporting': 'Documentazione GREEN_ENERBRAS',
         'tristar': 'Documentazione TRI STAR',
         'strumenti': 'Strumenti',
@@ -355,10 +359,16 @@ const Auth = {
                 // Guard: Se un utente (o admin in user view) si trova su una pagina disabilitata, reindirizza
                 if (Auth.isUserView()) {
                     const pageKey = getCurrentPageKey();
-                    if (pageKey && pageKey !== 'my_report' && Auth.pageVisibility[pageKey] === false) {
-                        alert("Questa pagina non è al momento accessibile per il tuo profilo.");
-                        let prefix = window.location.pathname.includes('/admin/') ? '../' : './';
-                        window.location.href = prefix + 'user/dashboard.html';
+                    if (pageKey && pageKey !== 'my_report') {
+                        let isBlocked = (Auth.pageVisibility[pageKey] === false);
+                        if ((pageKey === 'reporting' || pageKey === 'tristar') && Auth.pageVisibility['documentazione'] === false) {
+                            isBlocked = true;
+                        }
+                        if (isBlocked) {
+                            alert("Questa pagina non è al momento accessibile per il tuo profilo.");
+                            let prefix = window.location.pathname.includes('/admin/') ? '../' : './';
+                            window.location.href = prefix + 'user/dashboard.html';
+                        }
                     }
                 }
             }, (err) => {
@@ -390,6 +400,10 @@ const Auth = {
         const currentVal = (Auth.pageVisibility[pageKey] !== false);
         const newVal = !currentVal;
         Auth.pageVisibility[pageKey] = newVal;
+        if (pageKey === 'documentazione') {
+            Auth.pageVisibility['reporting'] = newVal;
+            Auth.pageVisibility['tristar'] = newVal;
+        }
         console.log(`[Auth] Toggling ${pageKey}: ${currentVal} -> ${newVal}`);
         
         try {
@@ -405,6 +419,10 @@ const Auth = {
                 db.ref('settings/pageVisibility/' + pageKey).set(newVal).catch((err) => {
                     console.warn("Salvataggio Firebase non riuscito, fallback locale attivo:", err);
                 });
+                if (pageKey === 'documentazione') {
+                    db.ref('settings/pageVisibility/reporting').set(newVal).catch(()=>{});
+                    db.ref('settings/pageVisibility/tristar').set(newVal).catch(()=>{});
+                }
             }
             return true;
         } catch (e) {
@@ -515,7 +533,10 @@ const Auth = {
         if (Auth.isUserView()) {
             const pageKey = getCurrentPageKey();
             if (pageKey && pageKey !== 'my_report') {
-                const isVisible = Auth.pageVisibility ? (Auth.pageVisibility[pageKey] !== false) : (DEFAULT_PAGE_VISIBILITY[pageKey] !== false);
+                let isVisible = Auth.pageVisibility ? (Auth.pageVisibility[pageKey] !== false) : (DEFAULT_PAGE_VISIBILITY[pageKey] !== false);
+                if ((pageKey === 'reporting' || pageKey === 'tristar') && Auth.pageVisibility && Auth.pageVisibility['documentazione'] === false) {
+                    isVisible = false;
+                }
                 if (!isVisible) {
                     alert("Questa pagina è al momento riservata all'Amministratore.");
                     let prefix = window.location.pathname.includes('/admin/') ? '../' : './';
