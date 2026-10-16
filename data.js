@@ -433,6 +433,13 @@
                              "description":  "Frais sur transfert",
                              "partner":  "Banque de Luxembourg",
                              "amount":  -25.0
+                         },
+                         {
+                             "date":  "15/10/2026",
+                             "category":  "Frais bancaires",
+                             "description":  "Frais de tenue de compte",
+                             "partner":  "Banque de Luxembourg",
+                             "amount":  -250.0
                          }
                      ],
     "production":  [
@@ -872,7 +879,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "15/10/2026 19:18",
+    "lastUpdated":  "16/10/2026 09:23",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,

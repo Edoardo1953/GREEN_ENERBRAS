@@ -473,7 +473,8 @@ document.addEventListener('DOMContentLoaded', () => {
             window.currentFilteredData = []; // Store filtered data for export
             const filteredTransactions = window.currentFilteredData;
             
-            APP_DATA.transactions.forEach((t, idx) => {
+            const reversedTransactions = [...APP_DATA.transactions].reverse();
+            reversedTransactions.forEach((t) => {
                 if (filterYear || filterMonth) {
                     if (!t.date) return;
                     const parts = t.date.split('/');
@@ -498,7 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const progressiveColor = t.actualProgressive < 0 ? '#ef4444' : '#3b82f6';
                 const relatedEntity = t.partner;
 
-                const txId = t.id || ('TX-' + (t.date || '').replace(/[\/\-]/g, '') + '-' + Math.abs(t.amount || 0).toFixed(0) + '-' + idx);
+                const txId = t.id;
                 const docs = getDocsForBankTx(txId);
                 const dCount = docs.length;
                 const dStyle = dCount > 0
@@ -661,14 +662,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentYear = today.getFullYear().toString();
             let currentMonth = (today.getMonth() + 1).toString().padStart(2, '0');
             
+            const allTxReversed = [...APP_DATA.transactions].reverse();
             if (period === 'filtered') {
                 dataToExport = window.currentFilteredData || [];
             } else if (period === 'global') {
-                dataToExport = APP_DATA.transactions;
+                dataToExport = allTxReversed;
             } else if (period === 'current_year') {
-                dataToExport = APP_DATA.transactions.filter(t => t.date && t.date.endsWith('/' + currentYear));
+                dataToExport = allTxReversed.filter(t => t.date && t.date.endsWith('/' + currentYear));
             } else if (period === 'current_month') {
-                dataToExport = APP_DATA.transactions.filter(t => t.date && t.date.includes('/' + currentMonth + '/' + currentYear));
+                dataToExport = allTxReversed.filter(t => t.date && t.date.includes('/' + currentMonth + '/' + currentYear));
                 // Fallback logico: se non ci sono dati questo mese, potremmo avvisare l'utente o usare l'ultimo mese disponibile
                 if (dataToExport.length === 0) {
                     alert("Nessun dato trovato per il mese in corso (" + currentMonth + "/" + currentYear + "). L'esportazione sarà vuota.");
