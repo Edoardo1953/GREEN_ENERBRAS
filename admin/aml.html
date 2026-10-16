@@ -25,7 +25,7 @@
     <!-- Auth Guard -->
     <script src="../auth.js?v=300"></script>
     <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
-    <script src="../i18n.js?v=300"></script>
+    <script src="../i18n.js?v=302"></script>
 
     <style>
         .aml-kpi-grid {
@@ -927,21 +927,40 @@
                         <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;" data-i18n="kyc_lbl_nationality">Nazionalità</label>
                         <input type="text" id="kyc-input-nationality" class="filter-input" style="width: 100%;" placeholder="Italiana, Spagnola, Lussemburghese...">
                     </div>
-                    <div>
-                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;" data-i18n="kyc_lbl_country">Paese di Residenza / Sede Fiscale</label>
-                        <input type="text" id="kyc-input-country" class="filter-input" style="width: 100%;" placeholder="Italia, Lussemburgo, Spagna...">
-                    </div>
                     <div style="grid-column: 1 / -1;">
                         <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;" data-i18n="kyc_lbl_address">Indirizzo di Residenza / Sede</label>
-                        <input type="text" id="kyc-input-address" class="filter-input" style="width: 100%;">
+                        <input type="text" id="kyc-input-address" class="filter-input" style="width: 100%; margin-bottom: 0.45rem;" placeholder="Via / Piazza e numero civico (Riga 1)" data-i18n-placeholder="kyc_lbl_address_placeholder_1">
+                        <input type="text" id="kyc-input-address-2" class="filter-input" style="width: 100%;" placeholder="Complemento indirizzo, Edificio, Scala, Interno... (Riga 2)" data-i18n-placeholder="kyc_lbl_address_placeholder_2">
+                    </div>
+                    <div style="grid-column: 1 / -1; display: grid; grid-template-columns: 125px 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;" data-i18n="kyc_lbl_postal">CAP / Cod. Postale</label>
+                            <input type="text" id="kyc-input-postal-code" class="filter-input" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;" data-i18n="kyc_lbl_city">Città</label>
+                            <input type="text" id="kyc-input-city" class="filter-input" style="width: 100%;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;" data-i18n="kyc_lbl_country">Paese di Residenza / Sede Fiscale</label>
+                            <input type="text" id="kyc-input-country" class="filter-input" style="width: 100%;" placeholder="Italia, Lussemburgo, Spagna...">
+                        </div>
                     </div>
                     <div>
-                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;" data-i18n="kyc_lbl_postal">CAP</label>
-                        <input type="text" id="kyc-input-postal-code" class="filter-input" style="width: 100%;">
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;"><i class="fa-solid fa-phone" style="font-size: 0.7rem; margin-right: 0.25rem; color: #10b981;"></i><span data-i18n="kyc_lbl_phone_landline">Telefono Fisso</span></label>
+                        <input type="tel" id="kyc-input-phone-landline" class="filter-input" style="width: 100%;" placeholder="+352 ... / +39 ..." data-i18n-placeholder="kyc_lbl_phone_landline_placeholder">
                     </div>
                     <div>
-                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;" data-i18n="kyc_lbl_city">Città</label>
-                        <input type="text" id="kyc-input-city" class="filter-input" style="width: 100%;">
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;"><i class="fa-solid fa-mobile-screen-button" style="font-size: 0.7rem; margin-right: 0.25rem; color: #10b981;"></i><span data-i18n="kyc_lbl_phone_mobile">Telefono Cellulare</span></label>
+                        <input type="tel" id="kyc-input-phone-mobile" class="filter-input" style="width: 100%;" placeholder="+352 ... / +39 ..." data-i18n-placeholder="kyc_lbl_phone_mobile_placeholder">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;"><i class="fa-solid fa-envelope" style="font-size: 0.7rem; margin-right: 0.25rem; color: #3b82f6;"></i><span data-i18n="kyc_lbl_email_personal">Email Personale</span></label>
+                        <input type="email" id="kyc-input-email-personal" class="filter-input" style="width: 100%;" placeholder="nome.cognome@email.com" data-i18n-placeholder="kyc_lbl_email_personal_placeholder">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;"><i class="fa-solid fa-briefcase" style="font-size: 0.7rem; margin-right: 0.25rem; color: #3b82f6;"></i><span data-i18n="kyc_lbl_email_professional">Email Professionale</span></label>
+                        <input type="email" id="kyc-input-email-professional" class="filter-input" style="width: 100%;" placeholder="nome@azienda.com" data-i18n-placeholder="kyc_lbl_email_professional_placeholder">
                     </div>
                     <div style="grid-column: 1 / -1;">
                         <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;" data-i18n="kyc_lbl_mandate">Natura della Sottoscrizione / Rapporto</label>
@@ -1150,8 +1169,8 @@
     </div>
 
     <!-- Data & Scripts -->
-    <script src="../data.js?v=301"></script>
-    <script src="aml_data.js?v=301"></script>
-    <script src="aml_app.js?v=301"></script>
+    <script src="../data.js?v=302"></script>
+    <script src="aml_data.js?v=302"></script>
+    <script src="aml_app.js?v=302"></script>
 </body>
 </html>

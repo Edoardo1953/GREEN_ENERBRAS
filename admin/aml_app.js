@@ -1044,10 +1044,15 @@ function getEnrichedPartner(partnerName) {
             matricule: '',
             tva_number: '',
             address: 'Adresse à compléter',
+            address_line2: '',
             postal_code: '',
             city: 'Luxembourg',
             country: 'Luxembourg',
             country_code: 'LU',
+            phone_landline: '',
+            phone_mobile: '',
+            email_personal: '',
+            email_professional: '',
             mandate_nature: "Souscription de Parts Sociales SCSp",
             mandate_start_date: '2025-01-01',
             contribution_committed: 20000.0,
@@ -1860,6 +1865,25 @@ function renderAmlPartnersCards() {
 
         const uploadedCount = partnerDocs.filter(d => !!d.file).length;
 
+        const fullAddressParts = [p.address, p.address_line2].filter(v => v && String(v).trim() !== '');
+        const fullAddressDisplay = fullAddressParts.join(' - ');
+        const hasContacts = (p.phone_landline && p.phone_landline.trim()) ||
+                            (p.phone_mobile && p.phone_mobile.trim()) ||
+                            (p.email_personal && p.email_personal.trim()) ||
+                            (p.email_professional && p.email_professional.trim());
+
+        let contactsHtml = '';
+        if (hasContacts) {
+            contactsHtml = `
+                <div style="font-size: 0.74rem; color: var(--text-muted); background: rgba(255,255,255,0.02); padding: 0.45rem 0.6rem; border-radius: 6px; margin-bottom: 0.75rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem 0.6rem;">
+                    ${p.phone_landline ? `<div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${t('kyc_lbl_phone_landline', 'Tel. Fisso')}: ${escapeHtml(p.phone_landline)}"><i class="fa-solid fa-phone text-emerald" style="width: 14px;"></i> <span style="color: var(--text-main);">${escapeHtml(p.phone_landline)}</span></div>` : ''}
+                    ${p.phone_mobile ? `<div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${t('kyc_lbl_phone_mobile', 'Cellulare')}: ${escapeHtml(p.phone_mobile)}"><i class="fa-solid fa-mobile-screen-button text-emerald" style="width: 14px;"></i> <span style="color: var(--text-main);">${escapeHtml(p.phone_mobile)}</span></div>` : ''}
+                    ${p.email_personal ? `<div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${t('kyc_lbl_email_personal', 'Email Personale')}: ${escapeHtml(p.email_personal)}"><i class="fa-solid fa-envelope text-blue" style="width: 14px;"></i> <span style="color: var(--text-main);">${escapeHtml(p.email_personal)}</span></div>` : ''}
+                    ${p.email_professional ? `<div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${t('kyc_lbl_email_professional', 'Email Professionale')}: ${escapeHtml(p.email_professional)}"><i class="fa-solid fa-briefcase text-blue" style="width: 14px;"></i> <span style="color: var(--text-main);">${escapeHtml(p.email_professional)}</span></div>` : ''}
+                </div>
+            `;
+        }
+
         html += `
             <div class="asset-card">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem;">
@@ -1867,7 +1891,7 @@ function renderAmlPartnersCards() {
                         <div style="font-size: 0.72rem; text-transform: uppercase; color: #10b981; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${roleLabel}</div>
                         <h3 style="margin: 0.15rem 0; font-size: 1.1rem; font-weight: 800; color: var(--text-main); word-break: break-word;">${escapeHtml(p.name)}</h3>
                         <div style="font-size: 0.78rem; color: var(--text-muted);">
-                            <i class="fa-solid fa-location-dot"></i> ${escapeHtml(p.city)} (${localizedCountry}) • <span style="color: var(--text-main); font-weight: 600;">${localizedNat}</span>
+                            <i class="fa-solid fa-location-dot"></i> ${fullAddressDisplay ? `${escapeHtml(fullAddressDisplay)}, ` : ''}${p.postal_code ? `${escapeHtml(p.postal_code)} ` : ''}${escapeHtml(p.city)} (${localizedCountry}) • <span style="color: var(--text-main); font-weight: 600;">${localizedNat}</span>
                         </div>
                     </div>
                     <div style="flex-shrink: 0; display: flex; align-items: flex-start;">${riskBadge}</div>
@@ -1885,6 +1909,7 @@ function renderAmlPartnersCards() {
                 </div>
 
                 ${uboSectionHtml}
+                ${contactsHtml}
 
                 <div style="border-top: 1px solid var(--border-color); padding-top: 0.6rem; margin-bottom: 0.75rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
@@ -3278,8 +3303,18 @@ window.openAmlKycModal = function(partnerName) {
 
     document.getElementById('kyc-input-country').value = getLocalizedCountry(p.country) || p.country || '';
     document.getElementById('kyc-input-address').value = p.address || '';
+    const addr2Input = document.getElementById('kyc-input-address-2');
+    if (addr2Input) addr2Input.value = p.address_line2 || '';
     document.getElementById('kyc-input-postal-code').value = p.postal_code || '';
     document.getElementById('kyc-input-city').value = p.city || '';
+    const phoneLandlineInput = document.getElementById('kyc-input-phone-landline');
+    if (phoneLandlineInput) phoneLandlineInput.value = p.phone_landline || '';
+    const phoneMobileInput = document.getElementById('kyc-input-phone-mobile');
+    if (phoneMobileInput) phoneMobileInput.value = p.phone_mobile || '';
+    const emailPersonalInput = document.getElementById('kyc-input-email-personal');
+    if (emailPersonalInput) emailPersonalInput.value = p.email_personal || '';
+    const emailProfessionalInput = document.getElementById('kyc-input-email-professional');
+    if (emailProfessionalInput) emailProfessionalInput.value = p.email_professional || '';
     document.getElementById('kyc-input-mandate').value = getLocalizedMandate(p.mandate_nature) || p.mandate_nature || '';
     document.getElementById('kyc-input-risk-level').value = p.aml_risk_level || 'LOW';
     document.getElementById('kyc-input-kyc-status').value = p.aml_kyc_status || 'CONFORME';
@@ -3371,8 +3406,13 @@ window.saveAmlKycModalData = async function() {
         tva_number: document.getElementById('kyc-input-tva').value,
         country: countryValue,
         address: document.getElementById('kyc-input-address').value,
+        address_line2: document.getElementById('kyc-input-address-2') ? document.getElementById('kyc-input-address-2').value : '',
         postal_code: document.getElementById('kyc-input-postal-code').value,
         city: document.getElementById('kyc-input-city').value,
+        phone_landline: document.getElementById('kyc-input-phone-landline') ? document.getElementById('kyc-input-phone-landline').value : '',
+        phone_mobile: document.getElementById('kyc-input-phone-mobile') ? document.getElementById('kyc-input-phone-mobile').value : '',
+        email_personal: document.getElementById('kyc-input-email-personal') ? document.getElementById('kyc-input-email-personal').value : '',
+        email_professional: document.getElementById('kyc-input-email-professional') ? document.getElementById('kyc-input-email-professional').value : '',
         mandate_nature: document.getElementById('kyc-input-mandate').value,
         aml_risk_level: document.getElementById('kyc-input-risk-level').value,
         aml_kyc_status: document.getElementById('kyc-input-kyc-status').value,
@@ -3681,8 +3721,13 @@ function exportAmlToExcel() {
             "Quota Totale Socio (%)": Number(p.detention_pct.toFixed(2)),
             "Pays de Résidence": getLocalizedCountry(p.country),
             "Ville / Siège": p.city,
-            "Adresse Complète": p.address,
+            "Adresse (Ligne 1)": p.address,
+            "Adresse (Ligne 2)": p.address_line2 || '',
             "Code Postal": p.postal_code,
+            "Téléphone Fixe": p.phone_landline || '',
+            "Téléphone Mobile": p.phone_mobile || '',
+            "Email Personnel": p.email_personal || '',
+            "Email Professionnel": p.email_professional || '',
             "Matricule / Code Fiscal": p.matricule,
             "N° TVA / Registre": p.tva_number || p.rcs_number,
             "Bénéficiaire Effectif (UBO / RBE)": ubo.name || 'Direct',
