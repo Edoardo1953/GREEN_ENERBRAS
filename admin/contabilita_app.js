@@ -1338,6 +1338,27 @@ const CONTABILITA_RECORDS = [
     "isInternalOffset": false
   },
   {
+    "data": "2026-10-15",
+    "valuta": "2026-10-15",
+    "mese": 10,
+    "anno": 2026,
+    "competenza": 2026,
+    "imp": -250.0,
+    "tvaPerc": 0.0,
+    "tva": 0.0,
+    "totale": -250.0,
+    "tipo": "PP",
+    "ap": "COSTS",
+    "classe": "",
+    "tipologia": "61333 - FRAIS DE COMPTE BANQUE",
+    "pcnCode": "61333",
+    "desc": "Frais bancaires",
+    "partner": "Banque de Luxembourg",
+    "fattura": "-",
+    "paye": "OUI",
+    "isInternalOffset": false
+  },
+  {
     "data": "2025-12-31",
     "valuta": "2025-12-31",
     "mese": 12,
@@ -1611,7 +1632,8 @@ window.onJournalFilterChange = function() {
     journalFilterPcn = pSelect ? pSelect.value : '';
     journalFilterSection = secSelect ? secSelect.value : '';
 
-    const filteredYearRecords = CONTABILITA_RECORDS.filter(r => {
+    const allRecs = getEffectiveContabilitaRecords();
+    const filteredYearRecords = allRecs.filter(r => {
         if (selectedYear === 'all') return true;
         return String(r.anno) === String(selectedYear);
     });
@@ -1635,7 +1657,8 @@ window.resetJournalFilters = function() {
     journalFilterPcn = '';
     journalFilterSection = '';
 
-    const filteredYearRecords = CONTABILITA_RECORDS.filter(r => {
+    const allRecs = getEffectiveContabilitaRecords();
+    const filteredYearRecords = allRecs.filter(r => {
         if (selectedYear === 'all') return true;
         return String(r.anno) === String(selectedYear);
     });
@@ -1648,7 +1671,8 @@ window.onMastriniFilterChange = function() {
     const mInput = document.getElementById('filter-mastrini-search');
     mastriniFilterSearch = mInput ? mInput.value.trim().toLowerCase() : '';
 
-    const filteredYearRecords = CONTABILITA_RECORDS.filter(r => {
+    const allRecs = getEffectiveContabilitaRecords();
+    const filteredYearRecords = allRecs.filter(r => {
         if (selectedYear === 'all') return true;
         return String(r.anno) === String(selectedYear);
     });
@@ -1663,7 +1687,7 @@ function populateJournalPcnDropdown() {
     const currentVal = pSelect.value;
     const uniquePcns = new Set();
 
-    CONTABILITA_RECORDS.forEach(r => {
+    getEffectiveContabilitaRecords().forEach(r => {
         if (r.pcnCode) uniquePcns.add(r.pcnCode);
     });
 
@@ -1677,7 +1701,55 @@ function populateJournalPcnDropdown() {
 }
 
 function getEffectiveContabilitaRecords() {
-    return [...CONTABILITA_RECORDS];
+    const recs = [...CONTABILITA_RECORDS];
+    if (typeof APP_DATA !== 'undefined' && Array.isArray(APP_DATA.transactions)) {
+        const feeCounts = {};
+        recs.forEach(r => {
+            if (String(r.pcnCode) === '61333') {
+                const key = `${r.data}|${Number(r.totale).toFixed(2)}`;
+                feeCounts[key] = (feeCounts[key] || 0) + 1;
+            }
+        });
+        const seenCounts = {};
+        APP_DATA.transactions.forEach(tx => {
+            const cat = String(tx.category || '').toLowerCase();
+            if (cat.includes('frais bancaires')) {
+                const parts = String(tx.date || '').split('/');
+                if (parts.length === 3) {
+                    const isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    const amt = Number(tx.amount) || 0;
+                    const key = `${isoDate}|${amt.toFixed(2)}`;
+                    seenCounts[key] = (seenCounts[key] || 0) + 1;
+                    if (seenCounts[key] > (feeCounts[key] || 0)) {
+                        const yr = parseInt(parts[2], 10) || 2026;
+                        const mo = parseInt(parts[1], 10) || 1;
+                        recs.push({
+                            data: isoDate,
+                            valuta: isoDate,
+                            mese: mo,
+                            anno: yr,
+                            competenza: yr,
+                            imp: amt,
+                            tvaPerc: 0.0,
+                            tva: 0.0,
+                            totale: amt,
+                            tipo: 'PP',
+                            ap: 'COSTS',
+                            classe: '',
+                            tipologia: '61333 - FRAIS DE COMPTE BANQUE',
+                            pcnCode: '61333',
+                            desc: 'Frais bancaires',
+                            partner: tx.partner || 'Banque de Luxembourg',
+                            fattura: '-',
+                            paye: 'OUI',
+                            isInternalOffset: false
+                        });
+                    }
+                }
+            }
+        });
+    }
+    return recs;
 }
 
 function renderContabilita() {
@@ -2410,13 +2482,15 @@ function renderMastriniTable(yearRecords) {
     const tbody = document.getElementById('table-body-mastrini');
     if (!tbody) return;
 
+    const allRecords = getEffectiveContabilitaRecords();
+
     // 1. Costruzione Mastrini per CONTI DI BILANCIO (Stato Patrimoniale)
     // Conti di bilancio: 5120000 (Banque), 1010000 (Capitale), 2330000/2610000 (Immobilizzazioni), 4720000 (Dettes)
 
     // A. BANQUE DE LUXEMBOURG (5120000)
     let bankSaldoPrec = 0;
     if (selectedYear !== 'all' && selectedYear !== '2025') {
-        CONTABILITA_RECORDS.forEach(r => {
+        allRecords.forEach(r => {
             if (Number(r.anno) < Number(selectedYear)) {
                 if (!r.isNonCashAccrual && !r.isInternalOffset) {
                     bankSaldoPrec += Number(r.totale) || 0;
@@ -2445,7 +2519,7 @@ function renderMastriniTable(yearRecords) {
     // B. CAPITAL SOUSCRIT (1010000)
     let capSaldoPrec = 0;
     if (selectedYear !== 'all' && selectedYear !== '2025') {
-        CONTABILITA_RECORDS.forEach(r => {
+        allRecords.forEach(r => {
             if (Number(r.anno) < Number(selectedYear)) {
                 const pcn = String(r.pcnCode || '');
                 const tip = String(r.tipologia || '');
@@ -2477,7 +2551,7 @@ function renderMastriniTable(yearRecords) {
     // C. IMMOBILISATIONS FINANCIÈRES (2330000 / 2610000)
     let immobSaldoPrec = 0;
     if (selectedYear !== 'all' && selectedYear !== '2025') {
-        CONTABILITA_RECORDS.forEach(r => {
+        allRecords.forEach(r => {
             if (Number(r.anno) < Number(selectedYear)) {
                 const ap = String(r.ap || '');
                 const pcn = String(r.pcnCode || '');
@@ -2508,7 +2582,7 @@ function renderMastriniTable(yearRecords) {
     // D. DETTES / FACTURES NON PARVENUES (4720000)
     let dettesSaldoPrec = 0;
     if (selectedYear !== 'all' && selectedYear !== '2025') {
-        CONTABILITA_RECORDS.forEach(r => {
+        allRecords.forEach(r => {
             if (Number(r.anno) < Number(selectedYear)) {
                 const pcn = String(r.pcnCode || '');
                 const tip = String(r.tipologia || '');
@@ -2538,7 +2612,7 @@ function renderMastriniTable(yearRecords) {
     // E. RESULTATS REPORTES / REPORT A NOUVEAU (1420000 / 1220000)
     let pnlSaldoPrec = 0;
     if (selectedYear !== 'all' && selectedYear !== '2025') {
-        CONTABILITA_RECORDS.forEach(r => {
+        allRecords.forEach(r => {
             if (Number(r.anno) < Number(selectedYear)) {
                 if (r.tipo === 'PP' && !r.isInternalOffset) {
                     pnlSaldoPrec += Number(r.totale) || 0;
@@ -2820,7 +2894,7 @@ function exportContabilitaExcel() {
         return;
     }
 
-    const filtered = CONTABILITA_RECORDS.filter(r => {
+    const filtered = getEffectiveContabilitaRecords().filter(r => {
         if (selectedYear === 'all') return true;
         return String(r.anno) === String(selectedYear);
     });
@@ -2891,7 +2965,8 @@ function exportContabilitaPDF() {
     const doc = new jsPDF('p', 'mm', 'a4');
     const yearLabel = selectedYear === 'all' ? 'Tutti gli anni (Storico)' : selectedYear;
 
-    const filtered = CONTABILITA_RECORDS.filter(r => {
+    const allRecs = getEffectiveContabilitaRecords();
+    const filtered = allRecs.filter(r => {
         if (selectedYear === 'all') return true;
         return String(r.anno) === String(selectedYear);
     });
@@ -3003,8 +3078,8 @@ function exportContabilitaPDF() {
     let totalCapital = 0;
     let totalDettes = 0;
 
-    const cumFiltered = CONTABILITA_RECORDS.filter(r => selectedYear === 'all' || Number(r.anno) <= Number(selectedYear));
-    const priorFiltered = CONTABILITA_RECORDS.filter(r => selectedYear !== 'all' && Number(r.anno) < Number(selectedYear));
+    const cumFiltered = allRecs.filter(r => selectedYear === 'all' || Number(r.anno) <= Number(selectedYear));
+    const priorFiltered = allRecs.filter(r => selectedYear !== 'all' && Number(r.anno) < Number(selectedYear));
 
     cumFiltered.forEach(r => {
         const val = Number(r.totale) || 0;

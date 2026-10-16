@@ -1332,6 +1332,27 @@
     "isInternalOffset": false
   },
   {
+    "data": "2026-10-15",
+    "valuta": "2026-10-15",
+    "mese": 10,
+    "anno": 2026,
+    "competenza": 2026,
+    "imp": -250.0,
+    "tvaPerc": 0.0,
+    "tva": 0.0,
+    "totale": -250.0,
+    "tipo": "PP",
+    "ap": "COSTS",
+    "classe": "",
+    "tipologia": "61333 - FRAIS DE COMPTE BANQUE",
+    "pcnCode": "61333",
+    "desc": "Frais bancaires",
+    "partner": "Banque de Luxembourg",
+    "fattura": "-",
+    "paye": "OUI",
+    "isInternalOffset": false
+  },
+  {
     "data": "2025-12-31",
     "valuta": "2025-12-31",
     "mese": 12,
