@@ -344,6 +344,7 @@ function Get-CosernInflationData {
         "06/2026" = 0.16
         "07/2026" = 0.07
         "08/2026" = -0.32
+        "09/2026" = 0.82
     }
 
     # Optional: check COSERN_Prezzi_Energia_Definitivo.xlsx for any additional inflation data

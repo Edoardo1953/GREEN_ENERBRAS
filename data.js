@@ -453,20 +453,27 @@
                        {
                            "period":  "07/2026",
                            "id":  "2",
+                           "kwh":  0,
+                           "revenues":  0,
+                           "client":  "ARCO-IRIS"
+                       },
+                       {
+                           "period":  "07/2026",
+                           "id":  "3",
                            "kwh":  875,
                            "revenues":  632.09,
                            "client":  "SAF HOSPEDAGENS"
                        },
                        {
                            "period":  "07/2026",
-                           "id":  "3",
+                           "id":  "4",
                            "kwh":  1158,
                            "revenues":  836.52,
                            "client":  "JM EMPREENDIMENTOS"
                        },
                        {
                            "period":  "07/2026",
-                           "id":  "4",
+                           "id":  "5",
                            "kwh":  608,
                            "revenues":  439.21,
                            "client":  "SOMBRA FLORESTA"
@@ -481,20 +488,27 @@
                        {
                            "period":  "08/2026",
                            "id":  "2",
+                           "kwh":  0,
+                           "revenues":  0,
+                           "client":  "ARCO-IRIS"
+                       },
+                       {
+                           "period":  "08/2026",
+                           "id":  "3",
                            "kwh":  3585,
                            "revenues":  2596.66,
                            "client":  "SAF HOSPEDAGENS"
                        },
                        {
                            "period":  "08/2026",
-                           "id":  "3",
+                           "id":  "4",
                            "kwh":  3334,
                            "revenues":  2414.86,
                            "client":  "JM EMPREENDIMENTOS"
                        },
                        {
                            "period":  "08/2026",
-                           "id":  "4",
+                           "id":  "5",
                            "kwh":  3322,
                            "revenues":  2406.16,
                            "client":  "SOMBRA FLORESTA"
@@ -509,22 +523,64 @@
                        {
                            "period":  "09/2026",
                            "id":  "2",
+                           "kwh":  0,
+                           "revenues":  0,
+                           "client":  "ARCO-IRIS"
+                       },
+                       {
+                           "period":  "09/2026",
+                           "id":  "3",
                            "kwh":  4371,
                            "revenues":  3197.01,
                            "client":  "SAF HOSPEDAGENS"
                        },
                        {
                            "period":  "09/2026",
-                           "id":  "3",
+                           "id":  "4",
                            "kwh":  3223,
                            "revenues":  2357.35,
                            "client":  "JM EMPREENDIMENTOS"
                        },
                        {
                            "period":  "09/2026",
-                           "id":  "4",
+                           "id":  "5",
                            "kwh":  5152,
                            "revenues":  3768.24,
+                           "client":  "SOMBRA FLORESTA"
+                       },
+                       {
+                           "period":  "10/2026",
+                           "id":  "1",
+                           "kwh":  4368,
+                           "revenues":  3144.67,
+                           "client":  "ARCO-IRIS"
+                       },
+                       {
+                           "period":  "10/2026",
+                           "id":  "2",
+                           "kwh":  3633,
+                           "revenues":  2615.52,
+                           "client":  "ARCO-IRIS"
+                       },
+                       {
+                           "period":  "10/2026",
+                           "id":  "3",
+                           "kwh":  6327,
+                           "revenues":  4555.02,
+                           "client":  "SAF HOSPEDAGENS"
+                       },
+                       {
+                           "period":  "10/2026",
+                           "id":  "4",
+                           "kwh":  0,
+                           "revenues":  0,
+                           "client":  "JM EMPREENDIMENTOS"
+                       },
+                       {
+                           "period":  "10/2026",
+                           "id":  "5",
+                           "kwh":  10133,
+                           "revenues":  7295.08,
                            "client":  "SOMBRA FLORESTA"
                        }
                    ],
@@ -879,7 +935,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "24/10/2026 21:30",
+    "lastUpdated":  "29/10/2026 18:31",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
@@ -1755,8 +1811,16 @@
                                 "period":  "09/2026",
                                 "periodCode":  "Sep-26",
                                 "tariff":  1.04487662,
-                                "inflation":  null,
+                                "inflation":  0.82,
                                 "tariffIndex":  110.73,
+                                "inflationIndex":  110.47
+                            },
+                            {
+                                "period":  "10/2026",
+                                "periodCode":  "Oct-26",
+                                "tariff":  1.02847597,
+                                "inflation":  null,
+                                "tariffIndex":  108.99,
                                 "inflationIndex":  null
                             }
                         ]
