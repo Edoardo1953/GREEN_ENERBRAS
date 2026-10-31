@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
             impiantiHtml += `
                 <div style="${index > 0 ? 'margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem;' : ''}">
                     <div class="impianto-header" style="border: none; padding: 0; margin-bottom: 0.5rem;">
-                        <h4 style="color: var(--green); margin:0; font-size: 1.1rem;">${impianto.impianto} - ${impianto.nome}</h4>
+                        <h4 style="color: var(--green); margin:0; font-size: 1.1rem;">${impianto.impianto}${impianto.codiceImpianto ? ' (' + impianto.codiceImpianto + ')' : ''} - ${impianto.nome}</h4>
                         <span class="impianto-status ${statusClass}">${impianto.stato}</span>
                     </div>
                     <div class="impianto-detail">
@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let popupContent = `<div style="font-family: 'Inter', sans-serif;">`;
             popupContent += `<h4 style="margin: 0 0 5px 0; color: ` + color + `;">` + imp.nome + `</h4>`;
-            popupContent += `<p style="margin: 3px 0;"><strong>` + imp.impianto + `</strong> (` + imp.stato + `)</p>`;
+            popupContent += `<p style="margin: 3px 0;"><strong>` + imp.impianto + (imp.codiceImpianto ? ' (' + imp.codiceImpianto + ')' : '') + `</strong> (` + imp.stato + `)</p>`;
             popupContent += `</div>`;
 
             const customIcon = L.divIcon({
