@@ -27,12 +27,56 @@ window.getClientDisplay = function(row) {
 };
 const getClientDisplay = window.getClientDisplay;
 
-const usinaColorsList = ['#3b82f6', '#06b6d4', '#10b981', '#14b8a6', '#6366f1', '#0ea5e9', '#2dd4bf', '#2563eb', '#059669', '#4f46e5', '#0891b2', '#15803d'];
+window.PLANT_ORDER = [
+    'TRI001 e TRI001bis',
+    'TRI002 e TRI002bis',
+    'TRI003',
+    'TRI007 e TRI007bis',
+    'TRI008 e TRI008bis'
+];
+
+window.PLANT_METERS = {
+    'TRI001 e TRI001bis': '7030869294',
+    'TRI002 e TRI002bis': '7030869065',
+    'TRI003': '7031754431',
+    'TRI007 e TRI007bis': '7030102643',
+    'TRI008 e TRI008bis': '7030869049'
+};
+
+window.getPlantDisplay = function(row) {
+    if (!row) return '';
+    if (typeof row === 'string') return row;
+    if (row.plant) return row.plant;
+    const m = String(row.meter || '');
+    if (m === '7030869294') return 'TRI001 e TRI001bis';
+    if (m === '7030869065') return 'TRI002 e TRI002bis';
+    if (m === '7031754431') return 'TRI003';
+    if (m === '7030102643') return 'TRI007 e TRI007bis';
+    if (m === '7030869049') return 'TRI008 e TRI008bis';
+    const id = String(row.id || '');
+    if (id === '5') return 'TRI001 e TRI001bis';
+    if (id === '4') return 'TRI002 e TRI002bis';
+    if (id === '2') return 'TRI003';
+    if (id === '1') return 'TRI007 e TRI007bis';
+    if (id === '3') return 'TRI008 e TRI008bis';
+    return id ? 'USINA ' + id.padStart(3, '0') : '';
+};
+const getPlantDisplay = window.getPlantDisplay;
+
+const usinaColorsList = ['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1'];
 const clientColorsList = ['#f59e0b', '#ec4899', '#8b5cf6', '#f97316', '#d946ef', '#ef4444', '#e11d48', '#a855f7', '#fb923c', '#f43f5e', '#c026d3', '#ea580c'];
 
-window.getUsinaColor = function(id, idx) {
-    const num = Number(id) || (idx != null ? idx + 1 : 1);
-    return usinaColorsList[(num - 1) % usinaColorsList.length];
+window.getUsinaColor = function(plantKey, idx) {
+    if (typeof plantKey === 'string' && window.PLANT_ORDER.includes(plantKey)) {
+        const i = window.PLANT_ORDER.indexOf(plantKey);
+        return usinaColorsList[i % usinaColorsList.length];
+    }
+    const num = Number(plantKey);
+    if (!isNaN(num) && num > 0) {
+        return usinaColorsList[(num - 1) % usinaColorsList.length];
+    }
+    const safeIdx = (idx != null && idx >= 0) ? idx : 0;
+    return usinaColorsList[safeIdx % usinaColorsList.length];
 };
 
 window.getClientColor = function(clientKey, idx, allList) {
@@ -424,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.myChart = null;
 
     // Setup initial filters
-    const allImp = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
+    const allImp = window.PLANT_ORDER.slice();
     const allCli = [...new Set(APP_DATA.production.map(r => getClientDisplay(r)))].sort();
     const allYears = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2028', '2027', '2026'];
     
@@ -522,7 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const monthlyData = {};
         
         APP_DATA.production.forEach(row => {
-            const rowImp = String(row.id);
+            const rowImp = getPlantDisplay(row);
             const rowCli = getClientDisplay(row);
             const rowYear = String(row.period).split('/')[1];
             
@@ -571,9 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (currentChartType === 'pie') {
             const activeItems = (groupBy === 'usina') ? window.chartFilters.impianti : window.chartFilters.clienti;
-            const pieLabels = (groupBy === 'usina') 
-                ? activeItems.map(imp => `USINA ${imp.padStart(3, '0')}`)
-                : activeItems;
+            const pieLabels = activeItems;
 
             const pieData = activeItems.map(item => {
                 let sum = 0;
@@ -647,7 +689,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.chartFilters.impianti.forEach(imp => {
                     const color = window.getUsinaColor ? window.getUsinaColor(imp, allImp.indexOf(imp)) : '#3b82f6';
                     datasets.push({
-                        label: `USINA ${imp.padStart(3, '0')}`,
+                        label: imp,
                         data: labels.map(l => window.chartFilters.mesi.includes(l.split('/')[0]) ? (monthlyData[l] && monthlyData[l].items[imp] ? monthlyData[l].items[imp] : 0) : null),
                         backgroundColor: color,
                         borderColor: color,
@@ -774,7 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.85rem; color:var(--text-main); padding: 2px 0;">
                             <input type="checkbox" class="chart-filter-impianti" value="${imp}" ${isChecked} onchange="window.updateChartFilters()" style="cursor:pointer;">
                             <span style="display:inline-block; width:12px; height:12px; min-width:12px; min-height:12px; flex-shrink:0; background-color:${color}; border-radius:3px;"></span>
-                            <span style="font-weight: 500;">USINA ${imp.padStart(3, '0')}</span>
+                            <span style="font-weight: 500;">${imp}</span>
                         </label>
                     `;
                 });
@@ -1097,13 +1139,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const type = typeSelect.value;
         const entityType = (document.getElementById('comparatore-entity-type') || {}).value || 'usina';
 
-        const allPlants = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
+        const allPlants = window.PLANT_ORDER.slice();
         const allClients = [...new Set(APP_DATA.production.map(r => getClientDisplay(r)))].sort();
 
         const entityKeys = (entityType === 'usina') ? allPlants : allClients;
-        const entityLabels = (entityType === 'usina')
-            ? allPlants.map(id => 'USINA ' + String(id).padStart(3, '0'))
-            : allClients;
+        const entityLabels = (entityType === 'usina') ? allPlants : allClients;
 
         const getEntityColor = (key, idx) => {
             if (entityType === 'usina') {
@@ -1175,13 +1215,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (viewMode === 'by_entity') {
                 const dataY1 = entityKeys.map(key => {
                     return APP_DATA.production
-                        .filter(r => (entityType === 'usina' ? String(r.id) === key : getClientDisplay(r) === key) && String(r.period).endsWith('/' + y1))
+                        .filter(r => (entityType === 'usina' ? getPlantDisplay(r) === key : getClientDisplay(r) === key) && String(r.period).endsWith('/' + y1))
                         .reduce((sum, r) => sum + (r.revenues || 0), 0);
                 });
 
                 const dataY2 = entityKeys.map(key => {
                     return APP_DATA.production
-                        .filter(r => (entityType === 'usina' ? String(r.id) === key : getClientDisplay(r) === key) && String(r.period).endsWith('/' + y2))
+                        .filter(r => (entityType === 'usina' ? getPlantDisplay(r) === key : getClientDisplay(r) === key) && String(r.period).endsWith('/' + y2))
                         .reduce((sum, r) => sum + (r.revenues || 0), 0);
                 });
 
@@ -1463,13 +1503,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const dataM1 = entityKeys.map(key => {
                 return APP_DATA.production
-                    .filter(r => (entityType === 'usina' ? String(r.id) === key : getClientDisplay(r) === key) && String(r.period) === m1)
+                    .filter(r => (entityType === 'usina' ? getPlantDisplay(r) === key : getClientDisplay(r) === key) && String(r.period) === m1)
                     .reduce((sum, r) => sum + (r.revenues || 0), 0);
             });
 
             const dataM2 = entityKeys.map(key => {
                 return APP_DATA.production
-                    .filter(r => (entityType === 'usina' ? String(r.id) === key : getClientDisplay(r) === key) && String(r.period) === m2)
+                    .filter(r => (entityType === 'usina' ? getPlantDisplay(r) === key : getClientDisplay(r) === key) && String(r.period) === m2)
                     .reduce((sum, r) => sum + (r.revenues || 0), 0);
             });
 
@@ -1586,7 +1626,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const entityData = {};
         APP_DATA.production.forEach(row => {
-            const key = (entityType === 'usina') ? String(row.id) : getClientDisplay(row);
+            const key = (entityType === 'usina') ? getPlantDisplay(row) : getClientDisplay(row);
             let matches = false;
             if (type === 'year') {
                 matches = String(row.period).endsWith('/' + periodVal);
@@ -1653,13 +1693,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!thead || !tbody) return;
 
         const entityType = (document.getElementById('comparatore-entity-type') || {}).value || 'usina';
-        const allPlants = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
+        const allPlants = window.PLANT_ORDER.slice();
         const allClients = [...new Set(APP_DATA.production.map(r => getClientDisplay(r)))].sort();
 
         const entityKeys = (entityType === 'usina') ? allPlants : allClients;
-        const entityLabels = (entityType === 'usina')
-            ? allPlants.map(id => 'USINA ' + String(id).padStart(3, '0'))
-            : allClients;
+        const entityLabels = (entityType === 'usina') ? allPlants : allClients;
 
         const getEntityColor = (key, idx) => {
             if (entityType === 'usina') {
@@ -1690,7 +1728,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         APP_DATA.production.forEach(row => {
-            const key = (entityType === 'usina') ? String(row.id) : getClientDisplay(row);
+            const key = (entityType === 'usina') ? getPlantDisplay(row) : getClientDisplay(row);
             const period = String(row.period);
             if (!isPeriodValid(period)) return;
             const parts = period.split('/');

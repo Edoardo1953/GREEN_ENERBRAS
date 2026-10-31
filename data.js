@@ -627,7 +627,7 @@
     "totalTarget":  281000,
     "modules":  [
                     {
-                        "impianto":  "USINA 01",
+                        "impianto":  "USINA 001",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 239, Rua Projetada 03 - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -656,7 +656,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 09",
+                        "impianto":  "USINA 009",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 240-A, - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -675,8 +675,8 @@
                         "locatario":  "TRI STAR ENERBRAS ONE SCP",
                         "empresa":  "",
                         "nomeUsinaTalita":  "",
-                        "codiceImpianto":  "TRI001BIS",
-                        "codiceIniettore":  "",
+                        "codiceImpianto":  "TRI001bis",
+                        "codiceIniettore":  "7030869294",
                         "potenza":  "60",
                         "nrAutCosern":  "2607014767",
                         "materialPlacas":  "",
@@ -685,7 +685,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 02",
+                        "impianto":  "USINA 002",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 239-A, Rua Projetada 03 - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -714,7 +714,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 10",
+                        "impianto":  "USINA 010",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 240-A, - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -733,8 +733,8 @@
                         "locatario":  "TRI STAR ENERBRAS ONE SCP",
                         "empresa":  "",
                         "nomeUsinaTalita":  "",
-                        "codiceImpianto":  "TRI002BIS",
-                        "codiceIniettore":  "",
+                        "codiceImpianto":  "TRI002bis",
+                        "codiceIniettore":  "7030869065",
                         "potenza":  "60",
                         "nrAutCosern":  "",
                         "materialPlacas":  "",
@@ -743,7 +743,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 03",
+                        "impianto":  "USINA 003",
                         "nome":  "CIDADE BELA",
                         "localizzazione":  "LOTEAMENTO CIDADE BELA",
                         "zona":  "SÃO JOSE DE MIPIBU – RN – CEP 59162-000, Rua dos Sabugueiros 1038 Taborda",
@@ -763,7 +763,7 @@
                         "empresa":  "FOTUS ENERGIA SOLAR LTDA",
                         "nomeUsinaTalita":  "USINA 6",
                         "codiceImpianto":  "TRI003",
-                        "codiceIniettore":  "",
+                        "codiceIniettore":  "7031754431",
                         "potenza":  "60",
                         "nrAutCosern":  "",
                         "materialPlacas":  "60 placas Ronma 585w",
@@ -772,7 +772,7 @@
                         "lng":  -35.232
                     },
                     {
-                        "impianto":  "USINA 04",
+                        "impianto":  "USINA 004",
                         "nome":  "CIDADE BELA",
                         "localizzazione":  "LOTEAMENTO CIDADE BELA",
                         "zona":  "SÃO JOSE DE MIPIBU – RN – CEP 59162-000, Rua dos Sabugueiros 1037 Taborda",
@@ -801,7 +801,7 @@
                         "lng":  -35.232
                     },
                     {
-                        "impianto":  "USINA 05",
+                        "impianto":  "USINA 005",
                         "nome":  "CAMINHO DOS VENTOS",
                         "localizzazione":  "LOTEAMENTO CAMINHO DOS VENTOS",
                         "zona":  "Município de Jandaíra/RN, Rua Antônio Barbosa de Lima, Nº S/N – Centro – Jandaíra/RN",
@@ -830,7 +830,7 @@
                         "lng":  -36.002
                     },
                     {
-                        "impianto":  "USINA 06",
+                        "impianto":  "USINA 006",
                         "nome":  "CAMINHO DOS VENTOS",
                         "localizzazione":  "LOTEAMENTO CAMINHO DOS VENTOS",
                         "zona":  "Município de Jandaíra/RN, Rua Antônio Barbosa de Lima, Nº S/N – Centro – Jandaíra/RN",
@@ -859,7 +859,7 @@
                         "lng":  -36.002
                     },
                     {
-                        "impianto":  "USINA 07",
+                        "impianto":  "USINA 007",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 240, - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -888,7 +888,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 12",
+                        "impianto":  "USINA 012",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 240-A, - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -907,8 +907,8 @@
                         "locatario":  "TRI STAR ENERBRAS ONE SCP",
                         "empresa":  "",
                         "nomeUsinaTalita":  "",
-                        "codiceImpianto":  "TRI007BIS",
-                        "codiceIniettore":  "",
+                        "codiceImpianto":  "TRI007bis",
+                        "codiceIniettore":  "7030102643",
                         "potenza":  "60",
                         "nrAutCosern":  "",
                         "materialPlacas":  "",
@@ -917,7 +917,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 08",
+                        "impianto":  "USINA 008",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 240-A, - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -946,7 +946,7 @@
                         "lng":  -35.255
                     },
                     {
-                        "impianto":  "USINA 11",
+                        "impianto":  "USINA 011",
                         "nome":  "PORTAL DOS MONTES",
                         "localizzazione":  "LOTEAMENTO PORTAL DOS MONTES",
                         "zona":  "PO CARNAUBA 240-A, - CARNAUBA – MONTE ALEGRE – RN – CEP 59182-000,",
@@ -965,8 +965,8 @@
                         "locatario":  "TRI STAR ENERBRAS ONE SCP",
                         "empresa":  "",
                         "nomeUsinaTalita":  "",
-                        "codiceImpianto":  "TRI008BIS",
-                        "codiceIniettore":  "",
+                        "codiceImpianto":  "TRI008bis",
+                        "codiceIniettore":  "7030102643",
                         "potenza":  "60",
                         "nrAutCosern":  "",
                         "materialPlacas":  "",
@@ -975,7 +975,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "30/10/2026 20:37",
+    "lastUpdated":  "31/10/2026 10:05",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,

@@ -27,19 +27,19 @@ const formatBRL = window.formatBRL;
 // Col E: 7030869065 -> TRI002 e TRI002bis
 // Col F: 7030869294 -> TRI001 e TRI001bis
 window.PLANT_ORDER = [
-    'TRI007 e TRI007bis',
-    'TRI003',
-    'TRI008 e TRI008bis',
+    'TRI001 e TRI001bis',
     'TRI002 e TRI002bis',
-    'TRI001 e TRI001bis'
+    'TRI003',
+    'TRI007 e TRI007bis',
+    'TRI008 e TRI008bis'
 ];
 
 window.PLANT_METERS = {
-    'TRI007 e TRI007bis': '7030102643',
-    'TRI003': '7031754431',
-    'TRI008 e TRI008bis': '7030869049',
+    'TRI001 e TRI001bis': '7030869294',
     'TRI002 e TRI002bis': '7030869065',
-    'TRI001 e TRI001bis': '7030869294'
+    'TRI003': '7031754431',
+    'TRI007 e TRI007bis': '7030102643',
+    'TRI008 e TRI008bis': '7030869049'
 };
 
 window.getPlantDisplay = function(row) {
@@ -47,17 +47,17 @@ window.getPlantDisplay = function(row) {
     if (typeof row === 'string') return row;
     if (row.plant) return row.plant;
     const m = String(row.meter || '');
-    if (m === '7030102643') return 'TRI007 e TRI007bis';
-    if (m === '7031754431') return 'TRI003';
-    if (m === '7030869049') return 'TRI008 e TRI008bis';
-    if (m === '7030869065') return 'TRI002 e TRI002bis';
     if (m === '7030869294') return 'TRI001 e TRI001bis';
+    if (m === '7030869065') return 'TRI002 e TRI002bis';
+    if (m === '7031754431') return 'TRI003';
+    if (m === '7030102643') return 'TRI007 e TRI007bis';
+    if (m === '7030869049') return 'TRI008 e TRI008bis';
     const id = String(row.id || '');
-    if (id === '1') return 'TRI007 e TRI007bis';
-    if (id === '2') return 'TRI003';
-    if (id === '3') return 'TRI008 e TRI008bis';
-    if (id === '4') return 'TRI002 e TRI002bis';
     if (id === '5') return 'TRI001 e TRI001bis';
+    if (id === '4') return 'TRI002 e TRI002bis';
+    if (id === '2') return 'TRI003';
+    if (id === '1') return 'TRI007 e TRI007bis';
+    if (id === '3') return 'TRI008 e TRI008bis';
     return id ? 'USINA ' + id.padStart(3, '0') : '';
 };
 const getPlantDisplay = window.getPlantDisplay;
@@ -411,18 +411,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const allYears = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2028', '2027', '2026'];
 
     const yearSelect = document.getElementById('chart-year-select');
-    if (yearSelect) {
-        yearSelect.innerHTML = '<option value="all" style="color: #000;" data-i18n="filter_tutti_anni">Tutti gli anni</option>';
+    const updateYearSelectOptions = () => {
+        if (!yearSelect) return;
+        const currentVal = yearSelect.value;
+        const annoLabel = (typeof t === 'function' ? t('comp_anno') : 'Anno');
+        const tuttiAnniLabel = (typeof t === 'function' ? t('filter_tutti_anni') : 'Tutti gli anni');
+        yearSelect.innerHTML = `<option value="all" style="color: #000;" data-i18n="filter_tutti_anni">${tuttiAnniLabel}</option>`;
         allYears.forEach(y => {
             if (!y || Number(y) < 2026) return;
             const opt = document.createElement('option');
-            opt.value = y; opt.textContent = 'Anno ' + y;
+            opt.value = y; opt.textContent = annoLabel + ' ' + y;
             opt.style.color = '#000';
             yearSelect.appendChild(opt);
         });
-        if (allYears.includes('2026')) {
+        if (currentVal && Array.from(yearSelect.options).some(o => o.value === currentVal)) {
+            yearSelect.value = currentVal;
+        } else if (allYears.includes('2026')) {
             yearSelect.value = '2026';
         }
+    };
+    if (yearSelect) {
+        updateYearSelectOptions();
     }
 
     const dropdownChartMese = document.getElementById('dropdown-chart-mese');
@@ -1437,3 +1446,33 @@ if (typeof MutationObserver !== 'undefined') {
         themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     }
 }
+
+
+window.addEventListener('languageChanged', () => {
+
+    if (typeof updateYearSelectOptions === 'function') {
+
+        updateYearSelectOptions();
+
+    }
+
+    if (typeof updateKpiProductionBanner === 'function' && typeof currentChartYear !== 'undefined') {
+
+        updateKpiProductionBanner(currentChartYear);
+
+    }
+
+    if (typeof updateMonthDropdownUI === 'function') {
+
+        updateMonthDropdownUI();
+
+    }
+
+    if (typeof applyTranslations === 'function') {
+
+        applyTranslations();
+
+    }
+
+});
+
