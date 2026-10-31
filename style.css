@@ -401,6 +401,54 @@ h2 {
 .data-table tr:hover td {
     background: rgba(255,255,255,0.02);
 }
+.data-table tfoot,
+.table-totals-foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    background: #1e293b;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.data-table tfoot td,
+.table-totals-foot td {
+    background: #1e293b;
+    border-top: 2px solid rgba(255, 255, 255, 0.15);
+    border-bottom: none;
+    font-weight: 700;
+    padding: 12px 14px;
+}
+
+.data-table tfoot td.total-label,
+.table-totals-foot td.total-label {
+    position: sticky;
+    left: 0;
+    z-index: 25;
+    background: #1e293b;
+    color: #94a3b8;
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+    font-weight: 800;
+}
+
+.data-table tfoot td.total-client-val,
+.table-totals-foot td.total-client-val {
+    color: #f8fafc;
+    font-weight: 700;
+}
+
+.data-table tfoot td.total-val-brl,
+.table-totals-foot td.total-val-brl {
+    color: #34d399;
+    font-weight: 800;
+}
+
+.data-table tfoot td.total-val-eur,
+.table-totals-foot td.total-val-eur {
+    color: #60a5fa;
+    font-weight: 800;
+}
+
 
 .filter-input {
     width: 100%;
@@ -641,6 +689,46 @@ body.theme-light .data-table td {
 body.theme-light .data-table tr:hover td {
     background: rgba(0, 0, 0, 0.03) !important;
 }
+body.theme-light .data-table tfoot,
+body.theme-light .table-totals-foot {
+    background: #f1f5f9 !important;
+    box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-light .data-table tfoot td,
+body.theme-light .table-totals-foot td {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-top: 2px solid #cbd5e1 !important;
+    border-bottom: none !important;
+    font-weight: 700 !important;
+}
+
+body.theme-light .data-table tfoot td.total-label,
+body.theme-light .table-totals-foot td.total-label {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    font-weight: 800 !important;
+}
+
+body.theme-light .data-table tfoot td.total-client-val,
+body.theme-light .table-totals-foot td.total-client-val {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+
+body.theme-light .data-table tfoot td.total-val-brl,
+body.theme-light .table-totals-foot td.total-val-brl {
+    color: #047857 !important;
+    font-weight: 800 !important;
+}
+
+body.theme-light .data-table tfoot td.total-val-eur,
+body.theme-light .table-totals-foot td.total-val-eur {
+    color: #1d4ed8 !important;
+    font-weight: 800 !important;
+}
+
 
 body.theme-light .filter-input {
     background: rgba(255, 255, 255, 0.95) !important;

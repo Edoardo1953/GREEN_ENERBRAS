@@ -865,6 +865,7 @@ function Update-GreenEnerbrasData {
                     $sheetRows[$rNum] = $rowDict
                 }
 
+                $row4 = $sheetRows[4]
                 $row5 = $sheetRows[5]
                 $row6 = $sheetRows[6]
                 
@@ -955,15 +956,42 @@ function Update-GreenEnerbrasData {
                         $cCol = if ($uIdx -lt $clientCols.Count) { $clientCols[$uIdx] } else { "" }
                         $clientName = if ($cCol -and $row6.ContainsKey($cCol)) { $row6[$cCol].Trim() } else { $usinaName }
 
+                        $meterVal = ""
+                        if ($cCol -and $row4 -and $row4.ContainsKey($cCol) -and $row4[$cCol]) {
+                            $meterVal = $row4[$cCol].ToString().Trim()
+                        } elseif ($row5 -and $row5.ContainsKey($uCol) -and $row5[$uCol]) {
+                            $meterVal = $row5[$uCol].ToString().Trim()
+                        }
+
+                        $plantName = switch ($meterVal) {
+                            "7030102643" { "TRI007 e TRI007bis" }
+                            "7031754431" { "TRI003" }
+                            "7030869049" { "TRI008 e TRI008bis" }
+                            "7030869065" { "TRI002 e TRI002bis" }
+                            "7030869294" { "TRI001 e TRI001bis" }
+                            default {
+                                switch ($uCol) {
+                                    "B" { "TRI007 e TRI007bis" }
+                                    "C" { "TRI003" }
+                                    "D" { "TRI008 e TRI008bis" }
+                                    "E" { "TRI002 e TRI002bis" }
+                                    "F" { "TRI001 e TRI001bis" }
+                                    default { "USINA " + $usinaId.PadLeft(3, '0') }
+                                }
+                            }
+                        }
+
                         $revRaw = if ($cCol -and $rDict.ContainsKey($cCol)) { $rDict[$cCol] } else { "0" }
                         $revVal = ToDouble $revRaw
 
                         $newProduction += [PSCustomObject]@{
                             period = $period
                             id = $usinaId
+                            plant = $plantName
                             kwh = [Math]::Round($kwhVal, 2)
                             revenues = [Math]::Round($revVal, 2)
                             client = $clientName
+                            meter = $meterVal
                         }
                     }
                 }

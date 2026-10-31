@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Produzione e vendita energia - GREEN ENERBRAS ONE</title>
+    <title>Energia Iniettata - GREEN ENERBRAS ONE</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,7 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <link rel="stylesheet" href="../style.css?v=300">
+    <link rel="stylesheet" href="../style.css?v=302">
 
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
@@ -37,7 +37,7 @@
                     <a href="index.html" class="nav-item"><i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_azionariato">Azionariato (LPs)</span></a>
                 </div>
                 <div class="nav-item-row" data-page="produzione">
-                    <a href="produzione.html" class="nav-item active"><i class="fa-solid fa-solar-panel"></i> <span data-i18n="nav_produzione">Produzione Energia</span></a>
+                    <a href="produzione.html" class="nav-item active"><i class="fa-solid fa-solar-panel"></i> <span data-i18n="nav_produzione">Energia Iniettata</span></a>
                     <button type="button" class="nav-eye-btn visible" data-page="produzione" data-visible="true" onclick="Auth.togglePageVisibility('produzione')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
                 </div>
                 <div class="nav-item-row" data-page="vendite">
@@ -87,7 +87,12 @@
         <main class="main-content">
             <div id="dashboard-content">
             <header class="topbar">
-                <h1 data-i18n="title_produzione">Produzione Energia Elettrica</h1>
+                <div>
+                    <h1 style="margin: 0;" data-i18n="title_produzione">Energia Iniettata nella Rete (Cosern/Neoenergia)</h1>
+                    <p style="margin: 0.35rem 0 0 0; font-size: 0.92rem; color: var(--text-muted);" data-i18n="title_produzione_sub">
+                        Energia che gli impianti hanno girato alla rete del distributore Cosern/Neoenergia
+                    </p>
+                </div>
                 
                 <div style="display: flex; align-items: center; gap: 1.5rem;">
                     <div class="lang-tools-wrapper">
@@ -120,7 +125,7 @@
                 <div class="kpi-card glass-panel">
                     <div class="kpi-icon bg-blue"><i class="fa-solid fa-bolt"></i></div>
                     <div class="kpi-data">
-                        <h3 data-i18n="kpi_totale_energia">Totale Energia Prodotta</h3>
+                        <h3 data-i18n="kpi_totale_energia">Totale Energia Iniettata</h3>
                         <div style="display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap;">
                             <p id="kpi-total-kwh" class="kpi-value text-blue" style="margin: 0;">0</p>
                             <span id="kpi-total-kwh-year" style="font-size: 1rem; font-weight: 600; color: #93c5fd; background: rgba(59, 130, 246, 0.2); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.4);">nel 2026</span>
@@ -132,16 +137,16 @@
                 <div class="kpi-card glass-panel" id="comparatore-kpi-card" style="position: relative; cursor: pointer; justify-content: center; align-items: center; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.5); transition: all 0.3s;" onmouseover="this.style.background='rgba(59, 130, 246, 0.3)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.15)'" onclick="openComparatoreModal()">
                     <div style="text-align: center;">
                         <i class="fa-solid fa-chart-column" style="font-size: 2.2rem; color: #3b82f6; margin-bottom: 0.5rem;"></i>
-                        <h3 style="margin: 0; color: var(--text-main); font-weight: 600; font-size: 1.1rem;" data-i18n="btn_comparatore_prod">COMPARATORE PRODUZIONE</h3>                        <div id="toggle-comparatore-btn" style="position: absolute; top: 10px; right: 10px; cursor: pointer; color: #9ca3af; padding: 5px; z-index: 10;" onclick="event.stopPropagation(); toggleComparatoreVisibility()">                            <i class="fa-solid fa-eye-slash" id="comparatore-eye-icon"></i>                        </div>
+                        <h3 style="margin: 0; color: var(--text-main); font-weight: 600; font-size: 1.1rem;" data-i18n="btn_comparatore_prod">COMPARATORE ENERGIA INIETTATA</h3>                        <div id="toggle-comparatore-btn" style="position: absolute; top: 10px; right: 10px; cursor: pointer; color: #9ca3af; padding: 5px; z-index: 10;" onclick="event.stopPropagation(); toggleComparatoreVisibility()">                            <i class="fa-solid fa-eye-slash" id="comparatore-eye-icon"></i>                        </div>
                     </div>
                 </div>
 </section>
 
-            <section class="dashboard-grid" style="grid-template-columns: 2.5fr 1fr;">
+            <section class="dashboard-grid" style="grid-template-columns: minmax(0, 1.5fr) minmax(430px, 1fr); gap: 1.5rem; align-items: stretch;">
                 <!-- Bar Chart -->
                 <div class="chart-container glass-panel">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                        <h2 style="margin: 0;" data-i18n="title_andamento_prod">Andamento Produzione</h2>
+                        <h2 style="margin: 0;" data-i18n="title_andamento_prod">Andamento Energia Iniettata</h2>
                         <div style="display: flex; gap: 1rem; align-items: center;">
                             
                             <div class="multi-select-container" style="position:relative; width: 180px;">
@@ -162,16 +167,16 @@
                     </div>
                 </div>
                 <!-- Filters -->
-                <div class="table-container glass-panel" style="display: flex; flex-direction: column; max-height: 500px;">
-                    <div id="custom-chart-legend" style="flex: 1; display: flex; flex-direction: column; gap: 1rem; overflow: hidden;"></div>
+                <div class="table-container glass-panel" style="display: flex; flex-direction: column; padding: 1.25rem;">
+                    <div id="custom-chart-legend" style="flex: 1; display: flex; flex-direction: column;"></div>
                 </div>
             </section>
 
-            <!-- Detailed Production Table -->
+            <!-- Detailed Injected Energy Matrix Table -->
             <section class="dashboard-grid" style="grid-template-columns: 1fr; margin-top: 1.5rem;">
                 <div class="table-container glass-panel" style="padding-bottom: 0;">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-                        <h2 style="margin: 0;" data-i18n="title_registro_prod">Registro Produzione</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                        <h2 style="margin: 0;" data-i18n="title_registro_prod">Registro Energia Iniettata (kWh)</h2>
                         <div class="export-actions" style="display: flex; gap: 0.5rem; align-items: center; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 8px;">
                             <span style="color: var(--text-muted); font-size: 0.9rem;" data-i18n="btn_export"><i class="fa-solid fa-download"></i> Esporta:</span>
                             <select id="export-period" class="filter-input" style="padding: 0.3rem; min-width: 150px;">
@@ -184,37 +189,40 @@
                         </div>
                     </div>
                     
-                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
-                        <div class="multi-select-container" style="position:relative; width: 220px;">
-                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.3rem;" data-i18n="filter_mese_anno">Filtra Mese/Anno</label>
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); align-items: flex-end;">
+                        <!-- Filtra Anno -->
+                        <div style="position:relative; width: 160px;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.3rem;" data-i18n="filter_anno">Filtra Anno</label>
+                            <select id="filter-anno" class="filter-input" style="width: 100%; cursor: pointer;" onchange="window.onYearFilterChange(this.value)">
+                                <option value="all" data-i18n="filter_tutti_anni">Tutti gli anni</option>
+                            </select>
+                        </div>
+
+                        <!-- Filtra Mese -->
+                        <div class="multi-select-container" style="position:relative; width: 200px;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.3rem;" data-i18n="filter_mese">Filtra Mese</label>
                             <button type="button" class="filter-input" style="width: 100%; text-align:left; cursor:pointer;" onclick="toggleDropdown('dropdown-mese')" data-i18n="filter_seleziona">Seleziona...</button>
                             <div id="dropdown-mese" class="multi-select-dropdown" style="display:none; position:absolute; top:100%; left:0; padding:0.6rem; z-index:9999; max-height:260px; overflow-y:auto; width:100%;"></div>
                         </div>
-                        <div class="multi-select-container" style="position:relative; width: 220px;">
+
+                        <!-- Filtra Impianto -->
+                        <div class="multi-select-container" style="position:relative; width: 300px;">
                             <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.3rem;" data-i18n="filter_impianto">Filtra Impianto</label>
                             <button type="button" class="filter-input" style="width: 100%; text-align:left; cursor:pointer;" onclick="toggleDropdown('dropdown-impianto')" data-i18n="filter_seleziona">Seleziona...</button>
-                            <div id="dropdown-impianto" class="multi-select-dropdown" style="display:none; position:absolute; top:100%; left:0; padding:0.6rem; z-index:9999; max-height:260px; overflow-y:auto; width:100%;"></div>
+                            <div id="dropdown-impianto" class="multi-select-dropdown" style="display:none; position:absolute; top:100%; left:0; padding:0.6rem; z-index:9999; max-height:280px; overflow-y:auto; width:100%; min-width: 300px;"></div>
                         </div>
                     </div>
-                    <div class="table-wrapper" style="height: 500px; overflow-y: auto;">
-                        <table class="data-table">
-                            <thead style="position: sticky; top: 0; z-index: 50; background: var(--bg-dark);">
-                                <tr>
-                                    <th data-i18n="table_mese_anno">Mese/Anno</th>
-                                    <th data-i18n="table_impianto">Impianto</th>
-                                    <th style="text-align: right;" data-i18n="table_produzione_kwh">Produzione (kWh)</th>
-                                    
-                                </tr>
+                    
+                    <div class="table-wrapper" style="max-height: 520px; overflow-y: auto; overflow-x: auto; position: relative; z-index: 1;">
+                        <table class="data-table" id="production-sales-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                            <thead id="production-table-head" style="position: sticky; top: 0; z-index: 50; background: var(--bg-dark);">
+                                <!-- Dynamic horizontal plant headers injected via JS -->
                             </thead>
                             <tbody id="production-table-body">
-                                <!-- Data injected via JS -->
+                                <!-- Dynamic rows injected via JS -->
                             </tbody>
-                            <tfoot style="background: rgba(0,0,0,0.4); position: sticky; bottom: 0; z-index: 10;">
-                                <tr>
-                                    <td colspan="2" style="text-align: right; font-weight: bold; font-size: 1rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.2);" data-i18n="table_subtotali">SUBTOTALI:</td>
-                                    <td id="subtotal-kwh" class="text-bold" style="text-align: right; color: #3b82f6; font-size: 1.1rem; border-top: 1px solid rgba(255,255,255,0.2);">0</td>
-                                    
-                                </tr>
+                            <tfoot id="production-table-foot" class="table-totals-foot">
+                                <!-- Dynamic totals injected via JS -->
                             </tfoot>
                         </table>
                     </div>
@@ -225,7 +233,7 @@
             <div id="comparatore-content" style="display: none; padding: 0;">
             <header class="topbar">
                 <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                    <h1 style="margin: 0; font-size: 1.5rem;"><span data-i18n="title_comparatore_impianto">Comparatore Produzione</span></h1>
+                    <h1 style="margin: 0; font-size: 1.5rem;"><span data-i18n="title_comparatore_impianto">Comparatore Energia Iniettata</span></h1>
                 </div>
                 
                 <div style="display: flex; align-items: center; gap: 1.5rem;">
@@ -255,10 +263,8 @@
                         <i class="fa-solid fa-solar-panel"></i>
                     </div>
                     <div>
-                        <h3 style="margin: 0 0 0.4rem 0; font-size: 1.05rem; color: var(--text-main); font-weight: 700;">Comparatore Produzione</h3>
-                        <p style="margin: 0; font-size: 0.92rem; line-height: 1.55; color: var(--text-muted);">
-                            Strumento per confrontare i dati di produzione di energia tra diversi anni o mesi.
-                        </p>
+                        <h3 style="margin: 0 0 0.4rem 0; font-size: 1.05rem; color: var(--text-main); font-weight: 700;" data-i18n="title_comparatore_impianto">Comparatore Energia Iniettata</h3>
+                        <p style="margin: 0; font-size: 0.92rem; line-height: 1.55; color: var(--text-muted);">Strumento per confrontare i dati di energia iniettata (kWh) tra diversi anni o mesi, suddivisi per impianto.</p>
                     </div>
                 </div>
             </section>
@@ -328,7 +334,7 @@
             </div>
             
             <div style="margin-top: 2rem; overflow-x: auto; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
-                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;"><span data-i18n="title_tabella_produzione">Dettaglio Produzione (kWh)</span></h3>
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem;"><span data-i18n="title_tabella_produzione">Dettaglio Energia Iniettata (kWh)</span></h3>
                 <table class="data-table" id="comparatore-table" style="width: 100%; border-collapse: collapse; text-align: right;">
                     <thead id="comparatore-table-head" style="background: rgba(0,0,0,0.4);">
                         <!-- Injected via JS -->
@@ -347,7 +353,7 @@
     <!-- Data script -->
     <script src="../data.js?v=202610030930"></script>
     <!-- App logic -->
-    <script src="prod_app.js?v=308"></script>
+    <script src="prod_app.js?v=316"></script>
 
     
 </body>

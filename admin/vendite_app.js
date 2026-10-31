@@ -20,11 +20,37 @@ window.formatBRL = function(num) {
 };
 const formatBRL = window.formatBRL;
 
+window.getClientDisplay = function(row) {
+    if (!row) return '';
+    if (typeof row === 'string') return row;
+    return row.meter ? `${row.client} (${row.meter})` : (row.client || '');
+};
+const getClientDisplay = window.getClientDisplay;
+
+const usinaColorsList = ['#3b82f6', '#06b6d4', '#10b981', '#14b8a6', '#6366f1', '#0ea5e9', '#2dd4bf', '#2563eb', '#059669', '#4f46e5', '#0891b2', '#15803d'];
+const clientColorsList = ['#f59e0b', '#ec4899', '#8b5cf6', '#f97316', '#d946ef', '#ef4444', '#e11d48', '#a855f7', '#fb923c', '#f43f5e', '#c026d3', '#ea580c'];
+
+window.getUsinaColor = function(id, idx) {
+    const num = Number(id) || (idx != null ? idx + 1 : 1);
+    return usinaColorsList[(num - 1) % usinaColorsList.length];
+};
+
+window.getClientColor = function(clientKey, idx, allList) {
+    if (allList && Array.isArray(allList)) {
+        const i = allList.indexOf(clientKey);
+        if (i >= 0) return clientColorsList[i % clientColorsList.length];
+    }
+    const safeIdx = (idx != null && idx >= 0) ? idx : 0;
+    return clientColorsList[safeIdx % clientColorsList.length];
+};
+
+
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof APP_DATA === 'undefined' || !APP_DATA.production) {
         console.error("Dati di produzione non trovati.");
         return;
     }
+
 
     // 1. Check Login
         if (!Auth || !Auth.currentUser) {
@@ -144,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (selectedYear === 'all' || rowYear === selectedYear) {
                 const revVal = Number(row.revenues) || 0;
                 filteredRev += revVal;
-                const clientName = row.client || 'Altro';
+                const clientName = getClientDisplay(row) || 'Altro';
                 if (!clientTotalsYear[clientName]) clientTotalsYear[clientName] = 0;
                 clientTotalsYear[clientName] += revVal;
             }
@@ -180,30 +206,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     window.updateKpiSalesBanner = updateKpiSalesBanner;
 
-    // 3.5 Table Rendering with Filters
+    // 3.5 Table Rendering with Horizontal Clients & Vertical Months
+    const prodTableHead = document.getElementById('production-table-head');
     const prodTableBody = document.getElementById('production-table-body');
-    const subtotalKwhElem = document.getElementById('subtotal-kwh');
-    const subtotalRevElem = document.getElementById('subtotal-rev');
+    const prodTableFoot = document.getElementById('production-table-foot');
 
-    // Populate dropdowns
-    const uniqueMese = [...new Set(APP_DATA.production.filter(r => isPeriodValid(r.period)).map(r => String(r.period)))].sort();
-    const uniqueImp = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
-    const uniqueClient = [...new Set(APP_DATA.production.map(r => String(r.client)))].sort();
+    // Extract all unique clients in consistent order
+    const allTableClients = [];
+    APP_DATA.production.forEach(r => {
+        const key = getClientDisplay(r);
+        if (key && !allTableClients.includes(key)) {
+            allTableClients.push(key);
+        }
+    });
+
+    // Extract all unique periods sorted descending (newest first)
+    const allTablePeriods = [...new Set(APP_DATA.production.filter(r => isPeriodValid(r.period)).map(r => String(r.period)))].sort((a,b) => {
+        const [m1,y1] = a.split('/');
+        const [m2,y2] = b.split('/');
+        return new Date(`${y2}-${m2}-01`) - new Date(`${y1}-${m1}-01`);
+    });
+
+    // Extract all unique years
+    const allTableYears = [...new Set(allTablePeriods.map(p => p.split('/')[1]))].sort((a,b) => Number(b) - Number(a));
+
+    // Populate Year Select
+    const filterAnnoSelect = document.getElementById('filter-anno');
+    if (filterAnnoSelect) {
+        filterAnnoSelect.innerHTML = '<option value="all">Tutti gli anni</option>' + 
+            allTableYears.map(yr => `<option value="${yr}">${yr}</option>`).join('');
+    }
 
     window.toggleAll = function(id, filterClass, isChecked) {
         document.querySelectorAll('.' + filterClass).forEach(cb => cb.checked = isChecked);
         window.renderTable();
     };
 
-    window.updateAllCheck = function(id, filterClass) {
-        const allCb = document.getElementById('all-' + id);
-        if(!allCb) return;
-        const total = document.querySelectorAll('.' + filterClass).length;
-        const checked = document.querySelectorAll('.' + filterClass + ':checked').length;
-        allCb.checked = (total === checked);
-    };
-
-    function populateDropdown(id, values, filterClass) {
+    function populateDropdown(id, values, filterClass, isClient = false) {
         const container = document.getElementById(id);
         if(!container) return;
         
@@ -213,24 +252,37 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>`;
         
         values.forEach(val => {
-            html += `<label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.3rem; font-size:0.85rem; font-weight:normal; text-transform:none; cursor:pointer;">
-                <input type="checkbox" class="${filterClass}" value="${val}" checked onchange="window.renderTable()">
-                ${val}
-            </label>`;
+            if (isClient) {
+                let cName = val;
+                let cMeter = '';
+                const m = val.match(/^(.*?)\s*\((.*?)\)$/);
+                if (m) { cName = m[1].trim(); cMeter = m[2].trim(); }
+                html += `<label style="display:flex; align-items:flex-start; gap:0.5rem; margin-bottom:0.4rem; font-size:0.85rem; font-weight:normal; text-transform:none; cursor:pointer;">
+                    <input type="checkbox" class="${filterClass}" value="${val}" checked onchange="window.renderTable()" style="margin-top:2px;">
+                    <span style="display:flex; flex-direction:column; line-height:1.2;">
+                        <span style="font-weight:600; color:var(--text-main);">${cName}</span>
+                        ${cMeter ? `<span style="font-family:monospace; font-size:0.75rem; color:#94a3b8;">${cMeter}</span>` : ''}
+                    </span>
+                </label>`;
+            } else {
+                html += `<label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.3rem; font-size:0.85rem; font-weight:normal; text-transform:none; cursor:pointer;">
+                    <input type="checkbox" class="${filterClass}" value="${val}" checked onchange="window.renderTable()">
+                    ${val}
+                </label>`;
+            }
         });
         container.innerHTML = html;
     }
 
-    populateDropdown('dropdown-mese', uniqueMese, 'chk-mese');
-    populateDropdown('dropdown-cliente', uniqueClient, 'chk-cliente');
-    populateDropdown('dropdown-impianto', uniqueImp, 'chk-impianto');
+    populateDropdown('dropdown-mese', allTablePeriods, 'chk-mese', false);
+    populateDropdown('dropdown-cliente', allTableClients, 'chk-cliente', true);
 
     window.toggleDropdown = function(id) {
         document.querySelectorAll('.multi-select-dropdown').forEach(el => {
             if(el.id !== id) el.style.display = 'none';
         });
         const el = document.getElementById(id);
-        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        if(el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
     };
 
     document.addEventListener('click', (e) => {
@@ -239,50 +291,128 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    window.renderTable = () => {
-        const checkedMese = Array.from(document.querySelectorAll('.chk-mese:checked')).map(cb => cb.value);
-        const checkedClient = Array.from(document.querySelectorAll('.chk-cliente:checked')).map(cb => cb.value);
-        const checkedImp = Array.from(document.querySelectorAll('.chk-impianto:checked')).map(cb => cb.value);
-
-        let subKwh = 0;
-        let subRev = 0;
-        let subRevEur = 0;
-        const currentEurBrlRate = window.currentExchangeRate || 5.50;
-        prodTableBody.innerHTML = '';
-
-        APP_DATA.production.forEach(row => {
-            if (!isPeriodValid(row.period)) return;
-            const rowMese = String(row.period);
-            const rowClient = String(row.client);
-            const rowImp = String(row.id);
-
-            if (
-                checkedMese.includes(rowMese) &&
-                checkedClient.includes(rowClient) &&
-                checkedImp.includes(rowImp)
-            ) {
-                subKwh += row.kwh;
-                subRev += row.revenues;
-                let eurValue = row.revenues / currentEurBrlRate;
-                subRevEur += eurValue;
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${row.period}</td>
-                    <td class="text-bold">Impianto ${row.id}</td>
-                    <td><span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.3); padding: 4px 8px; border-radius: 4px;">${row.client}</span></td>
-                    
-                    <td style="text-align: right; color: #10b981;" class="text-bold">${formatBRL(row.revenues)}</td>
-                    <td style="text-align: right; color: #3b82f6;" class="text-bold">${formatEUR(eurValue)}</td>
-                `;
-                prodTableBody.appendChild(tr);
+    window.onYearFilterChange = function(selectedYear) {
+        const monthCheckboxes = document.querySelectorAll('.chk-mese');
+        monthCheckboxes.forEach(cb => {
+            if (selectedYear === 'all') {
+                cb.checked = true;
+            } else {
+                cb.checked = cb.value.endsWith('/' + selectedYear);
             }
         });
+        window.renderTable();
+    };
 
-        if (subtotalKwhElem) subtotalKwhElem.textContent = formatNumber(subKwh);
-        if (subtotalRevElem) subtotalRevElem.textContent = formatBRL(subRev);
-        const subtotalRevEurElem = document.getElementById('subtotal-rev-eur');
-        if (subtotalRevEurElem) subtotalRevEurElem.textContent = formatEUR(subRevEur);
+    window.renderTable = () => {
+        if (!prodTableHead || !prodTableBody || !prodTableFoot) return;
+        
+        const checkedMese = Array.from(document.querySelectorAll('.chk-mese:checked')).map(cb => cb.value);
+        const checkedClients = Array.from(document.querySelectorAll('.chk-cliente:checked')).map(cb => cb.value);
+        
+        // Preserve standard order for selected client columns
+        const displayClients = allTableClients.filter(cli => checkedClients.includes(cli));
+        
+        const currentEurBrlRate = window.currentExchangeRate || 5.88;
+
+        // 1. Render Table Head (Dynamic Horizontal Clients)
+        let thHtml = `<tr>
+            <th style="position: sticky; left: 0; z-index: 60; background: var(--bg-dark); min-width: 110px; padding: 12px 14px; text-align: left; border-bottom: 2px solid rgba(255,255,255,0.15);" data-i18n="table_mese_anno">Mese/Anno</th>`;
+        
+        displayClients.forEach((cli, idx) => {
+            let clientName = cli;
+            let meterNumber = '';
+            const match = cli.match(/^(.*?)\s*\((.*?)\)$/);
+            if (match) { clientName = match[1].trim(); meterNumber = match[2].trim(); }
+            const color = window.getClientColor ? window.getClientColor(cli, allTableClients.indexOf(cli), allTableClients) : '#10b981';
+            
+            thHtml += `
+                <th style="text-align: right; min-width: 140px; padding: 10px 14px; border-bottom: 2px solid rgba(255,255,255,0.15);">
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                        <span style="display: flex; align-items: center; gap: 5px; font-weight: 600; color: var(--text-main);">
+                            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${color}; flex-shrink:0;"></span>
+                            <span>${clientName}</span>
+                        </span>
+                        ${meterNumber ? `<span style="font-family: monospace; font-size: 0.74rem; color: #94a3b8; font-weight: normal; letter-spacing: 0.5px;">${meterNumber}</span>` : ''}
+                    </div>
+                </th>
+            `;
+        });
+
+        thHtml += `
+            <th style="text-align: right; min-width: 130px; padding: 12px 14px; border-bottom: 2px solid rgba(255,255,255,0.15); color: #10b981; font-weight: 700;" data-i18n="table_totale_brl">Totale (R$)</th>
+            <th style="text-align: right; min-width: 130px; padding: 12px 14px; border-bottom: 2px solid rgba(255,255,255,0.15); color: #3b82f6; font-weight: 700;" data-i18n="table_totale_eur">Totale (EUR)</th>
+        </tr>`;
+        prodTableHead.innerHTML = thHtml;
+
+        // 2. Render Table Body (Months Vertically, Clients Horizontally)
+        prodTableBody.innerHTML = '';
+        
+        const clientColSums = {};
+        displayClients.forEach(c => clientColSums[c] = 0);
+        let grandTotalBrl = 0;
+        let grandTotalEur = 0;
+
+        // Filter and sort periods descending
+        const visiblePeriods = allTablePeriods.filter(p => checkedMese.includes(p));
+
+        if (visiblePeriods.length === 0 || displayClients.length === 0) {
+            prodTableBody.innerHTML = `<tr><td colspan="${displayClients.length + 3}" style="text-align: center; padding: 2rem; color: var(--text-muted);">Nessun dato corrispondente ai filtri selezionati.</td></tr>`;
+            prodTableFoot.innerHTML = '';
+            return;
+        }
+
+        visiblePeriods.forEach(period => {
+            const periodRows = APP_DATA.production.filter(r => String(r.period) === period);
+            const clientMonthVals = {};
+            periodRows.forEach(r => {
+                const key = getClientDisplay(r);
+                clientMonthVals[key] = (clientMonthVals[key] || 0) + (r.revenues || 0);
+            });
+
+            let monthBrl = 0;
+            displayClients.forEach(cli => {
+                const v = clientMonthVals[cli] || 0;
+                monthBrl += v;
+                clientColSums[cli] = (clientColSums[cli] || 0) + v;
+            });
+
+            const monthEur = monthBrl / currentEurBrlRate;
+            grandTotalBrl += monthBrl;
+            grandTotalEur += monthEur;
+
+            const tr = document.createElement('tr');
+            let trHtml = `<td style="position: sticky; left: 0; background: var(--bg-dark); font-weight: 600; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06);">${period}</td>`;
+            
+            displayClients.forEach(cli => {
+                const v = clientMonthVals[cli] || 0;
+                const formatted = v > 0 ? formatBRL(v) : '<span style="color: rgba(255,255,255,0.2);">-</span>';
+                trHtml += `<td style="text-align: right; font-family: monospace; font-size: 0.9rem; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06);">${formatted}</td>`;
+            });
+
+            trHtml += `
+                <td style="text-align: right; font-weight: 700; color: #10b981; font-family: monospace; font-size: 0.92rem; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06);">${formatBRL(monthBrl)}</td>
+                <td style="text-align: right; font-weight: 700; color: #3b82f6; font-family: monospace; font-size: 0.92rem; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06);">${formatEUR(monthEur)}</td>
+            `;
+            tr.innerHTML = trHtml;
+            prodTableBody.appendChild(tr);
+        });
+
+        // 3. Render Table Foot (Totals per client and grand total)
+        let tfootHtml = `<tr>
+            <td class="total-label" style="position: sticky; left: 0; padding: 12px 14px;" data-i18n="table_subtotali">TOTALI:</td>`;
+        
+        displayClients.forEach(cli => {
+            const sumVal = clientColSums[cli] || 0;
+            tfootHtml += `<td class="total-client-val" style="text-align: right; font-family: monospace; font-size: 0.95rem; padding: 12px 14px;">${formatBRL(sumVal)}</td>`;
+        });
+
+        tfootHtml += `
+            <td class="total-val-brl" style="text-align: right; font-size: 1.05rem; font-family: monospace; padding: 12px 14px;">${formatBRL(grandTotalBrl)}</td>
+            <td class="total-val-eur" style="text-align: right; font-size: 1.05rem; font-family: monospace; padding: 12px 14px;">${formatEUR(grandTotalEur)}</td>
+        </tr>`;
+        prodTableFoot.innerHTML = tfootHtml;
+
+        if (typeof applyTranslations === 'function') applyTranslations();
     };
 
     window.renderTable();
@@ -295,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup initial filters
     const allImp = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
-    const allCli = [...new Set(APP_DATA.production.map(r => String(r.client)))].sort();
+    const allCli = [...new Set(APP_DATA.production.map(r => getClientDisplay(r)))].sort();
     const allYears = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2028', '2027', '2026'];
     
     const yearSelect = document.getElementById('chart-year-select');
@@ -393,7 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         APP_DATA.production.forEach(row => {
             const rowImp = String(row.id);
-            const rowCli = String(row.client);
+            const rowCli = getClientDisplay(row);
             const rowYear = String(row.period).split('/')[1];
             
             if (currentChartYear !== 'all' && rowYear !== currentChartYear) return;
@@ -443,7 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const activeItems = (groupBy === 'usina') ? window.chartFilters.impianti : window.chartFilters.clienti;
             const pieLabels = (groupBy === 'usina') 
                 ? activeItems.map(imp => `USINA ${imp.padStart(3, '0')}`)
-                : activeItems.map(cli => (cli === 'JM Empreendimento' || cli === 'JM Empreendimentos') ? 'JM Empreend' : cli);
+                : activeItems;
 
             const pieData = activeItems.map(item => {
                 let sum = 0;
@@ -624,56 +754,67 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rebuildLegend) {
             const legendContainer = document.getElementById('custom-chart-legend');
             if (legendContainer) {
-                let html = '<div style="display:flex; gap:1rem; height:100%;">';
+                let html = '<div style="display:flex; gap:1.25rem; width:100%; align-items:stretch;">';
                 
-                // Impianti Scrollable List
-                let impList = `<div style="flex: 1; max-height: 200px; overflow-y: auto; padding-right: 10px; border-right: 1px solid var(--border-color);">
-                    <div class="filter-header-sticky" style="display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; padding: 4px 6px; margin-bottom: 8px; border-radius: 6px; z-index: 10;">
-                        <span style="font-weight: 700; font-size: 0.8rem; letter-spacing: 0.5px;"><span data-i18n="word_impianti">IMPIANTI</span></span>
-                        <div style="display: flex; gap: 4px;">
-                            <span onclick="window.toggleAllChart('impianti', true)" class="filter-toggle-btn filter-toggle-all"><span data-i18n="filter_tutti">+ Tutti</span></span>
-                            <span onclick="window.toggleAllChart('impianti', false)" class="filter-toggle-btn filter-toggle-none"><span data-i18n="filter_nessuno">- Nessuno</span></span>
+                // Impianti List (min-width: 195px so header never wraps or overflows)
+                let impList = `<div style="flex: 1; min-width: 195px; padding-right: 14px; border-right: 1px solid var(--border-color, rgba(255,255,255,0.1));">
+                    <div class="filter-header-sticky" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; margin-bottom: 10px; border-radius: 6px; gap: 6px; box-sizing: border-box;">
+                        <span style="font-weight: 700; font-size: 0.8rem; letter-spacing: 0.5px; white-space: nowrap;"><span data-i18n="word_impianti">IMPIANTI</span></span>
+                        <div style="display: flex; gap: 4px; flex-shrink: 0;">
+                            <span onclick="window.toggleAllChart('impianti', true)" class="filter-toggle-btn filter-toggle-all" style="font-size: 0.7rem; padding: 2px 6px; white-space: nowrap;"><span data-i18n="filter_tutti">+ Tutti</span></span>
+                            <span onclick="window.toggleAllChart('impianti', false)" class="filter-toggle-btn filter-toggle-none" style="font-size: 0.7rem; padding: 2px 6px; white-space: nowrap;"><span data-i18n="filter_nessuno">- Nessuno</span></span>
                         </div>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 0.4rem;">`;
+                    <div style="display: flex; flex-direction: column; gap: 0.6rem;">`;
                 
                 allImp.forEach(imp => {
                     const color = window.getUsinaColor ? window.getUsinaColor(imp, allImp.indexOf(imp)) : '#3b82f6';
                     const isChecked = window.chartFilters.impianti.includes(imp) ? 'checked' : '';
                     impList += `
-                        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.9rem; color:var(--text-main);">
-                            <input type="checkbox" class="chart-filter-impianti" value="${imp}" ${isChecked} onchange="window.updateChartFilters()">
-                            <span style="display:inline-block; width:14px; height:14px; min-width:14px; min-height:14px; flex-shrink:0; background-color:${color}; border-radius:3px;"></span>
-                            USINA ${imp.padStart(3, '0')}
+                        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.85rem; color:var(--text-main); padding: 2px 0;">
+                            <input type="checkbox" class="chart-filter-impianti" value="${imp}" ${isChecked} onchange="window.updateChartFilters()" style="cursor:pointer;">
+                            <span style="display:inline-block; width:12px; height:12px; min-width:12px; min-height:12px; flex-shrink:0; background-color:${color}; border-radius:3px;"></span>
+                            <span style="font-weight: 500;">USINA ${imp.padStart(3, '0')}</span>
                         </label>
                     `;
                 });
                 impList += `</div></div>`;
                 html += impList;
 
-                // Clienti Scrollable List
-                let cliList = `<div style="flex: 1; max-height: 200px; overflow-y: auto; padding-left: 10px;">
-                    <div class="filter-header-sticky" style="display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; padding: 4px 6px; margin-bottom: 8px; border-radius: 6px; z-index: 10;">
-                        <span style="font-weight: 700; font-size: 0.8rem; letter-spacing: 0.5px;"><span data-i18n="word_clienti">CLIENTI</span></span>
-                        <div style="display: flex; gap: 4px;">
-                            <span onclick="window.toggleAllChart('clienti', true)" class="filter-toggle-btn filter-toggle-all"><span data-i18n="filter_tutti">+ Tutti</span></span>
-                            <span onclick="window.toggleAllChart('clienti', false)" class="filter-toggle-btn filter-toggle-none"><span data-i18n="filter_nessuno">- Nessuno</span></span>
+                // Clienti List (min-width: 205px so header never wraps or overlaps)
+                let cliList = `<div style="flex: 1.15; min-width: 205px; padding-left: 6px;">
+                    <div class="filter-header-sticky" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 8px; margin-bottom: 10px; border-radius: 6px; gap: 6px; box-sizing: border-box;">
+                        <span style="font-weight: 700; font-size: 0.8rem; letter-spacing: 0.5px; white-space: nowrap;"><span data-i18n="word_clienti">CLIENTI</span></span>
+                        <div style="display: flex; gap: 4px; flex-shrink: 0;">
+                            <span onclick="window.toggleAllChart('clienti', true)" class="filter-toggle-btn filter-toggle-all" style="font-size: 0.7rem; padding: 2px 6px; white-space: nowrap;"><span data-i18n="filter_tutti">+ Tutti</span></span>
+                            <span onclick="window.toggleAllChart('clienti', false)" class="filter-toggle-btn filter-toggle-none" style="font-size: 0.7rem; padding: 2px 6px; white-space: nowrap;"><span data-i18n="filter_nessuno">- Nessuno</span></span>
                         </div>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 0.4rem;">`;
+                    <div style="display: flex; flex-direction: column; gap: 0.65rem;">`;
                 
                 allCli.forEach(cli => {
                     const color = window.getClientColor ? window.getClientColor(cli, allCli.indexOf(cli), allCli) : '#f59e0b';
                     const isChecked = window.chartFilters.clienti.includes(cli) ? 'checked' : '';
-                    let displayName = cli;
-                    if (displayName === 'JM Empreendimento' || displayName === 'JM Empreendimentos') {
-                        displayName = 'JM Empreend';
+                    
+                    let clientName = cli;
+                    let meterNumber = '';
+                    const match = cli.match(/^(.*?)\s*\((.*?)\)$/);
+                    if (match) {
+                        clientName = match[1].trim();
+                        meterNumber = match[2].trim();
                     }
+                    if (clientName === 'JM Empreendimento' || clientName === 'JM Empreendimentos') {
+                        clientName = 'JM EMPREENDIMENTOS';
+                    }
+                    
                     cliList += `
-                        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.9rem; color:var(--text-main);">
-                            <input type="checkbox" class="chart-filter-clienti" value="${cli}" ${isChecked} onchange="window.updateChartFilters()">
-                            <span style="display:inline-block; width:14px; height:14px; min-width:14px; min-height:14px; flex-shrink:0; background-color:${color}; border-radius:3px;"></span>
-                            ${displayName}
+                        <label style="display:flex; align-items:flex-start; gap:0.5rem; cursor:pointer; font-size:0.85rem; color:var(--text-main); padding: 2px 0;">
+                            <input type="checkbox" class="chart-filter-clienti" value="${cli}" ${isChecked} onchange="window.updateChartFilters()" style="cursor:pointer; margin-top: 3px;">
+                            <span style="display:inline-block; width:12px; height:12px; min-width:12px; min-height:12px; flex-shrink:0; background-color:${color}; border-radius:3px; margin-top: 4px;"></span>
+                            <span style="display:flex; flex-direction:column; min-width:0; overflow:hidden; line-height:1.25;">
+                                <span style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${clientName}">${clientName}</span>
+                                ${meterNumber ? `<span style="font-family: monospace; font-size: 0.76rem; color: #94a3b8; letter-spacing: 0.5px;">${meterNumber}</span>` : ''}
+                            </span>
                         </label>
                     `;
                 });
@@ -705,53 +846,95 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     window.exportData = function(type) {
-        const period = document.getElementById('export-period').value;
-        let dataToExport = [];
+        const periodExportMode = document.getElementById('export-period').value;
+        const currentEurBrlRate = window.currentExchangeRate || 5.88;
         const today = new Date();
         const currentYear = today.getFullYear().toString();
         let currentMonth = (today.getMonth() + 1).toString().padStart(2, '0');
         
-        if (period === 'filtered') {
-            const checkedMese = Array.from(document.querySelectorAll('.chk-mese:checked')).map(cb => cb.value);
-            const checkedImp = Array.from(document.querySelectorAll('.chk-impianto:checked')).map(cb => cb.value);
-            const checkedCli = Array.from(document.querySelectorAll('.chk-client:checked')).map(cb => cb.value);
-            dataToExport = APP_DATA.production.filter(row => checkedMese.includes(String(row.period)) && checkedImp.includes(String(row.id)) && checkedCli.includes(String(row.client)));
-        } else if (period === 'global') {
-            dataToExport = APP_DATA.production;
-        } else if (period === 'current_year') {
-            dataToExport = APP_DATA.production.filter(t => String(t.period).endsWith('/' + currentYear));
-        } else if (period === 'current_month') {
-            dataToExport = APP_DATA.production.filter(t => String(t.period) === (currentMonth + '/' + currentYear));
+        let periodsToExport = [];
+        if (periodExportMode === 'filtered') {
+            periodsToExport = Array.from(document.querySelectorAll('.chk-mese:checked')).map(cb => cb.value);
+        } else if (periodExportMode === 'global') {
+            periodsToExport = allTablePeriods;
+        } else if (periodExportMode === 'current_year') {
+            periodsToExport = allTablePeriods.filter(p => p.endsWith('/' + currentYear));
+        } else if (periodExportMode === 'current_month') {
+            periodsToExport = allTablePeriods.filter(p => p === (currentMonth + '/' + currentYear));
         }
 
-        if (dataToExport.length === 0) {
+        const checkedClients = Array.from(document.querySelectorAll('.chk-cliente:checked')).map(cb => cb.value);
+        const displayClients = allTableClients.filter(cli => checkedClients.includes(cli));
+
+        if (displayClients.length === 0 || periodsToExport.length === 0) {
             alert("Nessun dato da esportare.");
             return;
         }
 
+        // Sort descending
+        periodsToExport.sort((a,b) => {
+            const [m1,y1] = a.split('/');
+            const [m2,y2] = b.split('/');
+            return new Date(`${y2}-${m2}-01`) - new Date(`${y1}-${m1}-01`);
+        });
+
+        const headers = ["Periodo", ...displayClients, "Totale (R$)", "Totale (EUR)"];
+        const exportRows = [];
+        const clientColSums = {};
+        displayClients.forEach(c => clientColSums[c] = 0);
+        let grandTotalBrl = 0;
+        let grandTotalEur = 0;
+
+        periodsToExport.forEach(period => {
+            const periodRows = APP_DATA.production.filter(r => String(r.period) === period);
+            const clientMonthVals = {};
+            periodRows.forEach(r => {
+                const key = getClientDisplay(r);
+                clientMonthVals[key] = (clientMonthVals[key] || 0) + (r.revenues || 0);
+            });
+
+            let monthBrl = 0;
+            const rowVals = [period];
+            displayClients.forEach(cli => {
+                const val = clientMonthVals[cli] || 0;
+                monthBrl += val;
+                clientColSums[cli] = (clientColSums[cli] || 0) + val;
+                rowVals.push(val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }));
+            });
+
+            const monthEur = monthBrl / currentEurBrlRate;
+            grandTotalBrl += monthBrl;
+            grandTotalEur += monthEur;
+
+            rowVals.push(monthBrl.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }));
+            rowVals.push(monthEur.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }));
+            exportRows.push(rowVals);
+        });
+
+        // Add summary row
+        const summaryRow = ["TOTALI"];
+        displayClients.forEach(cli => {
+            summaryRow.push((clientColSums[cli] || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }));
+        });
+        summaryRow.push(grandTotalBrl.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }));
+        summaryRow.push(grandTotalEur.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }));
+        exportRows.push(summaryRow);
+
         const prefix = "Registro_Vendite";
-        const exportRows = dataToExport.map(t => [
-            t.period,
-            `Impianto ${t.id}`,
-            t.client,
-            t.kwh.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-            t.revenues.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 })
-        ]);
-        const headers = ["Periodo", "Impianto", "Cliente", "Energia (KWh)", "Ricavo (R$)"];
-        const filename = `${prefix}_${period}_${new Date().toISOString().slice(0,10)}`;
+        const filename = `${prefix}_${periodExportMode}_${new Date().toISOString().slice(0,10)}`;
 
         if (type === 'excel') {
             if (typeof XLSX === 'undefined') { alert("Libreria XLSX non caricata."); return; }
             const ws = XLSX.utils.aoa_to_sheet([headers, ...exportRows]);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Dati");
+            XLSX.utils.book_append_sheet(wb, ws, "Vendite");
             XLSX.writeFile(wb, `${filename}.xlsx`);
         } else if (type === 'pdf') {
             if (typeof window.jspdf === 'undefined') { alert("Libreria jsPDF non caricata."); return; }
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text(`${prefix.replace('_', ' ')} - ${period}`, 14, 15);
-            doc.autoTable({ head: [headers], body: exportRows, startY: 20, styles: { fontSize: 8 }, headStyles: { fillColor: [16, 185, 129] } });
+            const doc = new jsPDF('landscape');
+            doc.text(`${prefix.replace('_', ' ')} - ${periodExportMode}`, 14, 15);
+            doc.autoTable({ head: [headers], body: exportRows, startY: 20, styles: { fontSize: 7.5 }, headStyles: { fillColor: [16, 185, 129] } });
             doc.save(`${filename}.pdf`);
         }
     };
@@ -792,9 +975,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const comp = document.getElementById('comparatore-content');
         if (dash) dash.style.display = 'none';
         if (comp) comp.style.display = 'block';
-        window.scrollTo(0,0);
-        updateComparatorePeriodValues();
-        if (window.renderComparatoreTable) window.renderComparatoreTable();
+        window.scrollTo(0, 0);
+        setTimeout(() => {
+            try {
+                updateComparatorePeriodValues();
+                if (window.renderComparatoreTable) window.renderComparatoreTable();
+            } catch (err) {
+                console.error('Errore comparatore:', err);
+            }
+        }, 50);
     };
 
     window.closeComparatoreModal = function() {
@@ -909,12 +1098,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const entityType = (document.getElementById('comparatore-entity-type') || {}).value || 'usina';
 
         const allPlants = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
-        const allClients = [...new Set(APP_DATA.production.map(r => String(r.client)))].sort();
+        const allClients = [...new Set(APP_DATA.production.map(r => getClientDisplay(r)))].sort();
 
         const entityKeys = (entityType === 'usina') ? allPlants : allClients;
         const entityLabels = (entityType === 'usina')
             ? allPlants.map(id => 'USINA ' + String(id).padStart(3, '0'))
-            : allClients.map(cli => (cli === 'JM Empreendimento' || cli === 'JM Empreendimentos') ? 'JM Empreend' : cli);
+            : allClients;
 
         const getEntityColor = (key, idx) => {
             if (entityType === 'usina') {
@@ -986,13 +1175,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (viewMode === 'by_entity') {
                 const dataY1 = entityKeys.map(key => {
                     return APP_DATA.production
-                        .filter(r => (entityType === 'usina' ? String(r.id) === key : String(r.client) === key) && String(r.period).endsWith('/' + y1))
+                        .filter(r => (entityType === 'usina' ? String(r.id) === key : getClientDisplay(r) === key) && String(r.period).endsWith('/' + y1))
                         .reduce((sum, r) => sum + (r.revenues || 0), 0);
                 });
 
                 const dataY2 = entityKeys.map(key => {
                     return APP_DATA.production
-                        .filter(r => (entityType === 'usina' ? String(r.id) === key : String(r.client) === key) && String(r.period).endsWith('/' + y2))
+                        .filter(r => (entityType === 'usina' ? String(r.id) === key : getClientDisplay(r) === key) && String(r.period).endsWith('/' + y2))
                         .reduce((sum, r) => sum + (r.revenues || 0), 0);
                 });
 
@@ -1274,13 +1463,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const dataM1 = entityKeys.map(key => {
                 return APP_DATA.production
-                    .filter(r => (entityType === 'usina' ? String(r.id) === key : String(r.client) === key) && String(r.period) === m1)
+                    .filter(r => (entityType === 'usina' ? String(r.id) === key : getClientDisplay(r) === key) && String(r.period) === m1)
                     .reduce((sum, r) => sum + (r.revenues || 0), 0);
             });
 
             const dataM2 = entityKeys.map(key => {
                 return APP_DATA.production
-                    .filter(r => (entityType === 'usina' ? String(r.id) === key : String(r.client) === key) && String(r.period) === m2)
+                    .filter(r => (entityType === 'usina' ? String(r.id) === key : getClientDisplay(r) === key) && String(r.period) === m2)
                     .reduce((sum, r) => sum + (r.revenues || 0), 0);
             });
 
@@ -1397,7 +1586,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const entityData = {};
         APP_DATA.production.forEach(row => {
-            const key = (entityType === 'usina') ? String(row.id) : String(row.client);
+            const key = (entityType === 'usina') ? String(row.id) : getClientDisplay(row);
             let matches = false;
             if (type === 'year') {
                 matches = String(row.period).endsWith('/' + periodVal);
@@ -1465,12 +1654,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const entityType = (document.getElementById('comparatore-entity-type') || {}).value || 'usina';
         const allPlants = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
-        const allClients = [...new Set(APP_DATA.production.map(r => String(r.client)))].sort();
+        const allClients = [...new Set(APP_DATA.production.map(r => getClientDisplay(r)))].sort();
 
         const entityKeys = (entityType === 'usina') ? allPlants : allClients;
         const entityLabels = (entityType === 'usina')
             ? allPlants.map(id => 'USINA ' + String(id).padStart(3, '0'))
-            : allClients.map(cli => (cli === 'JM Empreendimento' || cli === 'JM Empreendimentos') ? 'JM Empreend' : cli);
+            : allClients;
 
         const getEntityColor = (key, idx) => {
             if (entityType === 'usina') {
@@ -1501,7 +1690,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         APP_DATA.production.forEach(row => {
-            const key = (entityType === 'usina') ? String(row.id) : String(row.client);
+            const key = (entityType === 'usina') ? String(row.id) : getClientDisplay(row);
             const period = String(row.period);
             if (!isPeriodValid(period)) return;
             const parts = period.split('/');
@@ -1654,6 +1843,5 @@ document.addEventListener('DOMContentLoaded', () => {
             themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
         }
     }
-
 
 

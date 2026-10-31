@@ -20,6 +20,67 @@ window.formatBRL = function(num) {
 };
 const formatBRL = window.formatBRL;
 
+// Mapping plants according to Excel Faturamento (Não Editar)
+// Col B: 7030102643 -> TRI007 e TRI007bis
+// Col C: 7031754431 -> TRI003
+// Col D: 7030869049 -> TRI008 e TRI008bis
+// Col E: 7030869065 -> TRI002 e TRI002bis
+// Col F: 7030869294 -> TRI001 e TRI001bis
+window.PLANT_ORDER = [
+    'TRI007 e TRI007bis',
+    'TRI003',
+    'TRI008 e TRI008bis',
+    'TRI002 e TRI002bis',
+    'TRI001 e TRI001bis'
+];
+
+window.PLANT_METERS = {
+    'TRI007 e TRI007bis': '7030102643',
+    'TRI003': '7031754431',
+    'TRI008 e TRI008bis': '7030869049',
+    'TRI002 e TRI002bis': '7030869065',
+    'TRI001 e TRI001bis': '7030869294'
+};
+
+window.getPlantDisplay = function(row) {
+    if (!row) return '';
+    if (typeof row === 'string') return row;
+    if (row.plant) return row.plant;
+    const m = String(row.meter || '');
+    if (m === '7030102643') return 'TRI007 e TRI007bis';
+    if (m === '7031754431') return 'TRI003';
+    if (m === '7030869049') return 'TRI008 e TRI008bis';
+    if (m === '7030869065') return 'TRI002 e TRI002bis';
+    if (m === '7030869294') return 'TRI001 e TRI001bis';
+    const id = String(row.id || '');
+    if (id === '1') return 'TRI007 e TRI007bis';
+    if (id === '2') return 'TRI003';
+    if (id === '3') return 'TRI008 e TRI008bis';
+    if (id === '4') return 'TRI002 e TRI002bis';
+    if (id === '5') return 'TRI001 e TRI001bis';
+    return id ? 'USINA ' + id.padStart(3, '0') : '';
+};
+const getPlantDisplay = window.getPlantDisplay;
+
+window.getPlantMeter = function(plantName) {
+    if (window.PLANT_METERS[plantName]) return window.PLANT_METERS[plantName];
+    if (typeof APP_DATA !== 'undefined' && APP_DATA.production) {
+        const found = APP_DATA.production.find(r => getPlantDisplay(r) === plantName && r.meter);
+        if (found) return found.meter;
+    }
+    return '';
+};
+
+const plantColorsList = ['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1'];
+window.getUsinaColor = function(plantKey, idx) {
+    if (typeof plantKey === 'string' && window.PLANT_ORDER.includes(plantKey)) {
+        const i = window.PLANT_ORDER.indexOf(plantKey);
+        return plantColorsList[i % plantColorsList.length];
+    }
+    const safeIdx = (idx != null && idx >= 0) ? idx : 0;
+    return plantColorsList[safeIdx % plantColorsList.length];
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof APP_DATA === 'undefined' || !APP_DATA.production) {
         console.error("Dati di produzione non trovati.");
@@ -27,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 1. Check Login
-        if (!Auth || !Auth.currentUser) {
+    if (!Auth || !Auth.currentUser) {
         window.location.href = "../index.html";
         return;
     }
@@ -36,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUserName = Auth.currentUser.partnerName;
     }
     if (!currentUserName) {
-        window.location.href = "login.html"; // Not logged in
+        window.location.href = "login.html";
         return;
     }
 
@@ -47,17 +108,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (APP_DATA.lastUpdated) {
         const lu = document.getElementById('last-updated');
-        if(lu) lu.textContent = APP_DATA.lastUpdated;
+        if (lu) lu.textContent = APP_DATA.lastUpdated;
     }
 
-    const plantsTableBody = document.getElementById('plants-table-body');
+    // 2. Active modules status KPI
     if (APP_DATA.modules) {
         const statusCounts = {};
         APP_DATA.modules.forEach(m => {
             statusCounts[m.stato] = (statusCounts[m.stato] || 0) + 1;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="text-bold">${m.impianto}</td><td>${m.nome}</td><td style="color: #3b82f6;">${formatBRL(m.investimento)}</td><td style="color: #10b981; font-weight: 600;">${m.stato}</td>`;
-            if (plantsTableBody) plantsTableBody.appendChild(tr);
         });
         const kpiList = document.getElementById('kpi-plants-list');
         if (kpiList) {
@@ -69,39 +127,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 html += `<div><span style="color: var(--text-main); font-weight: bold; font-size: 1.1rem;">${count}</span> <span data-i18n="word_impianti">Impianti</span> <span data-i18n="${i18nStato}">${statoLabel}</span></div>`;
             }
             kpiList.innerHTML = html;
-            if(typeof applyTranslations === 'function') applyTranslations();
+            if (typeof applyTranslations === 'function') applyTranslations();
         }
     }
 
-    let totalKwh = 0;
-    let totalRev = 0;
-    const monthlyData = {}; 
-    const clientData = {};
-    const plantTotals = {};
-    
-    APP_DATA.production.forEach(row => {
-        totalKwh += row.kwh;
-        totalRev += row.revenues;
-
-        if (!plantTotals[row.id]) plantTotals[row.id] = 0;
-        plantTotals[row.id] += row.kwh;
-
-        if (!monthlyData[row.period]) {
-            monthlyData[row.period] = { kwh: 0, rev: 0, clients: {} };
-        }
-        monthlyData[row.period].kwh += row.kwh;
-        monthlyData[row.period].rev += row.revenues;
-        
-        if (!monthlyData[row.period].clients[row.client]) {
-            monthlyData[row.period].clients[row.client] = { kwh: 0, rev: 0 };
-        }
-        monthlyData[row.period].clients[row.client].kwh += row.kwh;
-        monthlyData[row.period].clients[row.client].rev += row.revenues;
-
-        if (!clientData[row.client]) clientData[row.client] = 0;
-        clientData[row.client] += row.revenues;
-    });
-
+    // 3. KPI Production Banner
     function updateKpiProductionBanner(selectedYear) {
         const kpiKwhElem = document.getElementById('kpi-total-kwh');
         const kpiYearElem = document.getElementById('kpi-total-kwh-year');
@@ -118,9 +148,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (selectedYear === 'all' || rowYear === selectedYear) {
                 const kwhVal = Number(row.kwh) || 0;
                 filteredKwh += kwhVal;
-                const impId = String(row.id);
-                if (!plantTotalsYear[impId]) plantTotalsYear[impId] = 0;
-                plantTotalsYear[impId] += kwhVal;
+                const pName = getPlantDisplay(row);
+                if (!plantTotalsYear[pName]) plantTotalsYear[pName] = 0;
+                plantTotalsYear[pName] += kwhVal;
             }
         });
         
@@ -129,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         if (kpiYearElem) {
-            const currentLang = localStorage.getItem('app_lang') || 'it';
+            const currentLang = localStorage.getItem('appLang') || 'it';
             if (selectedYear === 'all') {
                 if (currentLang === 'en') kpiYearElem.textContent = 'All years';
                 else if (currentLang === 'fr') kpiYearElem.textContent = 'Toutes les années';
@@ -143,65 +173,114 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (kpiPlantsList) {
             let listHtml = '';
-            const sortedPlantIds = Object.keys(plantTotalsYear).sort((a,b) => Number(a) - Number(b));
-            sortedPlantIds.forEach(id => {
-                listHtml += `<div style="display: flex; justify-content: space-between;"><span>USINA ${String(id).padStart(3, '0')}</span> <span style="color: var(--text-main); font-weight: 600; margin-left: 0.5rem;">${formatNumber(plantTotalsYear[id])} kWh</span></div>`;
+            window.PLANT_ORDER.forEach((pName, idx) => {
+                const pKwh = plantTotalsYear[pName] || 0;
+                const color = window.getUsinaColor(pName, idx);
+                listHtml += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                        <span style="display: flex; align-items: center; gap: 6px;">
+                            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${color}; flex-shrink:0;"></span>
+                            <span>${pName}</span>
+                        </span>
+                        <span style="color: var(--text-main); font-weight: 600; margin-left: 0.5rem; font-family: monospace;">${formatNumber(pKwh)} kWh</span>
+                    </div>
+                `;
             });
             kpiPlantsList.innerHTML = listHtml;
         }
     }
     window.updateKpiProductionBanner = updateKpiProductionBanner;
 
-    // 3.5 Table Rendering with Filters
+    // 4. Matrix Table Setup (Plants in Horizontal Columns, Months in Vertical Rows)
+    const prodTableHead = document.getElementById('production-table-head');
     const prodTableBody = document.getElementById('production-table-body');
-    const subtotalKwhElem = document.getElementById('subtotal-kwh');
-    const subtotalRevElem = document.getElementById('subtotal-rev');
+    const prodTableFoot = document.getElementById('production-table-foot');
 
-    // Populate dropdowns
-    const uniqueMese = [...new Set(APP_DATA.production.filter(r => isPeriodValid(r.period)).map(r => String(r.period)))].sort();
-    const uniqueImp = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
-    const uniqueClient = [...new Set(APP_DATA.production.map(r => String(r.client)))].sort();
+    const allTablePlants = window.PLANT_ORDER.slice();
 
-    window.toggleAll = function(id, filterClass, isChecked) {
-        document.querySelectorAll('.' + filterClass).forEach(cb => cb.checked = isChecked);
+    const allTablePeriods = [...new Set(APP_DATA.production.filter(r => isPeriodValid(r.period)).map(r => String(r.period)))].sort((a,b) => {
+        const [m1, y1] = a.split('/').map(Number);
+        const [m2, y2] = b.split('/').map(Number);
+        return (y2 - y1) || (m2 - m1);
+    });
+
+    const allTableYears = [...new Set(allTablePeriods.map(p => p.split('/')[1]))].sort((a,b) => Number(b) - Number(a));
+
+    // Populate Year Filter Dropdown
+    const filterAnnoSelect = document.getElementById('filter-anno');
+    if (filterAnnoSelect) {
+        filterAnnoSelect.innerHTML = '<option value="all" data-i18n="filter_tutti_anni">Tutti gli anni</option>';
+        allTableYears.forEach(y => {
+            const opt = document.createElement('option');
+            opt.value = y;
+            opt.textContent = 'Anno ' + y;
+            filterAnnoSelect.appendChild(opt);
+        });
+    }
+
+    // Populate Month Multi-Select Dropdown
+    const dropdownMese = document.getElementById('dropdown-mese');
+    if (dropdownMese) {
+        let meseHtml = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.4rem;">
+                <span style="font-weight: bold; font-size: 0.8rem; color: #94a3b8;" data-i18n="filter_mesi">MESI</span>
+                <div style="display: flex; gap: 4px;">
+                    <span onclick="window.toggleAllFilter('chk-mese', true)" class="filter-toggle-btn filter-toggle-all" data-i18n="filter_tutti">+ Tutti</span>
+                    <span onclick="window.toggleAllFilter('chk-mese', false)" class="filter-toggle-btn filter-toggle-none" data-i18n="filter_nessuno">- Nessuno</span>
+                </div>
+            </div>
+        `;
+        allTablePeriods.forEach(p => {
+            meseHtml += `
+                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; cursor: pointer; font-size: 0.85rem;">
+                    <input type="checkbox" class="chk-mese" value="${p}" checked onchange="window.renderTable()">
+                    <span>${p}</span>
+                </label>
+            `;
+        });
+        dropdownMese.innerHTML = meseHtml;
+    }
+
+    // Populate Plant Multi-Select Dropdown
+    const dropdownImpianto = document.getElementById('dropdown-impianto');
+    if (dropdownImpianto) {
+        let impHtml = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.4rem;">
+                <span style="font-weight: bold; font-size: 0.8rem; color: #94a3b8;" data-i18n="filter_impianto">IMPIANTI</span>
+                <div style="display: flex; gap: 4px;">
+                    <span onclick="window.toggleAllFilter('chk-impianto', true)" class="filter-toggle-btn filter-toggle-all" data-i18n="filter_tutti">+ Tutti</span>
+                    <span onclick="window.toggleAllFilter('chk-impianto', false)" class="filter-toggle-btn filter-toggle-none" data-i18n="filter_nessuno">- Nessuno</span>
+                </div>
+            </div>
+        `;
+        allTablePlants.forEach((pName, idx) => {
+            const meter = window.getPlantMeter(pName);
+            const color = window.getUsinaColor(pName, idx);
+            impHtml += `
+                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.45rem; cursor: pointer; font-size: 0.85rem;">
+                    <input type="checkbox" class="chk-impianto" value="${pName}" checked onchange="window.renderTable()">
+                    <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background-color:${color}; flex-shrink:0;"></span>
+                    <span style="display: flex; flex-direction: column;">
+                        <span style="font-weight: 600;">${pName}</span>
+                        ${meter ? `<span style="font-family: monospace; font-size: 0.72rem; color: #94a3b8;">${meter}</span>` : ''}
+                    </span>
+                </label>
+            `;
+        });
+        dropdownImpianto.innerHTML = impHtml;
+    }
+
+    window.toggleAllFilter = (className, selectAll) => {
+        document.querySelectorAll('.' + className).forEach(cb => cb.checked = selectAll);
         window.renderTable();
     };
 
-    window.updateAllCheck = function(id, filterClass) {
-        const allCb = document.getElementById('all-' + id);
-        if(!allCb) return;
-        const total = document.querySelectorAll('.' + filterClass).length;
-        const checked = document.querySelectorAll('.' + filterClass + ':checked').length;
-        allCb.checked = (total === checked);
-    };
-
-    function populateDropdown(id, values, filterClass) {
-        const container = document.getElementById(id);
-        if(!container) return;
-        
-        let html = `<div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; padding-bottom:0.4rem; border-bottom:1px solid rgba(255,255,255,0.1);">
-            <span onclick="window.toggleAll('${id}', '${filterClass}', true)" style="font-size:0.8rem; font-weight:bold; color:#3b82f6; cursor:pointer; padding: 2px 5px; border-radius: 3px;"><span data-i18n="filter_tutti">+ Tutti</span></span>
-            <span onclick="window.toggleAll('${id}', '${filterClass}', false)" style="font-size:0.8rem; font-weight:bold; color:#ef4444; cursor:pointer; padding: 2px 5px; border-radius: 3px;"><span data-i18n="filter_nessuno">- Nessuno</span></span>
-        </div>`;
-        
-        values.forEach(val => {
-            html += `<label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.3rem; font-size:0.85rem; font-weight:normal; text-transform:none; cursor:pointer;">
-                <input type="checkbox" class="${filterClass}" value="${val}" checked onchange="window.renderTable()">
-                ${val}
-            </label>`;
-        });
-        container.innerHTML = html;
-    }
-
-    populateDropdown('dropdown-mese', uniqueMese, 'chk-mese');
-    populateDropdown('dropdown-impianto', uniqueImp, 'chk-impianto');
-
-    window.toggleDropdown = function(id) {
+    window.toggleDropdown = (id) => {
         document.querySelectorAll('.multi-select-dropdown').forEach(el => {
-            if(el.id !== id) el.style.display = 'none';
+            if (el.id !== id) el.style.display = 'none';
         });
         const el = document.getElementById(id);
-        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        if (el) el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
     };
 
     document.addEventListener('click', (e) => {
@@ -210,144 +289,238 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    window.renderTable = () => {
-        const checkedMese = Array.from(document.querySelectorAll('.chk-mese:checked')).map(cb => cb.value);
-        const checkedImp = Array.from(document.querySelectorAll('.chk-impianto:checked')).map(cb => cb.value);
+    window.onYearFilterChange = (selectedYear) => {
+        document.querySelectorAll('.chk-mese').forEach(cb => {
+            if (selectedYear === 'all') {
+                cb.checked = true;
+            } else {
+                cb.checked = cb.value.endsWith('/' + selectedYear);
+            }
+        });
+        window.renderTable();
+    };
 
-        let subKwh = 0;
-        let subRev = 0;
+    window.renderTable = () => {
+        if (!prodTableHead || !prodTableBody || !prodTableFoot) return;
+
+        const checkedMese = Array.from(document.querySelectorAll('.chk-mese:checked')).map(cb => cb.value);
+        const checkedPlants = Array.from(document.querySelectorAll('.chk-impianto:checked')).map(cb => cb.value);
+
+        const displayPlants = allTablePlants.filter(p => checkedPlants.includes(p));
+
+        // 1. Render Table Head (Dynamic Horizontal Plant Columns)
+        let thHtml = `<tr>
+            <th style="position: sticky; left: 0; z-index: 60; background: var(--bg-dark); min-width: 110px; padding: 12px 14px; text-align: left; border-bottom: 2px solid rgba(255,255,255,0.15);" data-i18n="table_mese_anno">Mese/Anno</th>`;
+
+        displayPlants.forEach((pName, idx) => {
+            const meter = window.getPlantMeter(pName);
+            const color = window.getUsinaColor(pName, allTablePlants.indexOf(pName));
+            thHtml += `
+                <th style="text-align: right; min-width: 155px; padding: 10px 14px; border-bottom: 2px solid rgba(255,255,255,0.15);">
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                        <span style="display: flex; align-items: center; gap: 5px; font-weight: 600; color: var(--text-main);">
+                            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${color}; flex-shrink:0;"></span>
+                            <span>${pName}</span>
+                        </span>
+                        ${meter ? `<span style="font-family: monospace; font-size: 0.74rem; color: #94a3b8; font-weight: normal; letter-spacing: 0.5px;">${meter}</span>` : ''}
+                    </div>
+                </th>
+            `;
+        });
+
+        thHtml += `
+            <th style="text-align: right; min-width: 140px; padding: 12px 14px; color: #10b981; font-weight: bold; border-bottom: 2px solid rgba(255,255,255,0.15);" data-i18n="table_totale_kwh">TOTALE (kWh)</th>
+        </tr>`;
+        prodTableHead.innerHTML = thHtml;
+
+        // 2. Render Table Body (Months in Vertical Rows)
         prodTableBody.innerHTML = '';
+        const matrixData = {};
+        allTablePeriods.forEach(p => {
+            matrixData[p] = {};
+            displayPlants.forEach(pName => { matrixData[p][pName] = 0; });
+        });
 
         APP_DATA.production.forEach(row => {
-            const rowMese = String(row.period);
-            const rowImp = String(row.id);
-
-            if (
-                isPeriodValid(rowMese) &&
-                checkedMese.includes(rowMese) &&
-                checkedImp.includes(rowImp)
-            ) {
-                subKwh += row.kwh;
-                subRev += row.revenues;
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${row.period}</td>
-                    <td class="text-bold">Impianto ${row.id}</td>
-                    <td style="text-align: right; color: #3b82f6;">${formatNumber(row.kwh)}</td>
-                    
-                `;
-                prodTableBody.appendChild(tr);
+            const p = String(row.period);
+            const pName = getPlantDisplay(row);
+            if (matrixData[p] && matrixData[p].hasOwnProperty(pName)) {
+                matrixData[p][pName] += (row.kwh || 0);
             }
         });
 
-        if (subtotalKwhElem) subtotalKwhElem.textContent = formatNumber(subKwh);
-        if (subtotalRevElem) subtotalRevElem.textContent = formatBRL(subRev);
+        const plantColSums = {};
+        displayPlants.forEach(pName => { plantColSums[pName] = 0; });
+        let grandTotalKwh = 0;
+
+        allTablePeriods.forEach(period => {
+            if (!checkedMese.includes(period)) return;
+
+            let monthKwh = 0;
+            const plantMonthVals = matrixData[period] || {};
+
+            displayPlants.forEach(pName => {
+                const val = plantMonthVals[pName] || 0;
+                monthKwh += val;
+                plantColSums[pName] += val;
+            });
+
+            grandTotalKwh += monthKwh;
+
+            const tr = document.createElement('tr');
+            let trHtml = `<td style="position: sticky; left: 0; background: var(--bg-dark); font-weight: 600; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06);">${period}</td>`;
+
+            displayPlants.forEach(pName => {
+                const v = plantMonthVals[pName] || 0;
+                const formatted = v > 0 ? formatNumber(v) : '<span style="color: rgba(255,255,255,0.2);">-</span>';
+                trHtml += `<td style="text-align: right; font-family: monospace; font-size: 0.9rem; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06);">${formatted}</td>`;
+            });
+
+            trHtml += `
+                <td style="text-align: right; font-weight: 700; color: #10b981; font-family: monospace; font-size: 0.95rem; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.06);">${formatNumber(monthKwh)}</td>
+            `;
+            tr.innerHTML = trHtml;
+            prodTableBody.appendChild(tr);
+        });
+
+        // 3. Render Table Foot (Totals per plant and grand total)
+        let tfootHtml = `<tr>
+            <td class="total-label" style="position: sticky; left: 0; padding: 12px 14px;" data-i18n="table_subtotali">TOTALI:</td>`;
+
+        displayPlants.forEach(pName => {
+            const sumVal = plantColSums[pName] || 0;
+            tfootHtml += `<td class="total-client-val" style="text-align: right; font-family: monospace; font-size: 0.95rem; padding: 12px 14px;">${formatNumber(sumVal)}</td>`;
+        });
+
+        tfootHtml += `
+            <td class="total-val-brl" style="text-align: right; font-size: 1.05rem; font-family: monospace; padding: 12px 14px; color: #10b981;">${formatNumber(grandTotalKwh)}</td>
+        </tr>`;
+        prodTableFoot.innerHTML = tfootHtml;
+
+        if (typeof applyTranslations === 'function') applyTranslations();
     };
 
     window.renderTable();
 
-    // 4. Create Chart Logic
-    
+    // 5. Main Chart Logic
     let currentChartType = 'bar';
     let currentChartYear = '2026';
     window.myChart = null;
 
-    // Setup initial filters
-    const allImp = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
-    const allCli = [...new Set(APP_DATA.production.map(r => String(r.client)))].sort();
+    const allImp = window.PLANT_ORDER.slice();
     const allYears = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2028', '2027', '2026'];
-    
+
     const yearSelect = document.getElementById('chart-year-select');
     if (yearSelect) {
         yearSelect.innerHTML = '<option value="all" style="color: #000;" data-i18n="filter_tutti_anni">Tutti gli anni</option>';
         allYears.forEach(y => {
             if (!y || Number(y) < 2026) return;
             const opt = document.createElement('option');
-            opt.value = y;
-            opt.textContent = y;
+            opt.value = y; opt.textContent = 'Anno ' + y;
             opt.style.color = '#000';
             yearSelect.appendChild(opt);
         });
-        yearSelect.value = '2026';
-    }
-    
-    window.chartFilters = {
-        impianti: [...allImp],
-        clienti: [...allCli],
-        mesi: ['06','07','08','09','10','11','12']
-    };
-
-    function populateChartMesiDropdown() {
-        const cmeseContainer = document.getElementById('dropdown-chart-mese');
-        if (!cmeseContainer) return;
-        let monthsList = ['01','02','03','04','05','06','07','08','09','10','11','12'];
-        if (currentChartYear === '2026') {
-            monthsList = ['06','07','08','09','10','11','12'];
+        if (allYears.includes('2026')) {
+            yearSelect.value = '2026';
         }
-        let chtml = `<div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; padding-bottom:0.4rem; border-bottom:1px solid rgba(255,255,255,0.1);">
-            <span onclick="window.toggleAllChart('mesi', true)" style="font-size:0.8rem; font-weight:bold; color:#3b82f6; cursor:pointer; padding: 2px 5px; border-radius: 3px;"><span data-i18n="filter_tutti">+ Tutti</span></span>
-            <span onclick="window.toggleAllChart('mesi', false)" style="font-size:0.8rem; font-weight:bold; color:#ef4444; cursor:pointer; padding: 2px 5px; border-radius: 3px;"><span data-i18n="filter_nessuno">- Nessuno</span></span>
-        </div>`;
-        monthsList.forEach(val => {
-            chtml += `<label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.3rem; font-size:0.85rem; font-weight:normal; text-transform:none; cursor:pointer;">
-                <input type="checkbox" class="chart-filter-mesi" value="${val}" checked onchange="window.updateChartFilters()">
-                ${val}
-            </label>`;
-        });
-        cmeseContainer.innerHTML = chtml;
-        window.chartFilters.mesi = [...monthsList];
     }
 
-    populateChartMesiDropdown();
+    const dropdownChartMese = document.getElementById('dropdown-chart-mese');
+    const allMesi = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+    const activeMesiInitial = (currentChartYear === '2026') ? ['06', '07', '08', '09', '10', '11', '12'] : allMesi;
 
-    window.changeChartYear = function(year) {
-        currentChartYear = year;
-        updateKpiProductionBanner(year);
-        populateChartMesiDropdown();
+    window.chartFilters = {
+        mesi: [...activeMesiInitial],
+        impianti: [...allImp]
+    };
+
+    const updateMonthDropdownUI = () => {
+        if (!dropdownChartMese) return;
+        let html = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.4rem;">
+                <span style="font-weight: bold; font-size: 0.8rem; color: #94a3b8;" data-i18n="filter_mesi">MESI</span>
+                <div style="display: flex; gap: 4px;">
+                    <span onclick="window.toggleAllChart('mesi', true)" class="filter-toggle-btn filter-toggle-all" data-i18n="filter_tutti">+ Tutti</span>
+                    <span onclick="window.toggleAllChart('mesi', false)" class="filter-toggle-btn filter-toggle-none" data-i18n="filter_nessuno">- Nessuno</span>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem;">
+        `;
+        const mesiList = (currentChartYear === '2026') ? ['06', '07', '08', '09', '10', '11', '12'] : allMesi;
+        mesiList.forEach(m => {
+            const isChecked = window.chartFilters.mesi.includes(m) ? 'checked' : '';
+            html += `
+                <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.85rem;">
+                    <input type="checkbox" class="chart-filter-mesi" value="${m}" ${isChecked} onchange="window.updateChartFilters()">
+                    <span>${m}</span>
+                </label>
+            `;
+        });
+        html += `</div>`;
+        dropdownChartMese.innerHTML = html;
+        if (typeof applyTranslations === 'function') applyTranslations();
+    };
+    updateMonthDropdownUI();
+
+    window.toggleAllChart = (group, selectAll) => {
+        if (group === 'mesi') {
+            const currentList = (currentChartYear === '2026') ? ['06', '07', '08', '09', '10', '11', '12'] : allMesi;
+            window.chartFilters.mesi = selectAll ? [...currentList] : [];
+            document.querySelectorAll('.chart-filter-mesi').forEach(cb => cb.checked = selectAll);
+        } else if (group === 'impianti') {
+            window.chartFilters.impianti = selectAll ? [...allImp] : [];
+            document.querySelectorAll('.chart-filter-impianti').forEach(cb => cb.checked = selectAll);
+        }
         window.renderChart(false);
     };
 
-    // Initial update of the top KPI banner with the selected year
-    updateKpiProductionBanner(currentChartYear);
-
-    window.toggleAllChart = function(type, isChecked) {
-        document.querySelectorAll(`.chart-filter-${type}`).forEach(cb => cb.checked = isChecked);
-        window.updateChartFilters();
-    };
-
-    window.updateChartFilters = function() {
-        window.chartFilters.impianti = Array.from(document.querySelectorAll('.chart-filter-impianti')).filter(cb => cb.checked).map(cb => cb.value);
-        window.chartFilters.clienti = Array.from(document.querySelectorAll('.chart-filter-clienti')).filter(cb => cb.checked).map(cb => cb.value);
-          window.chartFilters.mesi = Array.from(document.querySelectorAll('.chart-filter-mesi')).filter(cb => cb.checked).map(cb => cb.value);
+    window.updateChartFilters = () => {
+        window.chartFilters.mesi = Array.from(document.querySelectorAll('.chart-filter-mesi:checked')).map(cb => cb.value);
+        window.chartFilters.impianti = Array.from(document.querySelectorAll('.chart-filter-impianti:checked')).map(cb => cb.value);
         window.renderChart(false);
     };
 
-    window.changeChartType = function(type) {
+    window.changeChartType = (type) => {
         currentChartType = type;
         window.renderChart(false);
     };
 
-    window.renderChart = function(rebuildLegend = true) {
+    window.changeChartYear = (year) => {
+        currentChartYear = year;
+        if (year === '2026') {
+            window.chartFilters.mesi = ['06', '07', '08', '09', '10', '11', '12'];
+        } else {
+            window.chartFilters.mesi = [...allMesi];
+        }
+        updateMonthDropdownUI();
+        window.renderChart(false);
+        updateKpiProductionBanner(year);
+    };
+
+    window.renderChart = (rebuildLegend = true) => {
         const ctx = document.getElementById('prodChart');
         if (!ctx) return;
-        
+
         const monthlyData = {};
-        
         APP_DATA.production.forEach(row => {
-            const rowImp = String(row.id);
-            const rowYear = String(row.period).split('/')[1];
-            
-            if (!window.chartFilters.impianti.includes(rowImp)) return;
-            if (currentChartYear !== 'all' && rowYear !== currentChartYear) return;
-            
-            const periodKey = currentChartYear === 'all' ? rowYear : row.period;
-            
-            if (!periodKey) return;
-            if (!monthlyData[periodKey]) monthlyData[periodKey] = { impianti: {} };
-            
-            if (!monthlyData[periodKey].impianti[rowImp]) monthlyData[periodKey].impianti[rowImp] = 0;
-            monthlyData[periodKey].impianti[rowImp] += row.kwh;
+            const periodStr = String(row.period);
+            if (!isPeriodValid(periodStr)) return;
+            const parts = periodStr.split('/');
+            if (parts.length < 2) return;
+            const month = parts[0];
+            const year = parts[1];
+
+            if (currentChartYear !== 'all' && year !== currentChartYear) return;
+
+            const periodKey = (currentChartYear === 'all') ? year : periodStr;
+            const pName = getPlantDisplay(row);
+
+            if (!monthlyData[periodKey]) {
+                monthlyData[periodKey] = { total: 0, items: {} };
+                allImp.forEach(imp => monthlyData[periodKey].items[imp] = 0);
+            }
+            monthlyData[periodKey].items[pName] = (monthlyData[periodKey].items[pName] || 0) + (row.kwh || 0);
+            monthlyData[periodKey].total += (row.kwh || 0);
         });
 
         const labels = Object.keys(monthlyData).sort((a,b) => {
@@ -366,21 +539,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (currentChartType === 'pie') {
             const activePlants = window.chartFilters.impianti;
-            const pieLabels = activePlants.map(imp => `USINA ${imp.padStart(3, '0')}`);
+            const pieLabels = activePlants.slice();
             const pieData = activePlants.map(imp => {
                 let sum = 0;
                 labels.forEach(l => {
                     const monthPart = l.includes('/') ? l.split('/')[0] : '';
                     if (!monthPart || window.chartFilters.mesi.includes(monthPart)) {
-                        if (monthlyData[l] && monthlyData[l].impianti[imp]) {
-                            sum += monthlyData[l].impianti[imp];
+                        if (monthlyData[l] && monthlyData[l].items[imp]) {
+                            sum += monthlyData[l].items[imp];
                         }
                     }
                 });
                 return Math.round(sum);
             });
 
-            const pieColors = activePlants.map(imp => window.getUsinaColor ? window.getUsinaColor(imp, allImp.indexOf(imp)) : '#3b82f6');
+            const pieColors = activePlants.map(imp => window.getUsinaColor(imp, allImp.indexOf(imp)));
             const totalKwh = pieData.reduce((a, b) => a + b, 0);
 
             window.myChart = new Chart(ctx.getContext('2d'), {
@@ -431,12 +604,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } else {
             const datasets = [];
-            
             window.chartFilters.impianti.forEach(imp => {
-                const color = window.getUsinaColor ? window.getUsinaColor(imp, allImp.indexOf(imp)) : '#3b82f6';
+                const color = window.getUsinaColor(imp, allImp.indexOf(imp));
                 datasets.push({
-                    label: `USINA ${imp.padStart(3, '0')}`,
-                    data: labels.map(l => window.chartFilters.mesi.includes(l.split('/')[0]) ? (monthlyData[l] && monthlyData[l].impianti[imp] ? monthlyData[l].impianti[imp] : 0) : null),
+                    label: imp,
+                    data: labels.map(l => {
+                        const monthPart = l.includes('/') ? l.split('/')[0] : '';
+                        if (monthPart && !window.chartFilters.mesi.includes(monthPart)) return null;
+                        return monthlyData[l] && monthlyData[l].items[imp] ? monthlyData[l].items[imp] : 0;
+                    }),
                     backgroundColor: color,
                     borderColor: color,
                     type: 'bar',
@@ -448,63 +624,11 @@ document.addEventListener('DOMContentLoaded', () => {
             window.myChart = new Chart(ctx.getContext('2d'), {
                 type: 'bar',
                 data: { labels, datasets },
-                plugins: [{
-                    id: 'topTotalBarPlugin',
-                    afterDatasetsDraw(chart) {
-                        const ctx = chart.ctx;
-                        const meta0 = chart.getDatasetMeta(0);
-                        if (!meta0 || !meta0.data || meta0.data.length === 0) return;
-                        const yScale = chart.scales.y;
-                        if (!yScale) return;
-
-                        chart.data.labels.forEach((label, index) => {
-                            let total = 0;
-                            let hasVal = false;
-                            chart.data.datasets.forEach(ds => {
-                                if (ds.data && typeof ds.data[index] === 'number' && !isNaN(ds.data[index])) {
-                                    total += ds.data[index];
-                                    hasVal = true;
-                                }
-                            });
-                            if (!hasVal || total <= 0) return;
-
-                            const barElem = meta0.data[index];
-                            if (!barElem) return;
-
-                            const isLight = document.body.classList.contains('theme-light') || 
-                                            document.documentElement.getAttribute('data-theme') === 'light' || 
-                                            (typeof ThemeManager !== 'undefined' && ThemeManager.getTheme() === 'light');
-
-                            const text = formatNumber(total) + ' kWh';
-                            const x = barElem.x;
-                            const y = yScale.getPixelForValue(total);
-
-                            ctx.save();
-                            if (isLight) {
-                                ctx.fillStyle = '#000000';
-                                ctx.shadowColor = 'rgba(255, 255, 255, 0.9)';
-                                ctx.shadowBlur = 3;
-                            } else {
-                                ctx.fillStyle = '#ffffff';
-                                ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-                                ctx.shadowBlur = 4;
-                            }
-                            ctx.font = 'bold 11px Inter, sans-serif';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'bottom';
-                            ctx.fillText(text, x, y - 4);
-                            ctx.restore();
-                        });
-                    }
-                }],
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
-                    layout: {
-                        padding: {
-                            top: 25
-                        }
-                    },
+                    layout: { padding: { top: 25 } },
                     scales: {
                         x: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' } },
                         y: { 
@@ -517,55 +641,133 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     plugins: {
                         legend: { display: false },
-                        datalabels: {
-                            display: false
-                        }
+                        datalabels: { display: false }
                     }
                 }
             });
         }
-        
+
         if (rebuildLegend) {
             const legendContainer = document.getElementById('custom-chart-legend');
             if (legendContainer) {
-                let html = '';
-                
-                // Impianti Scrollable List
-                let impList = `<div style="flex: 1; max-height: 200px; overflow-y: auto; padding-right: 10px;">
-                    <div class="filter-header-sticky" style="display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; padding: 4px 6px; margin-bottom: 8px; border-radius: 6px; z-index: 10;">
-                        <span style="font-weight: 700; font-size: 0.8rem; letter-spacing: 0.5px;"><span data-i18n="word_impianti">IMPIANTI</span></span>
-                        <div style="display: flex; gap: 4px;">
-                            <span onclick="window.toggleAllChart('impianti', true)" class="filter-toggle-btn filter-toggle-all"><span data-i18n="filter_tutti">+ Tutti</span></span>
-                            <span onclick="window.toggleAllChart('impianti', false)" class="filter-toggle-btn filter-toggle-none"><span data-i18n="filter_nessuno">- Nessuno</span></span>
+                let html = `
+                    <div style="flex: 1; display: flex; flex-direction: column;">
+                        <div class="filter-header-sticky" style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; margin-bottom: 10px; border-radius: 6px;">
+                            <span style="font-weight: 700; font-size: 0.82rem; letter-spacing: 0.5px;" data-i18n="filter_impianto">IMPIANTI</span>
+                            <div style="display: flex; gap: 4px;">
+                                <span onclick="window.toggleAllChart('impianti', true)" class="filter-toggle-btn filter-toggle-all" data-i18n="filter_tutti">+ Tutti</span>
+                                <span onclick="window.toggleAllChart('impianti', false)" class="filter-toggle-btn filter-toggle-none" data-i18n="filter_nessuno">- Nessuno</span>
+                            </div>
                         </div>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 0.4rem;">`;
-                
+                        <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+                `;
+
                 allImp.forEach(imp => {
-                    const color = window.getUsinaColor ? window.getUsinaColor(imp, allImp.indexOf(imp)) : '#3b82f6';
+                    const color = window.getUsinaColor(imp, allImp.indexOf(imp));
                     const isChecked = window.chartFilters.impianti.includes(imp) ? 'checked' : '';
-                    impList += `
-                        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; font-size:0.9rem; color:var(--text-main);">
+                    const meter = window.getPlantMeter(imp);
+                    html += `
+                        <label style="display:flex; align-items:center; gap:0.6rem; cursor:pointer; font-size:0.9rem; color:var(--text-main);">
                             <input type="checkbox" class="chart-filter-impianti" value="${imp}" ${isChecked} onchange="window.updateChartFilters()">
-                            <span style="display:inline-block; width:14px; height:14px; background-color:${color}; border-radius:3px; opacity: 1"></span>
-                            USINA ${imp.padStart(3, '0')}
+                            <span style="display:inline-block; width:12px; height:12px; background-color:${color}; border-radius:3px; flex-shrink:0;"></span>
+                            <span style="display:flex; flex-direction:column; line-height: 1.25;">
+                                <span style="font-weight: 600;">${imp}</span>
+                                ${meter ? `<span style="font-family: monospace; font-size: 0.74rem; color: #94a3b8;">${meter}</span>` : ''}
+                            </span>
                         </label>
                     `;
                 });
-                impList += `</div></div>`;
-                html += impList;
-                
+                html += `</div></div>`;
                 legendContainer.innerHTML = html;
-                if(typeof applyTranslations === 'function') applyTranslations();
+                if (typeof applyTranslations === 'function') applyTranslations();
             }
         }
     };
 
     window.renderChart();
+    updateKpiProductionBanner(currentChartYear);
+
+    // 6. Export Data Function
+    window.exportData = function(type) {
+        const periodExportMode = document.getElementById('export-period').value;
+        const today = new Date();
+        const currentYear = today.getFullYear().toString();
+        let currentMonth = (today.getMonth() + 1).toString().padStart(2, '0');
+        
+        let periodsToExport = [];
+        if (periodExportMode === 'current_year') {
+            periodsToExport = allTablePeriods.filter(p => p.endsWith('/' + currentYear));
+        } else if (periodExportMode === 'global') {
+            periodsToExport = allTablePeriods.slice();
+        } else {
+            const checkedMese = Array.from(document.querySelectorAll('.chk-mese:checked')).map(cb => cb.value);
+            periodsToExport = allTablePeriods.filter(p => checkedMese.includes(p));
+        }
+
+        const checkedPlants = Array.from(document.querySelectorAll('.chk-impianto:checked')).map(cb => cb.value);
+        const exportPlants = allTablePlants.filter(p => checkedPlants.includes(p));
+
+        const matrixData = {};
+        periodsToExport.forEach(p => {
+            matrixData[p] = {};
+            exportPlants.forEach(pName => { matrixData[p][pName] = 0; });
+        });
+
+        APP_DATA.production.forEach(row => {
+            const p = String(row.period);
+            const pName = getPlantDisplay(row);
+            if (matrixData[p] && matrixData[p].hasOwnProperty(pName)) {
+                matrixData[p][pName] += (row.kwh || 0);
+            }
+        });
+
+        const headers = ['Mese/Anno', ...exportPlants.map(p => `${p} (${window.getPlantMeter(p) || ''})`), 'Totale (kWh)'];
+        const exportRows = [];
+        const colSums = {};
+        exportPlants.forEach(p => colSums[p] = 0);
+        let grandTotal = 0;
+
+        periodsToExport.forEach(period => {
+            let rowKwh = 0;
+            const rowData = [period];
+            exportPlants.forEach(pName => {
+                const val = matrixData[period][pName] || 0;
+                rowKwh += val;
+                colSums[pName] += val;
+                rowData.push(Math.round(val));
+            });
+            grandTotal += rowKwh;
+            rowData.push(Math.round(rowKwh));
+            exportRows.push(rowData);
+        });
+
+        exportRows.push(['TOTALI', ...exportPlants.map(p => Math.round(colSums[p])), Math.round(grandTotal)]);
+
+        const filename = `Energia_Iniettata_${periodExportMode}_${currentYear}${currentMonth}`;
+        if (type === 'excel') {
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...exportRows]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Energia Iniettata");
+            XLSX.writeFile(wb, `${filename}.xlsx`);
+        } else if (type === 'pdf') {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            doc.text(`Energia Iniettata (Cosern/Neoenergia) - ${periodExportMode}`, 14, 15);
+            doc.autoTable({ 
+                head: [headers], 
+                body: exportRows, 
+                startY: 20, 
+                styles: { fontSize: 8 }, 
+                headStyles: { fillColor: [59, 130, 246] } 
+            });
+            doc.save(`${filename}.pdf`);
+        }
+    };
 });
 
-
-// --- Comparatore Produzione Logic ---
+// ==========================================
+// 7. COMPARATORE ENERGIA INIETTATA LOGIC
+// ==========================================
 if (typeof db !== 'undefined') {
     db.ref('settings/comparatoreProduzione').on('value', snap => {
         const isVisible = !!snap.val();
@@ -596,29 +798,33 @@ window.toggleComparatoreVisibility = function() {
 };
 
 window.openComparatoreModal = function() {
-    
     const dash = document.getElementById('dashboard-content');
     const comp = document.getElementById('comparatore-content');
-    if(dash) dash.style.display = 'none';
-    if(comp) comp.style.display = 'block';
-    window.scrollTo(0,0);
-    
-    updateComparatorePeriodValues();
-    if(window.renderComparatoreTable) window.renderComparatoreTable();
+    if (dash) dash.style.display = 'none';
+    if (comp) comp.style.display = 'block';
+    window.scrollTo(0, 0);
+    setTimeout(() => {
+        try {
+            updateComparatorePeriodValues();
+            if (window.renderComparatoreTable) window.renderComparatoreTable();
+        } catch (err) {
+            console.error("Errore comparatore:", err);
+        }
+    }, 50);
 };
 
 window.closeComparatoreModal = function() {
-    
     const dash = document.getElementById('dashboard-content');
     const comp = document.getElementById('comparatore-content');
-    if(dash) dash.style.display = 'block';
-    if(comp) comp.style.display = 'none';
-    window.scrollTo(0,0);
-    
+    if (dash) dash.style.display = 'block';
+    if (comp) comp.style.display = 'none';
+    window.scrollTo(0, 0);
 };
 
 window.updateComparatorePeriodValues = function() {
-    const type = document.getElementById('comparatore-period-type').value;
+    const typeSelect = document.getElementById('comparatore-period-type');
+    if (!typeSelect) return;
+    const type = typeSelect.value;
     const valueSelect = document.getElementById('comparatore-period-value');
     const twoYearsContainer = document.getElementById('comparatore-two-years-container');
     const twoMonthsContainer = document.getElementById('comparatore-two-months-container');
@@ -626,15 +832,15 @@ window.updateComparatorePeriodValues = function() {
     const y2Select = document.getElementById('comparatore-year-2');
     const m1Select = document.getElementById('comparatore-month-1');
     const m2Select = document.getElementById('comparatore-month-2');
-    
+
     const years = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears().filter(y => Number(y) >= 2026) : ['2028', '2027', '2026'];
-    const months = (typeof window.getAvailableMonths === 'function') ? window.getAvailableMonths() : ['09/2026', '08/2026', '07/2026'];
+    const months = (typeof window.getAvailableMonths === 'function') ? window.getAvailableMonths() : ['08/2026', '07/2026', '06/2026'];
 
     if (type === 'two_years') {
         valueSelect.style.display = 'none';
         if (twoMonthsContainer) twoMonthsContainer.style.display = 'none';
         if (twoYearsContainer) twoYearsContainer.style.display = 'flex';
-        
+
         y1Select.innerHTML = '';
         y2Select.innerHTML = '';
         years.forEach(y => {
@@ -646,13 +852,13 @@ window.updateComparatorePeriodValues = function() {
             opt2.value = y; opt2.textContent = 'Anno ' + y;
             y2Select.appendChild(opt2);
         });
-        
+
         if (years.includes('2026') && years.includes('2027')) {
             y1Select.value = '2026';
             y2Select.value = '2027';
         } else if (years.length >= 2) {
-            y1Select.value = years[years.length - 1];
-            y2Select.value = years[years.length - 2];
+            y1Select.value = years[1];
+            y2Select.value = years[0];
         } else if (years.length === 1) {
             y1Select.value = years[0];
             y2Select.value = years[0];
@@ -674,9 +880,9 @@ window.updateComparatorePeriodValues = function() {
             m2Select.appendChild(opt2);
         });
 
-        if (months.includes('07/2026') && months.includes('08/2026')) {
-            m1Select.value = '07/2026';
-            m2Select.value = '08/2026';
+        if (months.includes('06/2026') && months.includes('07/2026')) {
+            m1Select.value = '06/2026';
+            m2Select.value = '07/2026';
         } else if (months.length >= 2) {
             m1Select.value = months[1];
             m2Select.value = months[0];
@@ -686,7 +892,7 @@ window.updateComparatorePeriodValues = function() {
         if (twoMonthsContainer) twoMonthsContainer.style.display = 'none';
         valueSelect.style.display = 'inline-block';
         valueSelect.innerHTML = '';
-        
+
         if (type === 'year') {
             years.forEach(y => {
                 const opt = document.createElement('option');
@@ -708,12 +914,15 @@ window.updateComparatorePeriodValues = function() {
         }
     }
     updateComparatoreChart();
+    if (window.renderComparatoreTable) window.renderComparatoreTable();
 };
 
 let comparatoreChartInstance = null;
 window.updateComparatoreChart = function() {
-    const type = document.getElementById('comparatore-period-type').value;
-    const allPlants = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
+    const typeSelect = document.getElementById('comparatore-period-type');
+    if (!typeSelect) return;
+    const type = typeSelect.value;
+    const allPlants = window.PLANT_ORDER.slice();
     const ctx = document.getElementById('comparatoreChartCanvas');
     const summaryKpi = document.getElementById('comparatore-summary-kpi');
     if (!ctx) return;
@@ -727,7 +936,6 @@ window.updateComparatoreChart = function() {
         const y2 = document.getElementById('comparatore-year-2').value;
         const viewMode = (document.getElementById('comparatore-two-years-view') || {}).value || 'by_usina';
 
-        // Calculate total production for Year 1 and Year 2
         const totalY1 = APP_DATA.production
             .filter(r => String(r.period).endsWith('/' + y1))
             .reduce((sum, r) => sum + (r.kwh || 0), 0);
@@ -744,8 +952,6 @@ window.updateComparatoreChart = function() {
             diffPctStr = '+100.0%';
         } else if (totalY1 > 0 && totalY2 === 0) {
             diffPctStr = '-100.0%';
-        } else {
-            diffPctStr = '0.0%';
         }
 
         if (summaryKpi) {
@@ -754,7 +960,7 @@ window.updateComparatoreChart = function() {
             document.getElementById('kpi-y1-val').textContent = formatNumber(totalY1) + ' kWh';
             document.getElementById('kpi-y2-label').textContent = `Anno ${y2}:`;
             document.getElementById('kpi-y2-val').textContent = formatNumber(totalY2) + ' kWh';
-            
+
             const badge = document.getElementById('kpi-diff-badge');
             badge.textContent = `${diffKwh >= 0 ? '+' : ''}${formatNumber(diffKwh)} kWh (${diffPctStr})`;
             if (diffKwh > 0) {
@@ -773,24 +979,22 @@ window.updateComparatoreChart = function() {
         }
 
         if (viewMode === 'by_usina') {
-            const labels = allPlants.map(id => 'USINA ' + String(id).padStart(3, '0'));
-            
-            const dataY1 = allPlants.map(id => {
+            const labels = allPlants.slice();
+            const dataY1 = allPlants.map(pName => {
                 return APP_DATA.production
-                    .filter(r => String(r.id) === id && String(r.period).endsWith('/' + y1))
+                    .filter(r => getPlantDisplay(r) === pName && String(r.period).endsWith('/' + y1))
                     .reduce((sum, r) => sum + (r.kwh || 0), 0);
             });
-
-            const dataY2 = allPlants.map(id => {
+            const dataY2 = allPlants.map(pName => {
                 return APP_DATA.production
-                    .filter(r => String(r.id) === id && String(r.period).endsWith('/' + y2))
+                    .filter(r => getPlantDisplay(r) === pName && String(r.period).endsWith('/' + y2))
                     .reduce((sum, r) => sum + (r.kwh || 0), 0);
             });
 
             comparatoreChartInstance = new Chart(ctx.getContext('2d'), {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels,
                     datasets: [
                         {
                             label: `Anno ${y1}`,
@@ -851,38 +1055,12 @@ window.updateComparatoreChart = function() {
                             grid: { color: 'rgba(255,255,255,0.05)' },
                             title: { display: true, text: 'kWh', color: '#94a3b8' }
                         },
-                        x: {
-                            grid: { color: 'rgba(255,255,255,0.05)' }
-                        }
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' } }
                     },
                     plugins: {
                         legend: { 
                             display: true,
                             labels: { color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#0f172a' : '#fff', font: { weight: 'bold' } }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const val = context.raw || 0;
-                                    return ` ${context.dataset.label}: ${formatNumber(val)} kWh`;
-                                },
-                                afterBody: function(contexts) {
-                                    if (contexts.length === 2) {
-                                        const v1 = contexts[0].raw || 0;
-                                        const v2 = contexts[1].raw || 0;
-                                        const diff = v2 - v1;
-                                        let pct = '0.0%';
-                                        if (v1 > 0) {
-                                            pct = ((diff / v1) * 100).toFixed(1) + '%';
-                                        } else if (v2 > 0) {
-                                            pct = '+100.0%';
-                                        }
-                                        const sign = diff >= 0 ? '+' : '';
-                                        return [`Variazione: ${sign}${formatNumber(diff)} kWh (${sign}${pct})`];
-                                    }
-                                    return [];
-                                }
-                            }
                         }
                     }
                 }
@@ -896,18 +1074,17 @@ window.updateComparatoreChart = function() {
             const monthNums = is2026Involved
                 ? ['06', '07', '08', '09', '10', '11', '12']
                 : ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
-            
+
             const dataY1 = monthNums.map(m => {
-                const pKey = `${m}/${y1}`;
+                const targetPeriod = `${m}/${y1}`;
                 return APP_DATA.production
-                    .filter(r => String(r.period) === pKey)
+                    .filter(r => String(r.period) === targetPeriod)
                     .reduce((sum, r) => sum + (r.kwh || 0), 0);
             });
-
             const dataY2 = monthNums.map(m => {
-                const pKey = `${m}/${y2}`;
+                const targetPeriod = `${m}/${y2}`;
                 return APP_DATA.production
-                    .filter(r => String(r.period) === pKey)
+                    .filter(r => String(r.period) === targetPeriod)
                     .reduce((sum, r) => sum + (r.kwh || 0), 0);
             });
 
@@ -916,98 +1093,16 @@ window.updateComparatoreChart = function() {
                 data: {
                     labels: monthLabels,
                     datasets: [
-                        {
-                            label: `Anno ${y1}`,
-                            data: dataY1,
-                            backgroundColor: '#3b82f6',
-                            borderColor: '#2563eb',
-                            borderWidth: 1,
-                            datalabels: {
-                                anchor: 'end',
-                                align: 'top',
-                                offset: 4,
-                                color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#1d4ed8' : '#93c5fd',
-                                font: { weight: 'bold', size: 11 },
-                                formatter: function(value) {
-                                    if (!value || value === 0) return '';
-                                    return formatNumber(value) + ' kWh';
-                                }
-                            }
-                        },
-                        {
-                            label: `Anno ${y2}`,
-                            data: dataY2,
-                            backgroundColor: '#10b981',
-                            borderColor: '#059669',
-                            borderWidth: 1,
-                            datalabels: {
-                                anchor: 'end',
-                                align: 'top',
-                                offset: 4,
-                                color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#047857' : '#6ee7b7',
-                                font: { weight: 'bold', size: 11 },
-                                formatter: function(value, context) {
-                                    const v1 = dataY1[context.dataIndex] || 0;
-                                    const v2 = value || 0;
-                                    if (v1 === 0 && v2 === 0) return '';
-                                    let pctText = '';
-                                    if (v1 > 0) {
-                                        const p = ((v2 - v1) / v1) * 100;
-                                        pctText = ` (${p >= 0 ? '+' : ''}${p.toFixed(0)}%)`;
-                                    } else if (v2 > 0) {
-                                        pctText = ' (+100%)';
-                                    }
-                                    return `${formatNumber(v2)} kWh${pctText}`;
-                                }
-                            }
-                        }
+                        { label: `Anno ${y1}`, data: dataY1, backgroundColor: '#3b82f6', borderColor: '#2563eb', borderWidth: 1 },
+                        { label: `Anno ${y2}`, data: dataY2, backgroundColor: '#10b981', borderColor: '#059669', borderWidth: 1 }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    layout: { padding: { top: 35 } },
-                    interaction: { mode: 'index', intersect: false },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            grace: '20%',
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            title: { display: true, text: 'kWh', color: '#94a3b8' }
-                        },
-                        x: {
-                            grid: { color: 'rgba(255,255,255,0.05)' }
-                        }
-                    },
-                    plugins: {
-                        legend: { 
-                            display: true,
-                            labels: { color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#0f172a' : '#fff', font: { weight: 'bold' } }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const val = context.raw || 0;
-                                    return ` ${context.dataset.label}: ${formatNumber(val)} kWh`;
-                                },
-                                afterBody: function(contexts) {
-                                    if (contexts.length === 2) {
-                                        const v1 = contexts[0].raw || 0;
-                                        const v2 = contexts[1].raw || 0;
-                                        const diff = v2 - v1;
-                                        let pct = '0.0%';
-                                        if (v1 > 0) {
-                                            pct = ((diff / v1) * 100).toFixed(1) + '%';
-                                        } else if (v2 > 0) {
-                                            pct = '+100.0%';
-                                        }
-                                        const sign = diff >= 0 ? '+' : '';
-                                        return [`Variazione: ${sign}${formatNumber(diff)} kWh (${sign}${pct})`];
-                                    }
-                                    return [];
-                                }
-                            }
-                        }
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' } }
                     }
                 }
             });
@@ -1019,7 +1114,6 @@ window.updateComparatoreChart = function() {
         const m1 = document.getElementById('comparatore-month-1').value;
         const m2 = document.getElementById('comparatore-month-2').value;
 
-        // Calculate total production for Month 1 and Month 2
         const totalM1 = APP_DATA.production
             .filter(r => String(r.period) === m1)
             .reduce((sum, r) => sum + (r.kwh || 0), 0);
@@ -1034,19 +1128,15 @@ window.updateComparatoreChart = function() {
             diffPctStr = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
         } else if (totalM2 > 0) {
             diffPctStr = '+100.0%';
-        } else if (totalM1 > 0 && totalM2 === 0) {
-            diffPctStr = '-100.0%';
-        } else {
-            diffPctStr = '0.0%';
         }
 
         if (summaryKpi) {
             summaryKpi.style.display = 'flex';
-            document.getElementById('kpi-y1-label').textContent = `Mese ${m1}:`;
+            document.getElementById('kpi-y1-label').textContent = `${m1}:`;
             document.getElementById('kpi-y1-val').textContent = formatNumber(totalM1) + ' kWh';
-            document.getElementById('kpi-y2-label').textContent = `Mese ${m2}:`;
+            document.getElementById('kpi-y2-label').textContent = `${m2}:`;
             document.getElementById('kpi-y2-val').textContent = formatNumber(totalM2) + ' kWh';
-            
+
             const badge = document.getElementById('kpi-diff-badge');
             badge.textContent = `${diffKwh >= 0 ? '+' : ''}${formatNumber(diffKwh)} kWh (${diffPctStr})`;
             if (diffKwh > 0) {
@@ -1064,117 +1154,33 @@ window.updateComparatoreChart = function() {
             }
         }
 
-        const labels = allPlants.map(id => 'USINA ' + String(id).padStart(3, '0'));
-        
-        const dataM1 = allPlants.map(id => {
+        const labels = allPlants.slice();
+        const dataM1 = allPlants.map(pName => {
             return APP_DATA.production
-                .filter(r => String(r.id) === id && String(r.period) === m1)
+                .filter(r => getPlantDisplay(r) === pName && String(r.period) === m1)
                 .reduce((sum, r) => sum + (r.kwh || 0), 0);
         });
-
-        const dataM2 = allPlants.map(id => {
+        const dataM2 = allPlants.map(pName => {
             return APP_DATA.production
-                .filter(r => String(r.id) === id && String(r.period) === m2)
+                .filter(r => getPlantDisplay(r) === pName && String(r.period) === m2)
                 .reduce((sum, r) => sum + (r.kwh || 0), 0);
         });
 
         comparatoreChartInstance = new Chart(ctx.getContext('2d'), {
             type: 'bar',
             data: {
-                labels: labels,
+                labels,
                 datasets: [
-                    {
-                        label: `Mese ${m1}`,
-                        data: dataM1,
-                        backgroundColor: '#3b82f6',
-                        borderColor: '#2563eb',
-                        borderWidth: 1,
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            offset: 4,
-                            color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#1d4ed8' : '#93c5fd',
-                            font: { weight: 'bold', size: 11 },
-                            formatter: function(value) {
-                                if (!value || value === 0) return '';
-                                return formatNumber(value) + ' kWh';
-                            }
-                        }
-                    },
-                    {
-                        label: `Mese ${m2}`,
-                        data: dataM2,
-                        backgroundColor: '#10b981',
-                        borderColor: '#059669',
-                        borderWidth: 1,
-                        datalabels: {
-                            anchor: 'end',
-                            align: 'top',
-                            offset: 4,
-                            color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#047857' : '#6ee7b7',
-                            font: { weight: 'bold', size: 11 },
-                            formatter: function(value, context) {
-                                const v1 = dataM1[context.dataIndex] || 0;
-                                const v2 = value || 0;
-                                if (v1 === 0 && v2 === 0) return '';
-                                let pctText = '';
-                                if (v1 > 0) {
-                                    const p = ((v2 - v1) / v1) * 100;
-                                    pctText = ` (${p >= 0 ? '+' : ''}${p.toFixed(0)}%)`;
-                                } else if (v2 > 0) {
-                                    pctText = ' (+100%)';
-                                }
-                                return `${formatNumber(v2)} kWh${pctText}`;
-                            }
-                        }
-                    }
+                    { label: `${m1}`, data: dataM1, backgroundColor: '#3b82f6', borderColor: '#2563eb', borderWidth: 1 },
+                    { label: `${m2}`, data: dataM2, backgroundColor: '#10b981', borderColor: '#059669', borderWidth: 1 }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: { padding: { top: 35 } },
-                interaction: { mode: 'index', intersect: false },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        grace: '20%',
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        title: { display: true, text: 'kWh', color: '#94a3b8' }
-                    },
-                    x: {
-                        grid: { color: 'rgba(255,255,255,0.05)' }
-                    }
-                },
-                plugins: {
-                    legend: { 
-                        display: true,
-                        labels: { color: () => (document.body.classList.contains('theme-light') || document.documentElement.getAttribute('data-theme') === 'light') ? '#0f172a' : '#fff', font: { weight: 'bold' } }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const val = context.raw || 0;
-                                return ` ${context.dataset.label}: ${formatNumber(val)} kWh`;
-                            },
-                            afterBody: function(contexts) {
-                                if (contexts.length === 2) {
-                                    const v1 = contexts[0].raw || 0;
-                                    const v2 = contexts[1].raw || 0;
-                                    const diff = v2 - v1;
-                                    let pct = '0.0%';
-                                    if (v1 > 0) {
-                                        pct = ((diff / v1) * 100).toFixed(1) + '%';
-                                    } else if (v2 > 0) {
-                                        pct = '+100.0%';
-                                    }
-                                    const sign = diff >= 0 ? '+' : '';
-                                    return [`Variazione: ${sign}${formatNumber(diff)} kWh (${sign}${pct})`];
-                                }
-                                return [];
-                            }
-                        }
-                    }
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                    x: { grid: { color: 'rgba(255,255,255,0.05)' } }
                 }
             }
         });
@@ -1191,7 +1197,6 @@ window.updateComparatoreChart = function() {
 
     const impiantiData = {};
     APP_DATA.production.forEach(row => {
-        const rowImp = String(row.id);
         let matches = false;
         if (type === 'year') {
             matches = String(row.period).endsWith('/' + periodVal);
@@ -1199,19 +1204,20 @@ window.updateComparatoreChart = function() {
             matches = String(row.period) === periodVal;
         }
         if (matches) {
-            if (!impiantiData[rowImp]) impiantiData[rowImp] = 0;
-            impiantiData[rowImp] += row.kwh;
+            const pName = getPlantDisplay(row);
+            if (!impiantiData[pName]) impiantiData[pName] = 0;
+            impiantiData[pName] += (row.kwh || 0);
         }
     });
 
-    const labels = allPlants.map(id => 'USINA ' + String(id).padStart(3, '0'));
-    const dataPoints = allPlants.map(id => impiantiData[id] || 0);
-    const colors = allPlants.map((id, idx) => window.getUsinaColor ? window.getUsinaColor(id, idx) : '#3b82f6');
+    const labels = allPlants.slice();
+    const dataPoints = allPlants.map(pName => impiantiData[pName] || 0);
+    const colors = allPlants.map((pName, idx) => window.getUsinaColor(pName, idx));
 
     comparatoreChartInstance = new Chart(ctx.getContext('2d'), {
         type: 'bar',
         data: {
-            labels: labels,
+            labels,
             datasets: [{
                 label: type === 'year' ? `Anno ${periodVal}` : `${periodVal}`,
                 data: dataPoints,
@@ -1231,9 +1237,7 @@ window.updateComparatoreChart = function() {
                     grid: { color: 'rgba(255,255,255,0.05)' },
                     title: { display: true, text: 'kWh', color: '#94a3b8' }
                 },
-                x: {
-                    grid: { color: 'rgba(255,255,255,0.05)' }
-                }
+                x: { grid: { color: 'rgba(255,255,255,0.05)' } }
             },
             plugins: {
                 legend: { display: false },
@@ -1258,58 +1262,54 @@ window.renderComparatoreTable = function() {
     const tbody = document.getElementById('comparatore-table-body');
     if (!thead || !tbody) return;
 
-    const allPlants = [...new Set(APP_DATA.production.map(r => String(r.id)))].sort((a,b) => Number(a) - Number(b));
-    
+    const allPlants = window.PLANT_ORDER.slice();
+
     const tAnnoMese = (typeof translations !== 'undefined' && typeof currentLang !== 'undefined' && translations[currentLang] && translations[currentLang]['comp_anno_mese']) || 'Anno / Mese';
     const tTotale = (typeof translations !== 'undefined' && typeof currentLang !== 'undefined' && translations[currentLang] && translations[currentLang]['comp_totale']) || 'Totale';
     const tVarYoY = (typeof translations !== 'undefined' && typeof currentLang !== 'undefined' && translations[currentLang] && translations[currentLang]['comp_var_yoy']) || 'Var. YoY';
 
     let thHtml = `<tr><th style="text-align: left; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2);">${tAnnoMese}</th>`;
     allPlants.forEach((p, idx) => {
-        const uColor = window.getUsinaColor ? window.getUsinaColor(p, idx) : '#3b82f6';
-        thHtml += `<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2);"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${uColor}; margin-right:5px;"></span>USINA ${p.padStart(3, '0')}</th>`;
+        const uColor = window.getUsinaColor(p, idx);
+        thHtml += `<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2);"><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${uColor}; margin-right:5px;"></span>${p}</th>`;
     });
     thHtml += `<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2); color: #3b82f6;">${tTotale}</th>`;
     thHtml += `<th style="text-align: right; padding: 10px; border-bottom: 2px solid rgba(255,255,255,0.2); color: #10b981;">${tVarYoY}</th></tr>`;
     thead.innerHTML = thHtml;
 
     const dataByYear = {};
-    
-    // Assicura che gli anni >= 2026 siano presenti nella tabella
     const availableYearsList = (typeof window.getAvailableYears === 'function') ? window.getAvailableYears() : ['2027', '2026'];
     availableYearsList.forEach(y => {
         dataByYear[y] = { total: {}, months: {} };
     });
-    
+
     APP_DATA.production.forEach(row => {
-        const p = String(row.id);
+        const p = getPlantDisplay(row);
         const period = String(row.period);
         if (!isPeriodValid(period)) return;
         const parts = period.split('/');
         if (parts.length < 2) return;
-        const month = parts[0];
         const year = parts[1];
-        
+
         if (!dataByYear[year]) {
             dataByYear[year] = { total: {}, months: {} };
         }
         if (!dataByYear[year].months[period]) {
             dataByYear[year].months[period] = {};
         }
-        
+
         if (!dataByYear[year].total[p]) dataByYear[year].total[p] = 0;
-        dataByYear[year].total[p] += row.kwh;
-        
+        dataByYear[year].total[p] += (row.kwh || 0);
+
         if (!dataByYear[year].months[period][p]) dataByYear[year].months[period][p] = 0;
-        dataByYear[year].months[period][p] += row.kwh;
+        dataByYear[year].months[period][p] += (row.kwh || 0);
     });
 
-    const formatValue = (val) => val ? Math.round(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : '-';
+    const formatValue = (val) => val ? formatNumber(val) : '-';
     let tbHtml = '';
-    
+
     const years = Object.keys(dataByYear).filter(y => Number(y) >= 2026).sort((a,b) => Number(b) - Number(a));
-    
-    // Precalculate totals per year for YoY comparison
+
     const yearTotals = {};
     years.forEach(yr => {
         yearTotals[yr] = allPlants.reduce((sum, p) => sum + (dataByYear[yr].total[p] || 0), 0);
@@ -1318,7 +1318,7 @@ window.renderComparatoreTable = function() {
     years.forEach(year => {
         let yearTotalRow = yearTotals[year] || 0;
         let yearCells = '';
-        
+
         const yearVals = allPlants.map(p => dataByYear[year].total[p] || 0);
         const activeYearVals = yearVals.filter(v => v > 0);
         const yearMax = activeYearVals.length > 0 ? Math.max(...activeYearVals) : -1;
@@ -1334,7 +1334,6 @@ window.renderComparatoreTable = function() {
             yearCells += `<td style="padding: 10px; text-align: right; ${colorStyle}">${formatValue(val)}</td>`;
         });
 
-        // Compute YoY variation (only for years > 2026, since 2026 is baseline starting 06/2026)
         const prevYear = String(Number(year) - 1);
         const prevTotal = yearTotals[prevYear] || 0;
         let yoyBadge = '<span style="color: #64748b;">-</span>';
@@ -1348,31 +1347,31 @@ window.renderComparatoreTable = function() {
         } else if (Number(year) > 2026 && prevTotal > 0 && yearTotalRow === 0) {
             yoyBadge = `<span style="color: #ef4444; font-weight: bold;">-100%</span>`;
         }
-        
+
         tbHtml += `
             <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); font-weight: bold; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'" onclick="window.toggleYearRows('${year}')">
-                <td style="text-align: left; padding: 10px; color: #f59e0b;"><i class="fa-solid fa-chevron-right" id="icon-year-${year}" style="margin-right: 8px; transition: transform 0.3s;"></i> ${year}</td>
+                <td style="text-align: left; padding: 10px; color: #3b82f6;"><i class="fa-solid fa-chevron-right" id="icon-year-${year}" style="margin-right: 8px; transition: transform 0.3s;"></i> ${year}</td>
                 ${yearCells}
                 <td style="padding: 10px; text-align: right; color: #3b82f6;">${formatValue(yearTotalRow)}</td>
                 <td style="padding: 10px; text-align: right;">${yoyBadge}</td>
             </tr>
         `;
-        
+
         const months = Object.keys(dataByYear[year].months).sort((a,b) => {
             const m1 = Number(a.split('/')[0]);
             const m2 = Number(b.split('/')[0]);
             return m2 - m1;
         });
-        
+
         months.forEach(month => {
             let monthTotalRow = 0;
             let monthCells = '';
-            
+
             const monthVals = allPlants.map(p => dataByYear[year].months[month][p] || 0);
             const activeMonthVals = monthVals.filter(v => v > 0);
             const monthMax = activeMonthVals.length > 0 ? Math.max(...activeMonthVals) : -1;
             const monthMin = activeMonthVals.length > 1 ? Math.min(...activeMonthVals) : -1;
-            
+
             allPlants.forEach((p, i) => {
                 const val = monthVals[i];
                 monthTotalRow += val;
@@ -1383,7 +1382,7 @@ window.renderComparatoreTable = function() {
                 }
                 monthCells += `<td style="padding: 8px; text-align: right; ${colorStyle}">${formatValue(val)}</td>`;
             });
-            
+
             tbHtml += `
                 <tr class="month-row-${year}" style="display: none; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 0.9em; background: rgba(0,0,0,0.15);">
                     <td style="text-align: left; padding: 8px; padding-left: 30px; color: #cbd5e1;">${month}</td>
@@ -1394,20 +1393,20 @@ window.renderComparatoreTable = function() {
             `;
         });
     });
-    
+
     tbody.innerHTML = tbHtml;
 };
 
 window.toggleYearRows = function(year) {
     const rows = document.querySelectorAll('.month-row-' + year);
     const icon = document.getElementById('icon-year-' + year);
-    if(rows.length === 0) return;
-    
+    if (rows.length === 0) return;
+
     const isHidden = rows[0].style.display === 'none';
     rows.forEach(r => {
         r.style.display = isHidden ? 'table-row' : 'none';
     });
-    
+
     if (icon) {
         icon.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
     }
@@ -1438,4 +1437,3 @@ if (typeof MutationObserver !== 'undefined') {
         themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     }
 }
-

@@ -168,7 +168,7 @@ function showToastNotification(pageKey, isVisible) {
     const pageLabels = {
         'azionariato': 'Azionariato (LPs)',
         'banca': 'Conto Bancario',
-        'produzione': 'Produzione Energia',
+        'produzione': 'Energia Iniettata',
         'vendite': 'Vendite Energia',
         'impianti': 'Impianti e Mappa',
         'documentazione': 'Documentazione',

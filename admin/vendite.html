@@ -11,7 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <link rel="stylesheet" href="../style.css?v=300">
+    <link rel="stylesheet" href="../style.css?v=302">
 
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
@@ -37,7 +37,7 @@
                     <a href="index.html" class="nav-item"><i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_azionariato">Azionariato (LPs)</span></a>
                 </div>
                 <div class="nav-item-row" data-page="produzione">
-                    <a href="produzione.html" class="nav-item"><i class="fa-solid fa-solar-panel"></i> <span data-i18n="nav_produzione">Produzione Energia</span></a>
+                    <a href="produzione.html" class="nav-item"><i class="fa-solid fa-solar-panel"></i> <span data-i18n="nav_produzione">Energia Iniettata</span></a>
                     <button type="button" class="nav-eye-btn visible" data-page="produzione" data-visible="true" onclick="Auth.togglePageVisibility('produzione')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
                 </div>
                 <div class="nav-item-row" data-page="vendite">
@@ -152,7 +152,7 @@
                 </a>
             </section>
 
-            <section class="dashboard-grid" style="grid-template-columns: 2.5fr 1fr;">
+            <section class="dashboard-grid" style="grid-template-columns: minmax(0, 1.5fr) minmax(430px, 1fr); gap: 1.5rem; align-items: stretch;">
                 <!-- Bar Chart -->
                 <div class="chart-container glass-panel">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
@@ -177,8 +177,8 @@
                     </div>
                 </div>
                 <!-- Filters -->
-                <div class="table-container glass-panel" style="display: flex; flex-direction: column; max-height: 500px;">
-                    <div id="custom-chart-legend" style="flex: 1; display: flex; flex-direction: column; gap: 1rem; overflow: hidden;"></div>
+                <div class="table-container glass-panel" style="display: flex; flex-direction: column; padding: 1.25rem;">
+                    <div id="custom-chart-legend" style="flex: 1; display: flex; flex-direction: column;"></div>
                 </div>
             </section>
 
@@ -205,44 +205,39 @@
                             <span style="color: var(--text-muted); font-size: 0.85rem; margin-right: 0.5rem;" data-i18n="cambio_eur_brl">Cambio EUR/R$:</span>
                             <span id="exchange-rate-display" style="font-weight: bold; color: #3b82f6;">...</span>
                         </div>
-                        <div class="multi-select-container" style="position:relative; width: 220px;">
-                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.3rem;" data-i18n="filter_mese_anno">Filtra Mese/Anno</label>
+                        
+                        <!-- Filtra Anno -->
+                        <div style="position:relative; width: 160px;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.3rem;" data-i18n="filter_anno">Filtra Anno</label>
+                            <select id="filter-anno" class="filter-input" style="width: 100%; cursor: pointer;" onchange="window.onYearFilterChange(this.value)">
+                                <option value="all" data-i18n="filter_tutti_anni">Tutti gli anni</option>
+                            </select>
+                        </div>
+
+                        <!-- Filtra Mese -->
+                        <div class="multi-select-container" style="position:relative; width: 200px;">
+                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.3rem;" data-i18n="filter_mese">Filtra Mese</label>
                             <button type="button" class="filter-input" style="width: 100%; text-align:left; cursor:pointer;" onclick="toggleDropdown('dropdown-mese')" data-i18n="filter_seleziona">Seleziona...</button>
                             <div id="dropdown-mese" class="multi-select-dropdown" style="display:none; position:absolute; top:100%; left:0; padding:0.6rem; z-index:9999; max-height:260px; overflow-y:auto; width:100%;"></div>
                         </div>
-                        <div class="multi-select-container" style="position:relative; width: 220px;">
-                            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.3rem;" data-i18n="filter_impianto">Filtra Impianto</label>
-                            <button type="button" class="filter-input" style="width: 100%; text-align:left; cursor:pointer;" onclick="toggleDropdown('dropdown-impianto')" data-i18n="filter_seleziona">Seleziona...</button>
-                            <div id="dropdown-impianto" class="multi-select-dropdown" style="display:none; position:absolute; top:100%; left:0; padding:0.6rem; z-index:9999; max-height:260px; overflow-y:auto; width:100%;"></div>
-                        </div>
-                        <div class="multi-select-container" style="position:relative; width: 220px;">
+
+                        <!-- Filtra Cliente -->
+                        <div class="multi-select-container" style="position:relative; width: 300px;">
                             <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.3rem;" data-i18n="filter_cliente">Filtra Cliente</label>
                             <button type="button" class="filter-input" style="width: 100%; text-align:left; cursor:pointer;" onclick="toggleDropdown('dropdown-cliente')" data-i18n="filter_seleziona">Seleziona...</button>
-                            <div id="dropdown-cliente" class="multi-select-dropdown" style="display:none; position:absolute; top:100%; left:0; padding:0.6rem; z-index:9999; max-height:260px; overflow-y:auto; width:100%;"></div>
+                            <div id="dropdown-cliente" class="multi-select-dropdown" style="display:none; position:absolute; top:100%; left:0; padding:0.6rem; z-index:9999; max-height:280px; overflow-y:auto; width:100%; min-width: 300px;"></div>
                         </div>
                     </div>
-                    <div class="table-wrapper" style="height: 500px; overflow-y: auto; position: relative; z-index: 1;">
-                        <table class="data-table">
-                            <thead style="position: sticky; top: 0; z-index: 50; background: var(--bg-dark);">
-                                <tr>
-                                    <th data-i18n="table_mese_anno">Mese/Anno</th>
-                                    <th data-i18n="table_impianto">Impianto</th>
-                                    <th data-i18n="table_cliente">Cliente</th>
-                                    
-                                    <th style="text-align: right;" data-i18n="table_ricavi">Ricavi (R$)</th>
-                                    <th style="text-align: right;">Ricavi (EUR)</th>
-                                </tr>
+                    <div class="table-wrapper" style="max-height: 520px; overflow-y: auto; overflow-x: auto; position: relative; z-index: 1;">
+                        <table class="data-table" id="production-sales-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                            <thead id="production-table-head" style="position: sticky; top: 0; z-index: 50; background: var(--bg-dark);">
+                                <!-- Dynamic headers injected via JS -->
                             </thead>
                             <tbody id="production-table-body">
-                                <!-- Data injected via JS -->
+                                <!-- Dynamic rows injected via JS -->
                             </tbody>
-                            <tfoot style="background: rgba(0,0,0,0.4); position: sticky; bottom: 0; z-index: 10;">
-                                <tr>
-                                    <td colspan="3" style="text-align: right; font-weight: bold; font-size: 1rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.2);">SUBTOTALI:</td>
-                                    
-                                    <td id="subtotal-rev" class="text-bold" style="text-align: right; color: #10b981; font-size: 1.1rem; border-top: 1px solid rgba(255,255,255,0.2);">R$ 0,00</td>
-                                    <td id="subtotal-rev-eur" class="text-bold" style="text-align: right; color: #3b82f6; font-size: 1.1rem; border-top: 1px solid rgba(255,255,255,0.2);">â‚¬ 0,00</td>
-                                </tr>
+                            <tfoot id="production-table-foot" class="table-totals-foot">
+                                <!-- Dynamic totals injected via JS -->
                             </tfoot>
                         </table>
                     </div>
@@ -382,7 +377,7 @@
     <!-- Data script -->
     <script src="../data.js?v=202610030930"></script>
     <!-- App logic -->
-    <script src="vendite_app.js?v=308"></script>
+    <script src="vendite_app.js?v=314"></script>
 
     
 </body>

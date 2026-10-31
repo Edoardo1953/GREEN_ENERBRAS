@@ -446,142 +446,182 @@
                        {
                            "period":  "07/2026",
                            "id":  "1",
+                           "plant":  "TRI007 e TRI007bis",
                            "kwh":  338,
                            "revenues":  244.17,
-                           "client":  "ARCO-IRIS"
+                           "client":  "ARCO-IRIS",
+                           "meter":  "7030102643"
                        },
                        {
                            "period":  "07/2026",
                            "id":  "2",
+                           "plant":  "TRI003",
                            "kwh":  0,
                            "revenues":  0,
-                           "client":  "ARCO-IRIS"
+                           "client":  "ARCO-IRIS",
+                           "meter":  "7031754431"
                        },
                        {
                            "period":  "07/2026",
                            "id":  "3",
+                           "plant":  "TRI008 e TRI008bis",
                            "kwh":  875,
                            "revenues":  632.09,
-                           "client":  "SAF HOSPEDAGENS"
+                           "client":  "SAF HOSPEDAGENS",
+                           "meter":  "7030869049"
                        },
                        {
                            "period":  "07/2026",
                            "id":  "4",
+                           "plant":  "TRI002 e TRI002bis",
                            "kwh":  1158,
                            "revenues":  836.52,
-                           "client":  "JM EMPREENDIMENTOS"
+                           "client":  "JM EMPREENDIMENTOS",
+                           "meter":  "7030869065"
                        },
                        {
                            "period":  "07/2026",
                            "id":  "5",
+                           "plant":  "TRI001 e TRI001bis",
                            "kwh":  608,
                            "revenues":  439.21,
-                           "client":  "SOMBRA FLORESTA"
+                           "client":  "SOMBRA FLORESTA",
+                           "meter":  "7030869294"
                        },
                        {
                            "period":  "08/2026",
                            "id":  "1",
+                           "plant":  "TRI007 e TRI007bis",
                            "kwh":  3425,
                            "revenues":  2480.77,
-                           "client":  "ARCO-IRIS"
+                           "client":  "ARCO-IRIS",
+                           "meter":  "7030102643"
                        },
                        {
                            "period":  "08/2026",
                            "id":  "2",
+                           "plant":  "TRI003",
                            "kwh":  0,
                            "revenues":  0,
-                           "client":  "ARCO-IRIS"
+                           "client":  "ARCO-IRIS",
+                           "meter":  "7031754431"
                        },
                        {
                            "period":  "08/2026",
                            "id":  "3",
+                           "plant":  "TRI008 e TRI008bis",
                            "kwh":  3585,
                            "revenues":  2596.66,
-                           "client":  "SAF HOSPEDAGENS"
+                           "client":  "SAF HOSPEDAGENS",
+                           "meter":  "7030869049"
                        },
                        {
                            "period":  "08/2026",
                            "id":  "4",
+                           "plant":  "TRI002 e TRI002bis",
                            "kwh":  3334,
                            "revenues":  2414.86,
-                           "client":  "JM EMPREENDIMENTOS"
+                           "client":  "JM EMPREENDIMENTOS",
+                           "meter":  "7030869065"
                        },
                        {
                            "period":  "08/2026",
                            "id":  "5",
+                           "plant":  "TRI001 e TRI001bis",
                            "kwh":  3322,
                            "revenues":  2406.16,
-                           "client":  "SOMBRA FLORESTA"
+                           "client":  "SOMBRA FLORESTA",
+                           "meter":  "7030869294"
                        },
                        {
                            "period":  "09/2026",
                            "id":  "1",
+                           "plant":  "TRI007 e TRI007bis",
                            "kwh":  4699,
                            "revenues":  3436.91,
-                           "client":  "ARCO-IRIS"
+                           "client":  "ARCO-IRIS",
+                           "meter":  "7030102643"
                        },
                        {
                            "period":  "09/2026",
                            "id":  "2",
+                           "plant":  "TRI003",
                            "kwh":  0,
                            "revenues":  0,
-                           "client":  "ARCO-IRIS"
+                           "client":  "ARCO-IRIS",
+                           "meter":  "7031754431"
                        },
                        {
                            "period":  "09/2026",
                            "id":  "3",
+                           "plant":  "TRI008 e TRI008bis",
                            "kwh":  4371,
                            "revenues":  3197.01,
-                           "client":  "SAF HOSPEDAGENS"
+                           "client":  "SAF HOSPEDAGENS",
+                           "meter":  "7030869049"
                        },
                        {
                            "period":  "09/2026",
                            "id":  "4",
+                           "plant":  "TRI002 e TRI002bis",
                            "kwh":  3223,
                            "revenues":  2357.35,
-                           "client":  "JM EMPREENDIMENTOS"
+                           "client":  "JM EMPREENDIMENTOS",
+                           "meter":  "7030869065"
                        },
                        {
                            "period":  "09/2026",
                            "id":  "5",
+                           "plant":  "TRI001 e TRI001bis",
                            "kwh":  5152,
                            "revenues":  3768.24,
-                           "client":  "SOMBRA FLORESTA"
+                           "client":  "SOMBRA FLORESTA",
+                           "meter":  "7030869294"
                        },
                        {
                            "period":  "10/2026",
                            "id":  "1",
+                           "plant":  "TRI007 e TRI007bis",
                            "kwh":  4368,
                            "revenues":  3144.67,
-                           "client":  "ARCO-IRIS"
+                           "client":  "ARCO-IRIS",
+                           "meter":  "7030102643"
                        },
                        {
                            "period":  "10/2026",
                            "id":  "2",
+                           "plant":  "TRI003",
                            "kwh":  3633,
                            "revenues":  2615.52,
-                           "client":  "ARCO-IRIS"
+                           "client":  "ARCO-IRIS",
+                           "meter":  "7031754431"
                        },
                        {
                            "period":  "10/2026",
                            "id":  "3",
+                           "plant":  "TRI008 e TRI008bis",
                            "kwh":  6327,
                            "revenues":  4555.02,
-                           "client":  "SAF HOSPEDAGENS"
+                           "client":  "SAF HOSPEDAGENS",
+                           "meter":  "7030869049"
                        },
                        {
                            "period":  "10/2026",
                            "id":  "4",
+                           "plant":  "TRI002 e TRI002bis",
                            "kwh":  0,
                            "revenues":  0,
-                           "client":  "JM EMPREENDIMENTOS"
+                           "client":  "JM EMPREENDIMENTOS",
+                           "meter":  "7030869065"
                        },
                        {
                            "period":  "10/2026",
                            "id":  "5",
+                           "plant":  "TRI001 e TRI001bis",
                            "kwh":  10133,
                            "revenues":  7295.08,
-                           "client":  "SOMBRA FLORESTA"
+                           "client":  "SOMBRA FLORESTA",
+                           "meter":  "7030869294"
                        }
                    ],
     "totalTarget":  281000,
@@ -935,7 +975,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "29/10/2026 18:31",
+    "lastUpdated":  "30/10/2026 20:37",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
