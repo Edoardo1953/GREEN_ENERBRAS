@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem('green_enerbras_theme') || 'dark';
+                if (theme === 'light') {
+                    document.documentElement.classList.add('theme-light');
+                } else {
+                    document.documentElement.classList.remove('theme-light');
+                }
+            } catch(e) {}
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foto & Video Database & Show - GREEN ENERBRAS ONE</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="../style.css?v=301">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
+
+    <!-- Firebase SDKs v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <!-- Auth Guard -->
+    <script src="../auth.js?v=301"></script>
+    <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass-panel">
+            <div class="logo" style="display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; padding: 0.5rem 0.25rem;">
+                <img src="Loghi/Logo Green Enerbras 01.png" alt="GREEN ENERBRAS" style="max-width: 100%; height: auto; max-height: 105px; object-fit: contain;">
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-visibility-header">
+                    <span data-i18n="nav_menu_title">PAGINA</span>
+                    <span class="user-view-col-header" data-i18n="nav_col_partner_view"><i class="fa-solid fa-users-viewfinder"></i> USER VIEW</span>
+                </div>
+                <div class="nav-item-row" data-page="azionariato">
+                    <a href="index.html" class="nav-item"><i class="fa-solid fa-chart-pie"></i> <span data-i18n="nav_azionariato">Azionariato (LPs)</span></a>
+                </div>
+                <div class="nav-item-row" data-page="produzione">
+                    <a href="produzione.html" class="nav-item"><i class="fa-solid fa-solar-panel"></i> <span data-i18n="nav_produzione">Energia Iniettata</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="produzione" data-visible="true" onclick="Auth.togglePageVisibility('produzione')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="vendite">
+                    <a href="vendite.html" class="nav-item"><i class="fa-solid fa-money-bill-trend-up"></i> <span data-i18n="nav_vendite">Vendite Energia</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="vendite" data-visible="true" onclick="Auth.togglePageVisibility('vendite')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="impianti">
+                    <a href="impianti.html" class="nav-item"><i class="fa-solid fa-map-location-dot"></i> <span data-i18n="nav_impianti">Impianti e Mappa</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="impianti" data-visible="true" onclick="Auth.togglePageVisibility('impianti')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="documentazione">
+                    <a href="documentazione.html" class="nav-item"><i class="fa-solid fa-folder-open"></i> <span data-i18n="nav_documentazione">Documentazione</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="documentazione" data-visible="true" onclick="Auth.togglePageVisibility('documentazione')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="media">
+                    <a href="media.html" class="nav-item active"><i class="fa-solid fa-photo-film text-cyan"></i> <span data-i18n="nav_media">Foto & Video</span></a>
+                    <button type="button" class="nav-eye-btn visible" data-page="media" data-visible="true" onclick="Auth.togglePageVisibility('media')" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="banca">
+                    <a href="banca.html" class="nav-item"><i class="fa-solid fa-building-columns"></i> <span data-i18n="nav_conto">Conto Bancario</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="banca" data-visible="false" onclick="Auth.togglePageVisibility('banca')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.8rem 0;"></div>
+                <div class="nav-item-row" data-page="risultati">
+                    <a href="risultati.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> <span data-i18n="menu_risultati">Risultati</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="risultati" data-visible="false" onclick="Auth.togglePageVisibility('risultati')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="contabilita">
+                    <a href="contabilita.html" class="nav-item"><i class="fa-solid fa-book-bookmark"></i> <span data-i18n="menu_contabilita">Contabilità</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="contabilita" data-visible="false" onclick="Auth.togglePageVisibility('contabilita')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="aml">
+                    <a href="aml.html" class="nav-item"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="nav_aml">Conformità AML (LBC-FT)</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="aml" data-visible="false" onclick="Auth.togglePageVisibility('aml')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <div class="nav-item-row" data-page="strumenti">
+                    <a href="strumenti.html" class="nav-item"><i class="fa-solid fa-toolbox"></i> <span data-i18n="nav_strumenti">Strumenti</span></a>
+                    <button type="button" class="nav-eye-btn hidden" data-page="strumenti" data-visible="false" onclick="Auth.togglePageVisibility('strumenti')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                </div>
+                <a href="../user/dashboard.html" class="nav-item" style="color: #3b82f6; margin-top: 1rem; border: 1px dashed #3b82f6; justify-content: center;"><i class="fa-solid fa-right-left"></i> <span data-i18n="nav_switch_user">Switch to USER</span></a>
+                <a href="#" onclick="Auth.logout()" class="nav-item" style="color: #ef4444; margin-top: 0.5rem; justify-content: center;"><i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="nav_logout">Esci</span></a>
+                <div class="update-info">
+                    <p data-i18n="last_updated">Ultimo aggiornamento:</p>
+                    <p id="last-updated" class="text-bold">--/--/----</p>
+                    <button class="btn-refresh" onclick="window.location.reload(true)" data-i18n="btn_refresh"><i class="fa-solid fa-rotate-right"></i> Ricarica Dati</button>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header Topbar -->
+            <header class="topbar">
+                <div class="page-title-box">
+                    <h1 data-i18n="title_media">Foto & Video Database & Show</h1>
+                    <div class="page-subtitle" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" data-i18n="subtitle_media">Galleria Multimediale Ufficiale • Database Foto/Video & Diaporama Sonorizzato</div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    <div class="lang-tools-wrapper">
+                        <div class="lang-selector" style="display: flex; gap: 0.5rem; align-items: center;">
+                            <img src="https://flagcdn.com/w40/it.png" alt="IT" data-lang="it" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                            <img src="https://flagcdn.com/w40/gb.png" alt="EN" data-lang="en" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                            <img src="https://flagcdn.com/w40/fr.png" alt="FR" data-lang="fr" class="lang-flag" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; object-fit: cover;">
+                        </div>
+                        <button type="button" class="btn-theme-toggle" onclick="ThemeManager.toggle()" title="Cambia tema: Scuro / Grigio chiaro">
+                            <i class="fa-solid fa-wrench"></i> <span class="theme-toggle-text">TOOLS</span>
+                        </button>
+                    </div>
+                    <div class="user-profile">
+                        <img src="https://ui-avatars.com/api/?name=Edoardo+Tubia&background=3b82f6&color=fff" alt="Admin" class="avatar">
+                        <span>Edoardo Tubia (Admin)</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- MEDIA DASHBOARD BANNER -->
+            <div class="media-banner-panel glass-panel">
+                <div class="media-banner-left">
+                    <div class="media-banner-badge" data-i18n="media_banner_badge">
+                        <i class="fa-solid fa-photo-film text-cyan"></i> DATABASE MULTIMEDIALE • GREEN ENERBRAS
+                    </div>
+                    <h2 class="media-banner-title" data-i18n="media_banner_title">
+                        Galleria & Diaporama Sonorizzato
+                    </h2>
+                    <p class="media-banner-desc" data-i18n="media_banner_desc">
+                        Esplora in alta definizione le foto dei Parchi Solari, delle Usine e delle installazioni, i video tour e goditi il diaporama interattivo a tutto schermo con musica di sottofondo MP3.
+                    </p>
+                    <div class="media-banner-stats">
+                        <div class="media-stat-item">
+                            <span class="media-stat-val text-cyan" id="statTotalMedia">26</span>
+                            <span class="media-stat-lbl" data-i18n="media_stat_total">Totale File</span>
+                        </div>
+                        <div class="media-stat-item">
+                            <span class="media-stat-val text-green" id="statTotalPhotos">24</span>
+                            <span class="media-stat-lbl" data-i18n="media_stat_photos">Foto HD</span>
+                        </div>
+                        <div class="media-stat-item">
+                            <span class="media-stat-val text-orange" id="statTotalVideos">2</span>
+                            <span class="media-stat-lbl" data-i18n="media_stat_videos">Video Tour</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="media-banner-right">
+                    <!-- Prominent Diaporama Launcher Button -->
+                    <button type="button" class="btn-diaporama-main-launch" onclick="startDiaporama()">
+                        <i class="fa-solid fa-play"></i>
+                        <div style="text-align: left;">
+                            <div style="font-size: 15px; font-weight: 800;" data-i18n="media_btn_start_slideshow">Avvia Diaporama</div>
+                            <div style="font-size: 11px; opacity: 0.9; font-weight: 500;" data-i18n="media_btn_start_slideshow_sub">Schermo intero • Avanzamento auto & Musica MP3</div>
+                        </div>
+                    </button>
+
+                    <!-- Upload Button -->
+                    <button type="button" class="btn btn-secondary btn-block" onclick="openUploadModal()" style="font-size: 12.5px; padding: 10px 14px; justify-content: center; display: flex; align-items: center; gap: 8px; border-radius: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; cursor: pointer;">
+                        <i class="fa-solid fa-cloud-arrow-up text-cyan"></i>
+                        <span data-i18n="media_btn_upload">Carica Foto / Video / MP3</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- MUSIC & CONTROLS TOOLBAR -->
+            <div class="media-audio-toolbar glass-panel">
+                <div class="media-audio-player-box">
+                    <div class="music-wave-bars">
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <button type="button" class="btn-audio-play-round" onclick="toggleMusicPlayback()" title="Riproduci / Pausa musica">
+                        <i class="fa-solid fa-play" id="btnAudioMainIcon"></i>
+                    </button>
+                    <div class="music-info-meta">
+                        <div class="music-track-label" data-i18n="media_music_label">Musica Diaporama :</div>
+                        <div class="music-track-title" id="headerTrackTitle">Norman Brown - Celebration</div>
+                    </div>
+                    <div class="music-track-select-wrap">
+                        <select id="headerMusicTrackSelect" class="form-control form-control-sm" onchange="onAudioTrackChange(this.value)" style="max-width: 280px; font-size: 12px; background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 5px 8px; border-radius: 6px;">
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="triggerCustomAudioUpload()" title="Carica un MP3 personale" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 5px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-music text-orange"></i> <span style="font-size: 11px;" data-i18n="media_btn_add_mp3">Aggiungi MP3</span>
+                    </button>
+                    <input type="file" id="customAudioInput" accept="audio/mp3,audio/*" style="display: none;" onchange="handleCustomAudioFile(this)">
+                </div>
+
+                <div class="media-toolbar-right">
+                    <button type="button" class="btn-restore-deleted" onclick="restoreAllDeletedMedia()" title="Ripristina tutti i file multimediali rimossi">
+                        <i class="fa-solid fa-rotate-left"></i> <span data-i18n="media_btn_restore">Ripristina File Rimossi</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- FILTER TOOLBAR & SEARCH -->
+            <div class="media-filters-bar glass-panel">
+                <div class="media-filter-group">
+                    <button type="button" class="media-type-tab active" data-type="all" onclick="setTypeFilter('all', this)">
+                        <i class="fa-solid fa-border-all"></i> <span data-i18n="media_tab_all">Tutto</span>
+                    </button>
+                    <button type="button" class="media-type-tab" data-type="photo" onclick="setTypeFilter('photo', this)">
+                        <i class="fa-solid fa-image"></i> <span data-i18n="media_tab_photos">Foto</span>
+                    </button>
+                    <button type="button" class="media-type-tab" data-type="video" onclick="setTypeFilter('video', this)">
+                        <i class="fa-solid fa-video"></i> <span data-i18n="media_tab_videos">Video</span>
+                    </button>
+                </div>
+
+                <div class="media-villa-pills">
+                    <span style="font-size: 11.5px; color: var(--text-muted); font-weight: 700; margin-right: 4px;" data-i18n="media_filter_sections">Sezione :</span>
+                    <button type="button" class="media-villa-pill active" data-villa="all" onclick="setVillaFilter('all', this)" data-i18n="media_filter_all">Tutte</button>
+                    <button type="button" class="media-villa-pill" data-villa="Impianti Solari" onclick="setVillaFilter('Impianti Solari', this)">Impianti Solari</button>
+                    <button type="button" class="media-villa-pill" data-villa="Parchi Solari" onclick="setVillaFilter('Parchi Solari', this)">Parchi Solari</button>
+                    <button type="button" class="media-villa-pill" data-villa="Tri Star" onclick="setVillaFilter('Tri Star', this)">Tri Star</button>
+                    <button type="button" class="media-villa-pill" data-villa="Generale" onclick="setVillaFilter('Generale', this)">Generale</button>
+                </div>
+
+                <div class="media-search-wrap">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="mediaSearchInput" class="form-control form-control-sm media-search-input" placeholder="Cerca per titolo, sezione..." data-i18n-placeholder="media_search_placeholder" oninput="onSearchInput(this.value)">
+                </div>
+            </div>
+
+            <!-- DEDICATED VISIBLE DRAG & DROP ZONE -->
+            <div class="media-inline-dropzone glass-panel" id="inlineDropZone" onclick="if(event.target.tagName !== 'SELECT' && event.target.tagName !== 'LABEL') document.getElementById('inlineMediaFileInput').click()">
+                <div class="inline-dropzone-content">
+                    <div class="inline-dropzone-left">
+                        <div class="inline-dropzone-icon-box">
+                            <i class="fa-solid fa-cloud-arrow-up text-cyan"></i>
+                        </div>
+                        <div class="inline-dropzone-text">
+                            <h4 data-i18n="media_dnd_zone_title">Area Drag & Drop - Carica Foto e Video</h4>
+                            <p data-i18n="media_dnd_zone_desc">Trascina e rilascia qui i tuoi file multimediali (Foto JPG/PNG, Video MP4, Audio MP3) oppure usa il pulsante per sfogliare i file dal computer.</p>
+                        </div>
+                    </div>
+                    <div class="inline-dropzone-actions" onclick="event.stopPropagation()">
+                        <div class="inline-dropzone-select-wrap">
+                            <label for="inlineUploadSectionSelect" style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 2px;" data-i18n="media_label_section">Sezione :</label>
+                            <select id="inlineUploadSectionSelect" class="form-control form-control-sm" style="font-size: 12px; padding: 6px 10px; border-radius: 6px; background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.2);">
+                                <option value="Impianti Solari">Impianti Solari</option>
+                                <option value="Parchi Solari">Parchi Solari</option>
+                                <option value="Tri Star">Tri Star</option>
+                                <option value="Generale">Generale</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-inline-upload" onclick="document.getElementById('inlineMediaFileInput').click()">
+                            <i class="fa-solid fa-folder-open"></i> <span data-i18n="media_btn_select_files">Seleziona / Carica File</span>
+                        </button>
+                        <input type="file" id="inlineMediaFileInput" multiple accept="image/*,video/*,audio/*" style="display: none;" onchange="handleInlineFileInput(this)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="media-dnd-hint">
+                <i class="fa-solid fa-grip-vertical text-cyan"></i>
+                <span data-i18n="media_dnd_hint"><strong>Suggerimento :</strong> Puoi trascinare e riordinare foto e video per personalizzare l'ordine della galleria e del diaporama. Clicca sull'icona matita per rinominare o cambiare sezione.</span>
+            </div>
+
+            <!-- MAIN MEDIA GRID -->
+            <div id="mediaGrid" class="media-grid-container">
+                <!-- Media Cards dynamically populated by media_app.js -->
+            </div>
+        </main>
+    </div>
+
+    <!-- ==========================================================================
+         FULLSCREEN DIAPORAMA (SLIDESHOW) OVERLAY WITH AUDIO MP3
+         ========================================================================== -->
+    <div id="diaporamaOverlay" class="diaporama-fullscreen-overlay" style="display: none;">
+        <!-- Top Controls Bar -->
+        <div class="diaporama-top-bar">
+            <div class="diaporama-info">
+                <span class="badge badge-emerald" id="diaporamaVilla">Impianti Solari</span>
+                <span class="diaporama-title" id="diaporamaTitle">Titolo</span>
+                <span class="diaporama-counter" id="diaporamaCounter">Slide 1 / 24</span>
+            </div>
+
+            <!-- Music Bar in Diaporama -->
+            <div class="diaporama-music-bar">
+                <div class="music-wave-bars">
+                    <span></span><span></span><span></span>
+                </div>
+                <span class="diaporama-track-name" id="diaporamaTrackTitle">Norman Brown - Celebration</span>
+                <button type="button" class="btn-icon-subtle" onclick="toggleMusicPlayback()" title="Riproduci/Pausa musica" style="background:none; border:none; color:#fff; cursor:pointer; padding:4px;">
+                    <i class="fa-solid fa-play-pause"></i>
+                </button>
+                <button type="button" id="btnToggleMute" class="btn-icon-subtle" onclick="toggleMusicMute()" title="Disattiva audio" style="background:none; border:none; color:#fff; cursor:pointer; padding:4px;">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <input type="range" min="0" max="1" step="0.05" value="0.65" class="diaporama-vol-slider" oninput="onAudioVolumeChange(this.value)" title="Volume">
+                <select id="diaporamaTrackSelect" class="form-control form-control-sm diaporama-track-select" onchange="onAudioTrackChange(this.value)" style="background: rgba(0,0,0,0.5); color:#fff; border: 1px solid rgba(255,255,255,0.2); border-radius:4px;">
+                </select>
+            </div>
+
+            <!-- Diaporama Speed & Close -->
+            <div class="diaporama-top-actions">
+                <div class="diaporama-speed-select-wrap">
+                    <span style="font-size: 11px; color: #94a3b8;" data-i18n="media_speed">Velocità :</span>
+                    <select class="form-control form-control-sm" onchange="setDiaporamaSpeed(this.value)" style="width: 75px; font-size: 11px; padding: 2px 4px; height: 26px; background: rgba(0,0,0,0.5); color:#fff; border: 1px solid rgba(255,255,255,0.2); border-radius:4px;">
+                        <option value="3000">3s</option>
+                        <option value="4000" selected>4s</option>
+                        <option value="6000">6s</option>
+                        <option value="9000">9s</option>
+                    </select>
+                </div>
+                <button type="button" class="btn-diaporama-icon" onclick="toggleDiaporamaFullscreen()" title="Schermo intero (F)">
+                    <i class="fa-solid fa-expand"></i>
+                </button>
+                <button type="button" class="btn-diaporama-close" onclick="closeDiaporama()" title="Chiudi Diaporama (Esc)">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Slide Progress Bar -->
+        <div class="diaporama-progress-track">
+            <div id="diaporamaProgress" class="diaporama-progress-fill"></div>
+        </div>
+
+        <!-- Main Slide Image Area -->
+        <div class="diaporama-stage">
+            <button type="button" class="diaporama-arrow-btn arrow-prev" onclick="prevSlide()" title="Foto precedente (Freccia Sinistra)">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+
+            <div class="diaporama-img-wrap">
+                <img id="diaporamaImg" src="" alt="Diaporama Green Enerbras" class="diaporama-slide-img">
+            </div>
+
+            <button type="button" class="diaporama-arrow-btn arrow-next" onclick="nextSlide()" title="Foto successiva (Freccia Destra)">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Bottom Play/Pause Controls Bar -->
+        <div class="diaporama-bottom-bar">
+            <button type="button" class="btn-diaporama-control" onclick="prevSlide()" title="Precedente">
+                <i class="fa-solid fa-backward-step"></i>
+            </button>
+            <button type="button" id="btnDiaporamaPlay" class="btn-diaporama-control btn-play-main" onclick="toggleDiaporamaPlay()" title="Riproduci / Pausa (Spazio)">
+                <i class="fa-solid fa-pause"></i>
+            </button>
+            <button type="button" class="btn-diaporama-control" onclick="nextSlide()" title="Successiva">
+                <i class="fa-solid fa-forward-step"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         LIGHTBOX MODAL (PHOTO UNIQUE)
+         ========================================================================== -->
+    <div id="photoLightboxModal" class="modal-backdrop" style="display: none;">
+        <div class="lightbox-container">
+            <div class="lightbox-header">
+                <div>
+                    <span class="badge badge-emerald" id="lightboxVilla">Impianti Solari</span>
+                    <span class="lightbox-title" id="lightboxTitle">Titolo foto</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="lightbox-counter" id="lightboxCounter">1 / 24</span>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="startDiaporama(allPhotos[currentLightboxIndex].id)" title="Avvia diaporama da questa foto" style="background: rgba(16,185,129,0.2); border: 1px solid #10b981; color:#fff; padding: 4px 10px; border-radius: 6px; cursor:pointer;">
+                        <i class="fa-solid fa-play"></i> <span data-i18n="media_diaporama">Diaporama</span>
+                    </button>
+                    <a id="lightboxDownloadBtn" href="" download class="btn btn-secondary btn-sm" title="Scarica foto" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color:#fff; padding: 4px 10px; border-radius: 6px; text-decoration:none;">
+                        <i class="fa-solid fa-download"></i>
+                    </a>
+                    <button type="button" class="btn-icon" onclick="closeLightbox()" title="Chiudi (Esc)" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer; padding: 4px 8px;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="lightbox-body">
+                <button type="button" class="lightbox-nav-btn nav-prev" onclick="prevLightboxPhoto()" title="Precedente">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <div class="lightbox-img-wrap">
+                    <img id="lightboxImg" src="" alt="Ingrandimento foto" class="lightbox-main-img">
+                </div>
+                <button type="button" class="lightbox-nav-btn nav-next" onclick="nextLightboxPhoto()" title="Successiva">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         VIDEO THEATER MODAL
+         ========================================================================== -->
+    <div id="videoTheaterModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-card glass-panel" style="max-width: 960px; width: 95%;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin:0;">
+                    <i class="fa-solid fa-video text-cyan"></i>
+                    <span id="videoTheaterTitle">Video Tour</span>
+                </h3>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <a id="videoTheaterDownloadBtn" href="" download class="btn btn-secondary btn-sm" title="Scarica video" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color:#fff; padding: 4px 10px; border-radius: 6px; text-decoration:none;">
+                        <i class="fa-solid fa-download"></i> <span data-i18n="media_download">Scarica</span>
+                    </a>
+                    <button type="button" class="btn-icon" onclick="closeVideoTheater()" title="Chiudi" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer; padding: 4px 8px;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-body" style="padding: 1rem; background: #000000; text-align: center; border-radius: 0 0 14px 14px;">
+                <video id="videoTheaterPlayer" controls playsinline style="width: 100%; max-height: 72vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);"></video>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         UPLOAD MODAL (DRAG & DROP)
+         ========================================================================== -->
+    <div id="uploadModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-card glass-panel" style="max-width: 580px; width: 95%;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin:0;">
+                    <i class="fa-solid fa-cloud-arrow-up text-cyan"></i> <span data-i18n="media_upload_modal_title">Carica Foto, Video o Audio</span>
+                </h3>
+                <button type="button" class="btn-icon" onclick="closeUploadModal()" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem;">
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;" data-i18n="media_label_section">Associa a una Sezione / Impianto :</label>
+                    <select id="uploadVillaSelect" class="form-control" style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff;">
+                        <option value="Impianti Solari">Impianti Solari</option>
+                        <option value="Parchi Solari">Parchi Solari</option>
+                        <option value="Tri Star">Tri Star</option>
+                        <option value="Generale">Generale</option>
+                    </select>
+                </div>
+
+                <div class="media-dropzone" onclick="document.getElementById('hiddenUploadInput').click()" 
+                     ondragover="event.preventDefault(); this.classList.add('dropzone-hover')" 
+                     ondragleave="this.classList.remove('dropzone-hover')" 
+                     ondrop="event.preventDefault(); this.classList.remove('dropzone-hover'); if (event.dataTransfer.files) processUploadedFiles(Array.from(event.dataTransfer.files));">
+                    <i class="fa-solid fa-photo-film dropzone-icon"></i>
+                    <div style="font-weight: 700; font-size: 14px; margin-top: 8px; color: var(--text-main);" data-i18n="media_dropzone_title">
+                        Trascina e rilascia qui i tuoi file
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;" data-i18n="media_dropzone_desc">
+                        Foto (JPG, PNG), Video (MP4) o Brani Musicali (MP3)
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color:#fff; padding: 6px 14px; border-radius:6px; cursor:pointer;">
+                        <i class="fa-solid fa-folder-open"></i> <span data-i18n="media_browse_btn">Sfoglia i file</span>
+                    </button>
+                    <input type="file" id="hiddenUploadInput" multiple accept="image/*,video/*,audio/*" style="display: none;" onchange="handleFileInputChange(this)">
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 1rem 1.5rem; justify-content: flex-end; display:flex; border-top: 1px solid rgba(255,255,255,0.1);">
+                <button type="button" class="btn btn-secondary" onclick="closeUploadModal()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color:#fff; padding: 6px 16px; border-radius:6px; cursor:pointer;" data-i18n="media_close">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         EDIT TITLE MODAL
+         ========================================================================== -->
+    <div id="editTitleModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-card glass-panel" style="max-width: 480px; width: 95%;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin:0;">
+                    <i class="fa-solid fa-pen-to-square text-cyan"></i> <span data-i18n="media_edit_title_modal">Modifica Titolo & Sezione</span>
+                </h3>
+                <button type="button" class="btn-icon" onclick="closeEditTitleModal()" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.25rem;">
+                <input type="hidden" id="modalEditMediaId" value="">
+                <div style="margin-bottom: 1rem;">
+                    <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="media_label_title">Titolo del file :</label>
+                    <input type="text" id="modalEditTitleInput" class="form-control" placeholder="Inserisci il titolo..." onkeydown="if(event.key==='Enter') saveModalTitle()" style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff;">
+                </div>
+                <div>
+                    <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="media_label_section">Sezione assegnata :</label>
+                    <select id="modalEditVillaSelect" class="form-control" style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff;">
+                        <option value="Impianti Solari">Impianti Solari</option>
+                        <option value="Parchi Solari">Parchi Solari</option>
+                        <option value="Tri Star">Tri Star</option>
+                        <option value="Generale">Generale</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 0.85rem 1.25rem; justify-content: flex-end; gap: 8px; display:flex; border-top: 1px solid rgba(255,255,255,0.1);">
+                <button type="button" class="btn btn-secondary" onclick="closeEditTitleModal()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color:#fff; padding: 6px 14px; border-radius:6px; cursor:pointer;" data-i18n="media_cancel">Annulla</button>
+                <button type="button" class="btn btn-primary" onclick="saveModalTitle()" style="background: linear-gradient(135deg, #10b981, #059669); border:none; color:#fff; padding: 6px 16px; border-radius:6px; cursor:pointer; font-weight:600;">
+                    <i class="fa-solid fa-check"></i> <span data-i18n="media_save">Salva</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Persistent Audio Element -->
+    <audio id="diaporamaAudio" preload="auto" loop></audio>
+
+    <!-- Core Scripts -->
+    <script src="media_data.js?v=301"></script>
+    <script src="../i18n.js?v=301"></script>
+    <script src="media_app.js?v=301"></script>
+</body>
+</html>

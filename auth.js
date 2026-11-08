@@ -89,6 +89,7 @@ const DEFAULT_PAGE_VISIBILITY = {
     vendite: true,
     impianti: true,
     documentazione: true,
+    media: true,
     reporting: true,
     tristar: true,
     azionariato: false,
@@ -114,6 +115,7 @@ function getPageKeyFromElement(el) {
     if (href.includes('vendite.html') || i18n === 'nav_vendite' || innerI18n === 'nav_vendite' || text.includes('vendite')) return 'vendite';
     if (href.includes('impianti.html') || i18n === 'nav_impianti' || innerI18n === 'nav_impianti' || text.includes('impianti')) return 'impianti';
     if (href.includes('documentazione.html') || i18n === 'nav_documentazione' || innerI18n === 'nav_documentazione' || text.includes('documentazione')) return 'documentazione';
+    if (href.includes('media.html') || i18n === 'nav_media' || innerI18n === 'nav_media' || text.includes('foto & video') || text.includes('photo & video')) return 'media';
     if (href.includes('reporting.html') || i18n === 'nav_reporting' || innerI18n === 'nav_reporting' || text.includes('reporting')) return 'reporting';
     if (href.includes('tristar.html') || i18n === 'nav_tristar' || innerI18n === 'nav_tristar' || text.includes('tri star')) return 'tristar';
     if (href.includes('banca.html') || i18n === 'nav_conto' || innerI18n === 'nav_conto' || text.includes('conto bancario')) return 'banca';
@@ -131,6 +133,7 @@ function getCurrentPageKey() {
     if (path.includes('vendite.html')) return 'vendite';
     if (path.includes('impianti.html')) return 'impianti';
     if (path.includes('documentazione.html')) return 'documentazione';
+    if (path.includes('media.html')) return 'media';
     if (path.includes('reporting.html')) return 'reporting';
     if (path.includes('tristar.html')) return 'tristar';
     if (path.includes('banca.html')) return 'banca';
