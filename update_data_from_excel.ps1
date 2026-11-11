@@ -1122,4 +1122,154 @@ window.getAvailableMonths = function() {
     Write-Host "File data.js aggiornato con successo!"
 }
 
+function ConvertTo-MediaUrl([string]$relativePath) {
+    $segments = $relativePath.Replace('\', '/').Split('/')
+    $encoded = $segments | ForEach-Object { [System.Uri]::EscapeDataString($_) }
+    return ($encoded -join '/')
+}
+
+function Update-GreenMediaData {
+    $projectDir = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+    $mediaRoot = Join-Path $projectDir "uploads\Foto, video e musica"
+    $fotoDir = Join-Path $mediaRoot "FOTO"
+    $videoDir = Join-Path $mediaRoot "VIDEO"
+    $musicaDir = Join-Path $mediaRoot "MUSICA"
+
+    $knownTitles = @{
+        "slide1.jpg" = "Parco Solare TriStar - Vista Impianto 1"
+        "slide2.jpg" = "Parco Solare TriStar - Moduli Fotovoltaici"
+        "slide3.jpg" = "Green Enerbras - Panorama Campi Solari"
+    }
+
+    $photos = @()
+    $videos = @()
+    $audio = @()
+
+    # 1. Scan FOTO
+    $photoExts = @('.jpg', '.jpeg', '.png', '.webp', '.gif')
+    if (Test-Path $fotoDir) {
+        $photoFiles = Get-ChildItem -Path $fotoDir -Recurse -File | Where-Object { $photoExts -contains $_.Extension.ToLower() } | Sort-Object FullName
+        $idx = 1
+        foreach ($f in $photoFiles) {
+            $relFromProject = $f.FullName.Substring($projectDir.Length + 1).Replace('\', '/')
+            $relFromFoto = $f.FullName.Substring($fotoDir.Length + 1)
+            $parts = $relFromFoto.Split('\')
+            $dossier = if ($parts.Count -gt 1) { $parts[0] } else { "Dossier App" }
+            $title = if ($knownTitles.ContainsKey($f.Name.ToLower())) { $knownTitles[$f.Name.ToLower()] } else { [System.IO.Path]::GetFileNameWithoutExtension($f.Name) }
+            $id = if ($f.Name.ToLower() -match '^slide(\d+)\.') { "ge_photo_" + $Matches[1] } else { "disk_photo_" + $idx }
+
+            $photos += [PSCustomObject]@{
+                id = $id
+                filename = $f.Name
+                title = $title
+                path = $relFromProject
+                url = (ConvertTo-MediaUrl $relFromProject)
+                dossier = $dossier
+                villa = $dossier
+                size_mb = [Math]::Round($f.Length / 1MB, 2)
+            }
+            $idx++
+        }
+    }
+
+    # Fallback to uploads/slide*.jpg if FOTO dir had none
+    if ($photos.Count -eq 0) {
+        $uploadsDir = Join-Path $projectDir "uploads"
+        if (Test-Path $uploadsDir) {
+            $fallbackSlides = Get-ChildItem -Path $uploadsDir -File | Where-Object { $_.Name -match '^slide\d+\.(jpg|jpeg|png)$' } | Sort-Object Name
+            foreach ($f in $fallbackSlides) {
+                $relFromProject = $f.FullName.Substring($projectDir.Length + 1).Replace('\', '/')
+                $title = if ($knownTitles.ContainsKey($f.Name.ToLower())) { $knownTitles[$f.Name.ToLower()] } else { [System.IO.Path]::GetFileNameWithoutExtension($f.Name) }
+                $id = if ($f.Name.ToLower() -match '^slide(\d+)\.') { "ge_photo_" + $Matches[1] } else { "disk_photo_" + ($photos.Count + 1) }
+                $photos += [PSCustomObject]@{
+                    id = $id
+                    filename = $f.Name
+                    title = $title
+                    path = $relFromProject
+                    url = (ConvertTo-MediaUrl $relFromProject)
+                    dossier = "Dossier App"
+                    villa = "Dossier App"
+                    size_mb = [Math]::Round($f.Length / 1MB, 2)
+                }
+            }
+        }
+    }
+
+    # 2. Scan VIDEO
+    $videoExts = @('.mp4', '.mov', '.webm', '.m4v')
+    if (Test-Path $videoDir) {
+        $videoFiles = Get-ChildItem -Path $videoDir -Recurse -File | Where-Object { $videoExts -contains $_.Extension.ToLower() } | Sort-Object FullName
+        $idx = 1
+        foreach ($f in $videoFiles) {
+            $relFromProject = $f.FullName.Substring($projectDir.Length + 1).Replace('\', '/')
+            $relFromVideo = $f.FullName.Substring($videoDir.Length + 1)
+            $parts = $relFromVideo.Split('\')
+            $dossier = if ($parts.Count -gt 1) { $parts[0] } else { "Video Tour" }
+            $videos += [PSCustomObject]@{
+                id = "video_" + $idx
+                filename = $f.Name
+                title = [System.IO.Path]::GetFileNameWithoutExtension($f.Name)
+                path = $relFromProject
+                url = (ConvertTo-MediaUrl $relFromProject)
+                dossier = $dossier
+                villa = $dossier
+                size_mb = [Math]::Round($f.Length / 1MB, 2)
+            }
+            $idx++
+        }
+    }
+
+    # 3. Scan MUSICA
+    $audioExts = @('.mp3', '.m4a', '.wav')
+    if (Test-Path $musicaDir) {
+        $audioFiles = Get-ChildItem -Path $musicaDir -Recurse -File | Where-Object { $audioExts -contains $_.Extension.ToLower() } | Sort-Object FullName
+        $idx = 1
+        foreach ($f in $audioFiles) {
+            $relFromProject = $f.FullName.Substring($projectDir.Length + 1).Replace('\', '/')
+            $relFromMusica = $f.FullName.Substring($musicaDir.Length + 1)
+            $parts = $relFromMusica.Split('\')
+            $album = if ($parts.Count -gt 1) { $parts[0] } else { "Musica Diaporama" }
+            $audio += [PSCustomObject]@{
+                id = "audio_" + $idx
+                filename = $f.Name
+                title = [System.IO.Path]::GetFileNameWithoutExtension($f.Name)
+                album = $album
+                path = $relFromProject
+                url = (ConvertTo-MediaUrl $relFromProject)
+                size_mb = [Math]::Round($f.Length / 1MB, 2)
+            }
+            $idx++
+        }
+    }
+
+    $photosJson = if ($photos.Count -eq 1) { "[" + ($photos[0] | ConvertTo-Json -Depth 4) + "]" } elseif ($photos.Count -eq 0) { "[]" } else { ($photos | ConvertTo-Json -Depth 4) }
+    $videosJson = if ($videos.Count -eq 1) { "[" + ($videos[0] | ConvertTo-Json -Depth 4) + "]" } elseif ($videos.Count -eq 0) { "[]" } else { ($videos | ConvertTo-Json -Depth 4) }
+    $audioJson = if ($audio.Count -eq 1) { "[" + ($audio[0] | ConvertTo-Json -Depth 4) + "]" } elseif ($audio.Count -eq 0) { "[]" } else { ($audio | ConvertTo-Json -Depth 4) }
+
+    $jsContent = @"
+/**
+ * GREEN_ENERBRAS - Media Data Catalog
+ * Auto-generated from uploads/Foto, video e musica/
+ */
+
+const GREEN_MEDIA_DATA = {
+    photos: $photosJson,
+    videos: $videosJson,
+    audio: $audioJson
+};
+
+if (typeof window !== 'undefined') {
+    window.GREEN_MEDIA_DATA = GREEN_MEDIA_DATA;
+}
+"@
+
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    $rootMediaPath = Join-Path $projectDir "media_data.js"
+    $adminMediaPath = Join-Path $projectDir "admin\media_data.js"
+    [System.IO.File]::WriteAllText($rootMediaPath, $jsContent, $utf8NoBom)
+    [System.IO.File]::WriteAllText($adminMediaPath, $jsContent, $utf8NoBom)
+    Write-Host "Catalogo Media aggiornato: $($photos.Count) foto, $($videos.Count) video, $($audio.Count) brani."
+}
+
 Update-GreenEnerbrasData
+Update-GreenMediaData

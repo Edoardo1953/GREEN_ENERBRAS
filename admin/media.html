@@ -21,7 +21,7 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Stylesheet -->
-    <link rel="stylesheet" href="../style.css?v=301">
+    <link rel="stylesheet" href="../style.css?v=303">
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
 
@@ -30,7 +30,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <!-- Auth Guard -->
-    <script src="../auth.js?v=301"></script>
+    <script src="../auth.js?v=303"></script>
     <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
 </head>
 <body>
@@ -106,7 +106,7 @@
             <header class="topbar">
                 <div class="page-title-box">
                     <h1 data-i18n="title_media">Foto & Video Database & Show</h1>
-                    <div class="page-subtitle" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" data-i18n="subtitle_media">Galleria Multimediale Ufficiale • Database Foto/Video & Diaporama Sonorizzato</div>
+                    <div class="page-subtitle" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" data-i18n="subtitle_media">Galleria Multimediale Ufficiale • Dossier Foto, Slideshow & Video Tour</div>
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 1.5rem;">
@@ -134,39 +134,39 @@
                         <i class="fa-solid fa-photo-film text-cyan"></i> DATABASE MULTIMEDIALE • GREEN ENERBRAS
                     </div>
                     <h2 class="media-banner-title" data-i18n="media_banner_title">
-                        Galleria & Diaporama Sonorizzato
+                        Galleria Foto, Dossier & Video Tour
                     </h2>
                     <p class="media-banner-desc" data-i18n="media_banner_desc">
-                        Esplora in alta definizione le foto dei Parchi Solari, delle Usine e delle installazioni, i video tour e goditi il diaporama interattivo a tutto schermo con musica di sottofondo MP3.
+                        Organizza le foto in Dossier, avvia lo Slideshow scegliendo un Dossier o selezionando più foto insieme con musica MP3. I video vengono riprodotti singolarmente separati dallo slideshow.
                     </p>
                     <div class="media-banner-stats">
                         <div class="media-stat-item">
-                            <span class="media-stat-val text-cyan" id="statTotalMedia">26</span>
+                            <span class="media-stat-val text-cyan" id="statTotalMedia">0</span>
                             <span class="media-stat-lbl" data-i18n="media_stat_total">Totale File</span>
                         </div>
                         <div class="media-stat-item">
-                            <span class="media-stat-val text-green" id="statTotalPhotos">24</span>
+                            <span class="media-stat-val text-green" id="statTotalPhotos">0</span>
                             <span class="media-stat-lbl" data-i18n="media_stat_photos">Foto HD</span>
                         </div>
                         <div class="media-stat-item">
-                            <span class="media-stat-val text-orange" id="statTotalVideos">2</span>
+                            <span class="media-stat-val text-orange" id="statTotalVideos">0</span>
                             <span class="media-stat-lbl" data-i18n="media_stat_videos">Video Tour</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="media-banner-right">
-                    <!-- Prominent Diaporama Launcher Button -->
+                    <!-- Prominent Diaporama Launcher Button (Photos Only) -->
                     <button type="button" class="btn-diaporama-main-launch" onclick="startDiaporama()">
                         <i class="fa-solid fa-play"></i>
                         <div style="text-align: left;">
-                            <div style="font-size: 15px; font-weight: 800;" data-i18n="media_btn_start_slideshow">Avvia Diaporama</div>
-                            <div style="font-size: 11px; opacity: 0.9; font-weight: 500;" data-i18n="media_btn_start_slideshow_sub">Schermo intero • Avanzamento auto & Musica MP3</div>
+                            <div style="font-size: 15px; font-weight: 800;" data-i18n="media_btn_start_slideshow">Avvia Slideshow Foto</div>
+                            <div id="slideshowLaunchScopeSub" style="font-size: 11px; opacity: 0.92; font-weight: 500;">Solo Foto • Dossier o Selezione + MP3</div>
                         </div>
                     </button>
 
                     <!-- Upload Button -->
-                    <button type="button" class="btn btn-secondary btn-block" onclick="openUploadModal()" style="font-size: 12.5px; padding: 10px 14px; justify-content: center; display: flex; align-items: center; gap: 8px; border-radius: 8px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; cursor: pointer;">
+                    <button type="button" class="btn-banner-upload" onclick="openUploadModal()">
                         <i class="fa-solid fa-cloud-arrow-up text-cyan"></i>
                         <span data-i18n="media_btn_upload">Carica Foto / Video / MP3</span>
                     </button>
@@ -183,14 +183,14 @@
                         <i class="fa-solid fa-play" id="btnAudioMainIcon"></i>
                     </button>
                     <div class="music-info-meta">
-                        <div class="music-track-label" data-i18n="media_music_label">Musica Diaporama :</div>
-                        <div class="music-track-title" id="headerTrackTitle">Norman Brown - Celebration</div>
+                        <div class="music-track-label" data-i18n="media_music_label">Musica Slideshow :</div>
+                        <div class="music-track-title" id="headerTrackTitle">Musica Diaporama</div>
                     </div>
                     <div class="music-track-select-wrap">
-                        <select id="headerMusicTrackSelect" class="form-control form-control-sm" onchange="onAudioTrackChange(this.value)" style="max-width: 280px; font-size: 12px; background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 5px 8px; border-radius: 6px;">
+                        <select id="headerMusicTrackSelect" class="form-control form-control-sm media-select-styled" onchange="onAudioTrackChange(this.value)" style="max-width: 280px;">
                         </select>
                     </div>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="triggerCustomAudioUpload()" title="Carica un MP3 personale" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 5px 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                    <button type="button" class="btn-media-subtle" onclick="triggerCustomAudioUpload()" title="Carica un MP3 personale">
                         <i class="fa-solid fa-music text-orange"></i> <span style="font-size: 11px;" data-i18n="media_btn_add_mp3">Aggiungi MP3</span>
                     </button>
                     <input type="file" id="customAudioInput" accept="audio/mp3,audio/*" style="display: none;" onchange="handleCustomAudioFile(this)">
@@ -210,80 +210,174 @@
                         <i class="fa-solid fa-border-all"></i> <span data-i18n="media_tab_all">Tutto</span>
                     </button>
                     <button type="button" class="media-type-tab" data-type="photo" onclick="setTypeFilter('photo', this)">
-                        <i class="fa-solid fa-image"></i> <span data-i18n="media_tab_photos">Foto</span>
+                        <i class="fa-solid fa-image"></i> <span data-i18n="media_tab_photos">Solo Foto</span>
                     </button>
                     <button type="button" class="media-type-tab" data-type="video" onclick="setTypeFilter('video', this)">
-                        <i class="fa-solid fa-video"></i> <span data-i18n="media_tab_videos">Video</span>
+                        <i class="fa-solid fa-video"></i> <span data-i18n="media_tab_videos">Solo Video</span>
                     </button>
                 </div>
 
-                <div class="media-villa-pills">
-                    <span style="font-size: 11.5px; color: var(--text-muted); font-weight: 700; margin-right: 4px;" data-i18n="media_filter_sections">Sezione :</span>
-                    <button type="button" class="media-villa-pill active" data-villa="all" onclick="setVillaFilter('all', this)" data-i18n="media_filter_all">Tutte</button>
-                    <button type="button" class="media-villa-pill" data-villa="Impianti Solari" onclick="setVillaFilter('Impianti Solari', this)">Impianti Solari</button>
-                    <button type="button" class="media-villa-pill" data-villa="Parchi Solari" onclick="setVillaFilter('Parchi Solari', this)">Parchi Solari</button>
-                    <button type="button" class="media-villa-pill" data-villa="Tri Star" onclick="setVillaFilter('Tri Star', this)">Tri Star</button>
-                    <button type="button" class="media-villa-pill" data-villa="Generale" onclick="setVillaFilter('Generale', this)">Generale</button>
+                <div class="media-search-wrap" style="flex: 1; max-width: 360px;">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="mediaSearchInput" class="form-control form-control-sm media-search-input" placeholder="Cerca per titolo, dossier..." data-i18n-placeholder="media_search_placeholder" oninput="onSearchInput(this.value)">
                 </div>
 
-                <div class="media-search-wrap">
-                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="mediaSearchInput" class="form-control form-control-sm media-search-input" placeholder="Cerca per titolo, sezione..." data-i18n-placeholder="media_search_placeholder" oninput="onSearchInput(this.value)">
+                <div class="media-quick-actions" id="photoQuickActions">
+                    <button type="button" class="btn-media-subtle" onclick="selectAllVisiblePhotos()" title="Seleziona tutte le foto visibili per lo slideshow">
+                        <i class="fa-regular fa-square-check text-cyan"></i> <span data-i18n="media_select_all">Seleziona tutte</span>
+                    </button>
+                    <button type="button" class="btn-media-subtle" id="btnClearSelectionTop" onclick="clearPhotoSelection()" style="display: none;">
+                        <i class="fa-solid fa-xmark"></i> <span data-i18n="media_deselect_all">Deseleziona</span>
+                    </button>
                 </div>
             </div>
 
             <!-- DEDICATED VISIBLE DRAG & DROP ZONE -->
-            <div class="media-inline-dropzone glass-panel" id="inlineDropZone" onclick="if(event.target.tagName !== 'SELECT' && event.target.tagName !== 'LABEL') document.getElementById('inlineMediaFileInput').click()">
+            <div class="media-inline-dropzone glass-panel" id="inlineDropZone" onclick="if(!event.target.closest('select, label, button')) document.getElementById('inlineMediaFileInput').click()">
                 <div class="inline-dropzone-content">
                     <div class="inline-dropzone-left">
                         <div class="inline-dropzone-icon-box">
                             <i class="fa-solid fa-cloud-arrow-up text-cyan"></i>
                         </div>
                         <div class="inline-dropzone-text">
-                            <h4 data-i18n="media_dnd_zone_title">Area Drag & Drop - Carica Foto e Video</h4>
-                            <p data-i18n="media_dnd_zone_desc">Trascina e rilascia qui i tuoi file multimediali (Foto JPG/PNG, Video MP4, Audio MP3) oppure usa il pulsante per sfogliare i file dal computer.</p>
+                            <h4 data-i18n="media_dnd_zone_title">Area Drag & Drop - Carica Foto e Video (salvataggio permanente)</h4>
+                            <p data-i18n="media_dnd_zone_desc">Trascina qui file o intere cartelle dal computer (Foto JPG/PNG, Video MP4, Audio MP3). Se trascini una cartella, il suo nome diventa automaticamente un Dossier foto.</p>
                         </div>
                     </div>
                     <div class="inline-dropzone-actions" onclick="event.stopPropagation()">
                         <div class="inline-dropzone-select-wrap">
-                            <label for="inlineUploadSectionSelect" style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 2px;" data-i18n="media_label_section">Sezione :</label>
-                            <select id="inlineUploadSectionSelect" class="form-control form-control-sm" style="font-size: 12px; padding: 6px 10px; border-radius: 6px; background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.2);">
-                                <option value="Impianti Solari">Impianti Solari</option>
-                                <option value="Parchi Solari">Parchi Solari</option>
-                                <option value="Tri Star">Tri Star</option>
-                                <option value="Generale">Generale</option>
-                            </select>
+                            <label for="inlineUploadSectionSelect" style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 2px;" data-i18n="media_label_dossier">Dossier di destinazione :</label>
+                            <div style="display: flex; gap: 6px; align-items: center;">
+                                <select id="inlineUploadSectionSelect" class="form-control form-control-sm media-select-styled">
+                                </select>
+                                <button type="button" class="btn-media-subtle" onclick="openNewDossierModal('inlineUploadSectionSelect')" title="Crea un nuovo dossier foto" style="padding: 6px 10px;">
+                                    <i class="fa-solid fa-folder-plus text-green"></i>
+                                </button>
+                            </div>
                         </div>
                         <button type="button" class="btn btn-inline-upload" onclick="document.getElementById('inlineMediaFileInput').click()">
-                            <i class="fa-solid fa-folder-open"></i> <span data-i18n="media_btn_select_files">Seleziona / Carica File</span>
+                            <i class="fa-solid fa-file-image"></i> <span data-i18n="media_btn_select_files">Carica File</span>
+                        </button>
+                        <button type="button" class="btn-media-folder-upload" onclick="document.getElementById('inlineMediaFolderInput').click()" title="Importa un'intera cartella come Dossier">
+                            <i class="fa-solid fa-folder-open"></i> <span data-i18n="media_btn_select_folder">Carica Cartella</span>
                         </button>
                         <input type="file" id="inlineMediaFileInput" multiple accept="image/*,video/*,audio/*" style="display: none;" onchange="handleInlineFileInput(this)">
+                        <input type="file" id="inlineMediaFolderInput" webkitdirectory directory multiple style="display: none;" onchange="handleInlineFolderInput(this)">
                     </div>
                 </div>
             </div>
 
-            <div class="media-dnd-hint">
-                <i class="fa-solid fa-grip-vertical text-cyan"></i>
-                <span data-i18n="media_dnd_hint"><strong>Suggerimento :</strong> Puoi trascinare e riordinare foto e video per personalizzare l'ordine della galleria e del diaporama. Clicca sull'icona matita per rinominare o cambiare sezione.</span>
-            </div>
+            <!-- ==========================================================================
+                 PHOTO SECTION: DOSSIERS + MULTI-SELECT + SLIDESHOW (PHOTOS ONLY)
+                 ========================================================================== -->
+            <section id="photoSectionContainer" class="media-section-block">
+                <div class="media-section-header">
+                    <div class="media-section-title-wrap">
+                        <div class="media-section-icon photo-icon"><i class="fa-solid fa-images"></i></div>
+                        <div>
+                            <h3 class="media-section-title">
+                                <span data-i18n="media_section_photos_title">Galleria Foto & Dossier</span>
+                                <span class="media-section-count" id="photoSectionCountBadge">0</span>
+                            </h3>
+                            <p class="media-section-sub" data-i18n="media_section_photos_sub">Scegli un Dossier oppure spunta più foto insieme per avviare lo Slideshow (solo foto). Clicca su una foto per ingrandirla.</p>
+                        </div>
+                    </div>
+                    <div class="media-section-header-actions">
+                        <button type="button" class="btn-slideshow-dossier" id="btnSlideshowCurrentDossier" onclick="startDossierSlideshow()" title="Avvia Slideshow con le foto di questo Dossier">
+                            <i class="fa-solid fa-play"></i> <span id="btnSlideshowDossierLabel">Avvia Slideshow Dossier</span>
+                        </button>
+                    </div>
+                </div>
 
-            <!-- MAIN MEDIA GRID -->
-            <div id="mediaGrid" class="media-grid-container">
-                <!-- Media Cards dynamically populated by media_app.js -->
-            </div>
+                <!-- DOSSIER BAR -->
+                <div class="media-dossier-bar glass-panel">
+                    <div class="media-dossier-bar-header">
+                        <span class="media-dossier-label">
+                            <i class="fa-solid fa-folder-tree text-cyan"></i> <span data-i18n="media_dossiers_title">Dossier Foto :</span>
+                        </span>
+                        <button type="button" class="btn-new-dossier" onclick="openNewDossierModal()">
+                            <i class="fa-solid fa-folder-plus"></i> <span data-i18n="media_btn_new_dossier">Nuovo Dossier</span>
+                        </button>
+                    </div>
+                    <div id="dossierPillsContainer" class="media-dossier-pills">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+
+                <!-- MULTI-SELECT ACTION BAR (VISIBLE WHEN >= 1 PHOTO CHECKED) -->
+                <div id="photoSelectionBar" class="photo-selection-bar glass-panel" style="display: none;">
+                    <div class="selection-bar-left">
+                        <span class="selection-count-badge" id="selectionCountText">0 foto selezionate</span>
+                        <button type="button" class="btn-slideshow-selected" onclick="startSelectedPhotosSlideshow()">
+                            <i class="fa-solid fa-play"></i> <span data-i18n="media_btn_slideshow_selected">Avvia Slideshow Selezionate</span>
+                        </button>
+                    </div>
+                    <div class="selection-bar-right">
+                        <div class="selection-move-group">
+                            <select id="bulkMoveDossierSelect" class="form-control form-control-sm media-select-styled"></select>
+                            <button type="button" class="btn-media-subtle" onclick="bulkMoveSelectedToDossier()" title="Sposta le foto selezionate nel dossier scelto">
+                                <i class="fa-solid fa-folder-arrow-up text-cyan"></i> <span data-i18n="media_btn_move_dossier">Sposta nel Dossier</span>
+                            </button>
+                        </div>
+                        <button type="button" class="btn-media-subtle" onclick="selectAllVisiblePhotos()">
+                            <i class="fa-regular fa-square-check"></i> <span data-i18n="media_select_all">Seleziona tutte</span>
+                        </button>
+                        <button type="button" class="btn-media-subtle" onclick="clearPhotoSelection()">
+                            <i class="fa-solid fa-xmark"></i> <span data-i18n="media_deselect_all">Deseleziona</span>
+                        </button>
+                        <button type="button" class="btn-media-subtle btn-danger-subtle" onclick="bulkDeleteSelectedPhotos()" title="Rimuovi le foto selezionate">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="media-dnd-hint">
+                    <i class="fa-solid fa-circle-info text-cyan"></i>
+                    <span data-i18n="media_dnd_hint"><strong>Suggerimento :</strong> Usa la casella in alto a sinistra di ogni foto (anche con Maiusc+Click) per selezionare più foto per lo Slideshow, oppure clicca <i class="fa-solid fa-play"></i> su un Dossier. Trascina le card per riordinarle.</span>
+                </div>
+
+                <!-- PHOTO GRID -->
+                <div id="photoGrid" class="media-grid-container">
+                    <!-- Photo Cards populated by media_app.js -->
+                </div>
+            </section>
+
+            <!-- ==========================================================================
+                 VIDEO SECTION: SEPARATE INDIVIDUAL PLAYBACK (NEVER IN SLIDESHOW)
+                 ========================================================================== -->
+            <section id="videoSectionContainer" class="media-section-block media-video-section">
+                <div class="media-section-header">
+                    <div class="media-section-title-wrap">
+                        <div class="media-section-icon video-icon"><i class="fa-solid fa-film"></i></div>
+                        <div>
+                            <h3 class="media-section-title">
+                                <span data-i18n="media_section_videos_title">Video Tour</span>
+                                <span class="media-section-count video-count" id="videoSectionCountBadge">0</span>
+                            </h3>
+                            <p class="media-section-sub" data-i18n="media_section_videos_sub">I video sono separati dallo slideshow e si avviano singolarmente cliccando sulla card.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIDEO GRID -->
+                <div id="videoGrid" class="media-grid-container">
+                    <!-- Video Cards populated by media_app.js -->
+                </div>
+            </section>
         </main>
     </div>
 
     <!-- ==========================================================================
-         FULLSCREEN DIAPORAMA (SLIDESHOW) OVERLAY WITH AUDIO MP3
+         FULLSCREEN DIAPORAMA (SLIDESHOW - PHOTOS ONLY) WITH AUDIO MP3
          ========================================================================== -->
     <div id="diaporamaOverlay" class="diaporama-fullscreen-overlay" style="display: none;">
         <!-- Top Controls Bar -->
         <div class="diaporama-top-bar">
             <div class="diaporama-info">
-                <span class="badge badge-emerald" id="diaporamaVilla">Impianti Solari</span>
+                <span class="badge badge-cyan" id="diaporamaSourceBadge" style="display:none;">Selezione</span>
+                <span class="badge badge-emerald" id="diaporamaVilla">Dossier App</span>
                 <span class="diaporama-title" id="diaporamaTitle">Titolo</span>
-                <span class="diaporama-counter" id="diaporamaCounter">Slide 1 / 24</span>
+                <span class="diaporama-counter" id="diaporamaCounter">Slide 1 / 10</span>
             </div>
 
             <!-- Music Bar in Diaporama -->
@@ -291,9 +385,9 @@
                 <div class="music-wave-bars">
                     <span></span><span></span><span></span>
                 </div>
-                <span class="diaporama-track-name" id="diaporamaTrackTitle">Norman Brown - Celebration</span>
+                <span class="diaporama-track-name" id="diaporamaTrackTitle">Musica Diaporama</span>
                 <button type="button" class="btn-icon-subtle" onclick="toggleMusicPlayback()" title="Riproduci/Pausa musica" style="background:none; border:none; color:#fff; cursor:pointer; padding:4px;">
-                    <i class="fa-solid fa-play-pause"></i>
+                    <i class="fa-solid fa-play"></i>/<i class="fa-solid fa-pause"></i>
                 </button>
                 <button type="button" id="btnToggleMute" class="btn-icon-subtle" onclick="toggleMusicMute()" title="Disattiva audio" style="background:none; border:none; color:#fff; cursor:pointer; padding:4px;">
                     <i class="fa-solid fa-volume-high"></i>
@@ -317,7 +411,7 @@
                 <button type="button" class="btn-diaporama-icon" onclick="toggleDiaporamaFullscreen()" title="Schermo intero (F)">
                     <i class="fa-solid fa-expand"></i>
                 </button>
-                <button type="button" class="btn-diaporama-close" onclick="closeDiaporama()" title="Chiudi Diaporama (Esc)">
+                <button type="button" class="btn-diaporama-close" onclick="closeDiaporama()" title="Chiudi Slideshow (Esc)">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -364,18 +458,18 @@
         <div class="lightbox-container">
             <div class="lightbox-header">
                 <div>
-                    <span class="badge badge-emerald" id="lightboxVilla">Impianti Solari</span>
+                    <span class="badge badge-emerald" id="lightboxVilla">Dossier App</span>
                     <span class="lightbox-title" id="lightboxTitle">Titolo foto</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="lightbox-counter" id="lightboxCounter">1 / 24</span>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="startDiaporama(allPhotos[currentLightboxIndex].id)" title="Avvia diaporama da questa foto" style="background: rgba(16,185,129,0.2); border: 1px solid #10b981; color:#fff; padding: 4px 10px; border-radius: 6px; cursor:pointer;">
-                        <i class="fa-solid fa-play"></i> <span data-i18n="media_diaporama">Diaporama</span>
+                    <span class="lightbox-counter" id="lightboxCounter">1 / 10</span>
+                    <button type="button" class="btn-slideshow-selected" onclick="startDiaporamaFromLightbox()" title="Avvia slideshow da questa foto" style="padding: 5px 12px; font-size: 12px;">
+                        <i class="fa-solid fa-play"></i> <span data-i18n="media_diaporama">Slideshow</span>
                     </button>
-                    <a id="lightboxDownloadBtn" href="" download class="btn btn-secondary btn-sm" title="Scarica foto" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color:#fff; padding: 4px 10px; border-radius: 6px; text-decoration:none;">
+                    <a id="lightboxDownloadBtn" href="" download class="modal-download-btn" title="Scarica foto">
                         <i class="fa-solid fa-download"></i>
                     </a>
-                    <button type="button" class="btn-icon" onclick="closeLightbox()" title="Chiudi (Esc)" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer; padding: 4px 8px;">
+                    <button type="button" class="modal-close-btn" onclick="closeLightbox()" title="Chiudi (Esc)">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
@@ -396,104 +490,104 @@
     </div>
 
     <!-- ==========================================================================
-         VIDEO THEATER MODAL
+         VIDEO THEATER MODAL (INDIVIDUAL VIDEO PLAYBACK)
          ========================================================================== -->
     <div id="videoTheaterModal" class="modal-backdrop" style="display: none;">
-        <div class="modal-card glass-panel" style="max-width: 960px; width: 95%;">
+        <div class="modal-card glass-panel video-theater-card">
             <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
                 <h3 style="font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin:0;">
                     <i class="fa-solid fa-video text-cyan"></i>
                     <span id="videoTheaterTitle">Video Tour</span>
                 </h3>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <a id="videoTheaterDownloadBtn" href="" download class="btn btn-secondary btn-sm" title="Scarica video" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color:#fff; padding: 4px 10px; border-radius: 6px; text-decoration:none;">
+                    <a id="videoTheaterDownloadBtn" href="" download class="modal-download-btn" title="Scarica video">
                         <i class="fa-solid fa-download"></i> <span data-i18n="media_download">Scarica</span>
                     </a>
-                    <button type="button" class="btn-icon" onclick="closeVideoTheater()" title="Chiudi" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer; padding: 4px 8px;">
+                    <button type="button" class="modal-close-btn" onclick="closeVideoTheater()" title="Chiudi (Esc)">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
             </div>
-            <div class="modal-body" style="padding: 1rem; background: #000000; text-align: center; border-radius: 0 0 14px 14px;">
-                <video id="videoTheaterPlayer" controls playsinline style="width: 100%; max-height: 72vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);"></video>
+            <div class="modal-body video-theater-body">
+                <video id="videoTheaterPlayer" controls playsinline class="video-theater-player"></video>
             </div>
         </div>
     </div>
 
     <!-- ==========================================================================
-         UPLOAD MODAL (DRAG & DROP)
+         UPLOAD MODAL (DRAG & DROP + FOLDER UPLOAD)
          ========================================================================== -->
     <div id="uploadModal" class="modal-backdrop" style="display: none;">
-        <div class="modal-card glass-panel" style="max-width: 580px; width: 95%;">
+        <div class="modal-card glass-panel" style="max-width: 600px; width: 95%;">
             <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
                 <h3 style="font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin:0;">
                     <i class="fa-solid fa-cloud-arrow-up text-cyan"></i> <span data-i18n="media_upload_modal_title">Carica Foto, Video o Audio</span>
                 </h3>
-                <button type="button" class="btn-icon" onclick="closeUploadModal()" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" class="modal-close-btn" onclick="closeUploadModal()" title="Chiudi"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body" style="padding: 1.5rem;">
                 <div style="margin-bottom: 1rem;">
-                    <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;" data-i18n="media_label_section">Associa a una Sezione / Impianto :</label>
-                    <select id="uploadVillaSelect" class="form-control" style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff;">
-                        <option value="Impianti Solari">Impianti Solari</option>
-                        <option value="Parchi Solari">Parchi Solari</option>
-                        <option value="Tri Star">Tri Star</option>
-                        <option value="Generale">Generale</option>
-                    </select>
+                    <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;" data-i18n="media_label_dossier">Associa le foto a un Dossier :</label>
+                    <div style="display: flex; gap: 8px;">
+                        <select id="uploadVillaSelect" class="form-control media-select-styled" style="flex: 1;">
+                        </select>
+                        <button type="button" class="btn-media-subtle" onclick="openNewDossierModal('uploadVillaSelect')" title="Crea un nuovo Dossier">
+                            <i class="fa-solid fa-folder-plus text-green"></i> <span data-i18n="media_btn_new_dossier">Nuovo Dossier</span>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="media-dropzone" onclick="document.getElementById('hiddenUploadInput').click()" 
-                     ondragover="event.preventDefault(); this.classList.add('dropzone-hover')" 
-                     ondragleave="this.classList.remove('dropzone-hover')" 
-                     ondrop="event.preventDefault(); this.classList.remove('dropzone-hover'); if (event.dataTransfer.files) processUploadedFiles(Array.from(event.dataTransfer.files));">
+                <div class="media-dropzone" id="modalDropZone" onclick="document.getElementById('hiddenUploadInput').click()">
                     <i class="fa-solid fa-photo-film dropzone-icon"></i>
                     <div style="font-weight: 700; font-size: 14px; margin-top: 8px; color: var(--text-main);" data-i18n="media_dropzone_title">
-                        Trascina e rilascia qui i tuoi file
+                        Trascina e rilascia qui file o cartelle
                     </div>
                     <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;" data-i18n="media_dropzone_desc">
-                        Foto (JPG, PNG), Video (MP4) o Brani Musicali (MP3)
+                        Foto (JPG, PNG), Video (MP4) o Brani Musicali (MP3) — salvati in modo permanente
                     </div>
-                    <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color:#fff; padding: 6px 14px; border-radius:6px; cursor:pointer;">
-                        <i class="fa-solid fa-folder-open"></i> <span data-i18n="media_browse_btn">Sfoglia i file</span>
-                    </button>
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px;" onclick="event.stopPropagation()">
+                        <button type="button" class="btn btn-inline-upload" onclick="document.getElementById('hiddenUploadInput').click()">
+                            <i class="fa-solid fa-file-image"></i> <span data-i18n="media_browse_btn">Sfoglia File</span>
+                        </button>
+                        <button type="button" class="btn-media-folder-upload" onclick="document.getElementById('hiddenUploadFolderInput').click()">
+                            <i class="fa-solid fa-folder-open"></i> <span data-i18n="media_btn_select_folder">Carica Cartella (Dossier)</span>
+                        </button>
+                    </div>
                     <input type="file" id="hiddenUploadInput" multiple accept="image/*,video/*,audio/*" style="display: none;" onchange="handleFileInputChange(this)">
+                    <input type="file" id="hiddenUploadFolderInput" webkitdirectory directory multiple style="display: none;" onchange="handleFolderInputChange(this)">
                 </div>
             </div>
             <div class="modal-footer" style="padding: 1rem 1.5rem; justify-content: flex-end; display:flex; border-top: 1px solid rgba(255,255,255,0.1);">
-                <button type="button" class="btn btn-secondary" onclick="closeUploadModal()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color:#fff; padding: 6px 16px; border-radius:6px; cursor:pointer;" data-i18n="media_close">Chiudi</button>
+                <button type="button" class="btn-media-subtle" onclick="closeUploadModal()" data-i18n="media_close">Chiudi</button>
             </div>
         </div>
     </div>
 
     <!-- ==========================================================================
-         EDIT TITLE MODAL
+         EDIT TITLE & DOSSIER MODAL
          ========================================================================== -->
     <div id="editTitleModal" class="modal-backdrop" style="display: none;">
         <div class="modal-card glass-panel" style="max-width: 480px; width: 95%;">
             <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
                 <h3 style="font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin:0;">
-                    <i class="fa-solid fa-pen-to-square text-cyan"></i> <span data-i18n="media_edit_title_modal">Modifica Titolo & Sezione</span>
+                    <i class="fa-solid fa-pen-to-square text-cyan"></i> <span data-i18n="media_edit_title_modal">Modifica Titolo & Dossier</span>
                 </h3>
-                <button type="button" class="btn-icon" onclick="closeEditTitleModal()" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" class="modal-close-btn" onclick="closeEditTitleModal()" title="Chiudi"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="modal-body" style="padding: 1.25rem;">
                 <input type="hidden" id="modalEditMediaId" value="">
                 <div style="margin-bottom: 1rem;">
                     <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="media_label_title">Titolo del file :</label>
-                    <input type="text" id="modalEditTitleInput" class="form-control" placeholder="Inserisci il titolo..." onkeydown="if(event.key==='Enter') saveModalTitle()" style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff;">
+                    <input type="text" id="modalEditTitleInput" class="form-control media-input-styled" placeholder="Inserisci il titolo..." onkeydown="if(event.key==='Enter') saveModalTitle()">
                 </div>
-                <div>
-                    <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="media_label_section">Sezione assegnata :</label>
-                    <select id="modalEditVillaSelect" class="form-control" style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff;">
-                        <option value="Impianti Solari">Impianti Solari</option>
-                        <option value="Parchi Solari">Parchi Solari</option>
-                        <option value="Tri Star">Tri Star</option>
-                        <option value="Generale">Generale</option>
+                <div id="modalEditDossierRow">
+                    <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px;" data-i18n="media_label_dossier_assigned">Dossier assegnato :</label>
+                    <select id="modalEditVillaSelect" class="form-control media-select-styled">
                     </select>
                 </div>
             </div>
             <div class="modal-footer" style="padding: 0.85rem 1.25rem; justify-content: flex-end; gap: 8px; display:flex; border-top: 1px solid rgba(255,255,255,0.1);">
-                <button type="button" class="btn btn-secondary" onclick="closeEditTitleModal()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color:#fff; padding: 6px 14px; border-radius:6px; cursor:pointer;" data-i18n="media_cancel">Annulla</button>
+                <button type="button" class="btn-media-subtle" onclick="closeEditTitleModal()" data-i18n="media_cancel">Annulla</button>
                 <button type="button" class="btn btn-primary" onclick="saveModalTitle()" style="background: linear-gradient(135deg, #10b981, #059669); border:none; color:#fff; padding: 6px 16px; border-radius:6px; cursor:pointer; font-weight:600;">
                     <i class="fa-solid fa-check"></i> <span data-i18n="media_save">Salva</span>
                 </button>
@@ -501,12 +595,40 @@
         </div>
     </div>
 
+    <!-- ==========================================================================
+         NEW DOSSIER MODAL
+         ========================================================================== -->
+    <div id="newDossierModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-card glass-panel" style="max-width: 440px; width: 95%;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="font-size: 1.1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin:0;">
+                    <i class="fa-solid fa-folder-plus text-green"></i> <span data-i18n="media_new_dossier_modal">Nuovo Dossier Foto</span>
+                </h3>
+                <button type="button" class="modal-close-btn" onclick="closeNewDossierModal()" title="Chiudi"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 1.25rem;">
+                <input type="hidden" id="newDossierTargetSelectId" value="">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;" data-i18n="media_label_dossier_name">Nome del Dossier :</label>
+                <input type="text" id="newDossierNameInput" class="form-control media-input-styled" placeholder="Es. Cantiere Parco 1, Inverter..." onkeydown="if(event.key==='Enter') confirmCreateDossier()">
+            </div>
+            <div class="modal-footer" style="padding: 0.85rem 1.25rem; justify-content: flex-end; gap: 8px; display:flex; border-top: 1px solid rgba(255,255,255,0.1);">
+                <button type="button" class="btn-media-subtle" onclick="closeNewDossierModal()" data-i18n="media_cancel">Annulla</button>
+                <button type="button" class="btn btn-primary" onclick="confirmCreateDossier()" style="background: linear-gradient(135deg, #10b981, #059669); border:none; color:#fff; padding: 6px 16px; border-radius:6px; cursor:pointer; font-weight:600;">
+                    <i class="fa-solid fa-check"></i> <span data-i18n="media_create">Crea Dossier</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file input for relinking expired legacy blob uploads -->
+    <input type="file" id="relinkMediaInput" accept="image/*,video/*" style="display: none;">
+
     <!-- Hidden Persistent Audio Element -->
     <audio id="diaporamaAudio" preload="auto" loop></audio>
 
     <!-- Core Scripts -->
-    <script src="media_data.js?v=301"></script>
-    <script src="../i18n.js?v=301"></script>
-    <script src="media_app.js?v=301"></script>
+    <script src="media_data.js?v=302"></script>
+    <script src="../i18n.js?v=302"></script>
+    <script src="media_app.js?v=302"></script>
 </body>
 </html>

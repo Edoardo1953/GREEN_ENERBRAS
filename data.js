@@ -779,7 +779,7 @@
                         "lotto":  "Lote n. Q023-LOT 1037",
                         "superficie":  "200mq",
                         "investimento":  120000,
-                        "stato":  "IN PRODUZIONE",
+                        "stato":  "COMPLETATI",
                         "gruppo":  "B",
                         "contratto":  "Affitto",
                         "locatore":  "Franco TOSCANO",
@@ -808,7 +808,7 @@
                         "lotto":  "Lote nº: Quadra M-LOT 0018",
                         "superficie":  "200 mq",
                         "investimento":  120000,
-                        "stato":  "IN PRODUZIONE",
+                        "stato":  "COMPLETATI",
                         "gruppo":  "C",
                         "contratto":  "Affitto",
                         "locatore":  "Franco TOSCANO",
@@ -837,7 +837,7 @@
                         "lotto":  "Lote nº: Quadra M-LOT 0020",
                         "superficie":  "200mq",
                         "investimento":  105357.27,
-                        "stato":  "IN PRODUZIONE",
+                        "stato":  "COMPLETATI",
                         "gruppo":  "C",
                         "contratto":  "Affitto",
                         "locatore":  "Franco TOSCANO",
@@ -975,7 +975,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "11/11/2026 07:14",
+    "lastUpdated":  "11/11/2026 10:01",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
