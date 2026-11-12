@@ -130,7 +130,7 @@ function getPageKeyFromElement(el) {
 function getCurrentPageKey() {
     const path = window.location.pathname.toLowerCase();
     if (path.includes('produzione.html')) return 'produzione';
-    if (path.includes('vendite.html')) return 'vendite';
+    if (path.includes('vendite.html') || path.includes('prezzi_inflazione.html')) return 'vendite';
     if (path.includes('impianti.html')) return 'impianti';
     if (path.includes('documentazione.html')) return 'documentazione';
     if (path.includes('media.html')) return 'media';
@@ -352,8 +352,7 @@ const Auth = {
             db.ref('settings/pageVisibility').on('value', (snap) => {
                 if (snap.exists()) {
                     const val = snap.val();
-                    const localVis = getStoredVisibility();
-                    Auth.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...val, ...localVis };
+                    Auth.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...val };
                     setStoredVisibility(Auth.pageVisibility);
                 }
                 
@@ -526,7 +525,11 @@ const Auth = {
             Auth.logout();
             return false;
         }
-        if (!allowedRoles.includes(Auth.currentUser.role)) {
+        const userRole = (Auth.currentUser.role || '').toLowerCase();
+        const isAllowed = allowedRoles.includes(userRole) ||
+            (allowedRoles.includes('partner') && ['user', 'investitore'].includes(userRole)) ||
+            (allowedRoles.includes('visitor') && userRole === 'ospite');
+        if (!isAllowed) {
             alert("Non hai i permessi per accedere a questa pagina.");
             Auth.logout();
             return false;

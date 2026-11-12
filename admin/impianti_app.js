@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let statoKey = '';
             const stUpper = (impianto.stato || '').toUpperCase();
             if (stUpper === 'ATTIVO' || stUpper === 'ATTIVI') statoKey = 'status_attivi';
-            else if (stUpper.includes('FINITO') || stUpper.includes('COMPLETATO') || stUpper.includes('ATTESA')) statoKey = 'status_finiti_cosern';
+            else if (stUpper.includes('FINIT') || stUpper.includes('COMPLET') || stUpper.includes('ATTESA')) statoKey = 'status_finiti_cosern';
             else if (stUpper.includes('COSTRUZIONE')) statoKey = 'status_in_costruzione';
             else if (stUpper.includes('PRODUZIONE')) statoKey = 'status_in_produzione';
             else if (stUpper.includes('CORSO')) statoKey = 'status_in_corso';

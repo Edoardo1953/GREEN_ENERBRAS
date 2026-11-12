@@ -895,7 +895,7 @@
                         "lotto":  "Lote nº: Q017-LOT 0239",
                         "superficie":  "200/800 mq",
                         "investimento":  0,
-                        "stato":  "IN CORSO",
+                        "stato":  "IN PRODUZIONE",
                         "gruppo":  "A",
                         "contratto":  "Affitto",
                         "locatore":  "Franco TOSCANO",
@@ -975,7 +975,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "12/11/2026 12:03",
+    "lastUpdated":  "12/11/2026 15:47",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,

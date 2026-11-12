@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const stato = (m.stato || '').toUpperCase();
             if (stato === 'ATTIVO' || stato === 'ATTIVI' || stato === 'IN PRODUZIONE') {
                 activePlantsCount++;
-            } else if (stato.includes('ATTESA') || stato.includes('FINITO') || stato.includes('COMPLETATO')) {
+            } else if (stato.includes('ATTESA') || stato.includes('FINIT') || stato.includes('COMPLET')) {
                 waitingPlantsCount++;
             } else if (stato.includes('COSTRUZIONE') || stato.includes('IN CORSO') || stato.includes('PIANIFICATO')) {
                 wipPlantsCount++;
