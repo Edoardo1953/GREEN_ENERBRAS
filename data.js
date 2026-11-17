@@ -440,6 +440,20 @@
                              "description":  "Frais de tenue de compte",
                              "partner":  "Banque de Luxembourg",
                              "amount":  -250.0
+                         },
+                         {
+                             "date":  "18/11/2026",
+                             "category":  "Capital Contribution",
+                             "description":  "Paiement Capital Contribution",
+                             "partner":  "Tubia Edoardo",
+                             "amount":  20000.0
+                         },
+                         {
+                             "date":  "18/11/2026",
+                             "category":  "Capital Contribution",
+                             "description":  "Paiement Capital Contribution",
+                             "partner":  "Elisa Zaniboni",
+                             "amount":  -20000.0
                          }
                      ],
     "production":  [
@@ -975,7 +989,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "17/11/2026 17:07",
+    "lastUpdated":  "17/11/2026 17:44",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
