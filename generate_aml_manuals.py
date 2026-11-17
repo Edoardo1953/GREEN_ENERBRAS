@@ -21,8 +21,8 @@ os.makedirs(ADMIN_DOCS_DIR, exist_ok=True)
 MANUAL_MD_IT = """# GREEN ENERBRAS ONE SCSp - Luxembourg
 ## Guida Metodologica & Manuale d'Uso del Modulo AML / Antiriciclaggio
 ### Conformità LBC-FT (Supervisione AED / Legge 12 Nov 2004), Controllo Apporti Soci & Investimenti
-**Società :** GREEN ENERBRAS ONE SCSp &bull; **R.C.S. Luxembourg :** B 278.900 &bull; **Matricola Nazionale :** 2023 2450 123 &bull; **TVA :** LU 34891234
-**General Partner & Gérant :** NEW LIFE Sàrl (R.C.S. B 225.643) &bull; **Versione :** 2.0 (Esercizio 2026) &bull; **Stato :** Documento Ufficiale Interno
+**Società :** GREEN ENERBRAS ONE SCSp &bull; **R.C.S. Luxembourg :** B 295061 &bull; **Matricola Nazionale :** 2025 5805 747 &bull; **TVA :** LU 34891234
+**General Partner & Gérant :** NEW LIFE Sàrl (R.C.S. B 17790) &bull; **Versione :** 2.0 (Esercizio 2026) &bull; **Stato :** Documento Ufficiale Interno
 
 ---
 
@@ -132,8 +132,8 @@ La sezione **« 4. Simulateur Due Diligence »** consente di calcolare il profil
 MANUAL_MD_FR = """# GREEN ENERBRAS ONE SCSp - Luxembourg
 ## Guide Méthodologique & Manuel d'Utilisation du Module AML / LBC-FT
 ### Conformité Anti-Blanchiment (AED / Loi 12 Nov 2004), Contrôle des Apports Associés & Investissements
-**Société :** GREEN ENERBRAS ONE SCSp &bull; **R.C.S. Luxembourg :** B 278.900 &bull; **Matricule National :** 2023 2450 123 &bull; **TVA :** LU 34891234
-**General Partner & Gérant :** NEW LIFE Sàrl (R.C.S. B 225.643) &bull; **Version :** 2.0 (Exercice 2026) &bull; **Statut :** Document Officiel Interne
+**Société :** GREEN ENERBRAS ONE SCSp &bull; **R.C.S. Luxembourg :** B 295061 &bull; **Matricule National :** 2025 5805 747 &bull; **TVA :** LU 34891234
+**General Partner & Gérant :** NEW LIFE Sàrl (R.C.S. B 17790) &bull; **Version :** 2.0 (Exercice 2026) &bull; **Statut :** Document Officiel Interne
 
 ---
 
@@ -243,8 +243,8 @@ L'onglet **« 4. Simulateur Due Diligence »** permet d'évaluer le risque de to
 MANUAL_MD_EN = """# GREEN ENERBRAS ONE SCSp - Luxembourg
 ## Methodological Guide & User Manual for the AML / CFT Compliance Module
 ### Anti-Money Laundering Compliance (AED Oversight / Law of 12 Nov 2004), Partner Capital Monitoring & Investments
-**Company :** GREEN ENERBRAS ONE SCSp &bull; **R.C.S. Luxembourg :** B 278.900 &bull; **National ID (Matricule) :** 2023 2450 123 &bull; **VAT :** LU 34891234
-**General Partner & Manager :** NEW LIFE Sàrl (R.C.S. B 225.643) &bull; **Version :** 2.0 (Fiscal Year 2026) &bull; **Status :** Official Internal Compliance Policy
+**Company :** GREEN ENERBRAS ONE SCSp &bull; **R.C.S. Luxembourg :** B 295061 &bull; **National ID (Matricule) :** 2025 5805 747 &bull; **VAT :** LU 34891234
+**General Partner & Manager :** NEW LIFE Sàrl (R.C.S. B 17790) &bull; **Version :** 2.0 (Fiscal Year 2026) &bull; **Status :** Official Internal Compliance Policy
 
 ---
 
@@ -379,7 +379,7 @@ def create_pdf_from_text(title, subtitle, lang_code, sections, output_pdf_path):
         
         # En-tête supérieur
         page.draw_rect(fitz.Rect(MARGIN_X, 25, PAGE_WIDTH - MARGIN_X, 27), color=COLOR_HEADER_BG, fill=COLOR_HEADER_BG)
-        page.insert_text(fitz.Point(MARGIN_X, 40), "GREEN ENERBRAS ONE SCSp • Luxembourg (R.C.S. B 278.900)", fontsize=8, color=COLOR_MUTED)
+        page.insert_text(fitz.Point(MARGIN_X, 40), "GREEN ENERBRAS ONE SCSp • Luxembourg (R.C.S. B 295061)", fontsize=8, color=COLOR_MUTED)
         page.insert_text(fitz.Point(PAGE_WIDTH - MARGIN_X - 190, 40), f"Conformità AML / LBC-FT (AED / Loi 2004)", fontsize=8, color=COLOR_HEADER_BG)
         
         # Ligne de séparation
@@ -404,7 +404,7 @@ def create_pdf_from_text(title, subtitle, lang_code, sections, output_pdf_path):
     
     page.insert_text(fitz.Point(MARGIN_X + 18, y + 26), title, fontsize=14, color=COLOR_DARK, fontname="hebo")
     page.insert_text(fitz.Point(MARGIN_X + 18, y + 46), subtitle, fontsize=9.5, color=COLOR_HEADER_BG, fontname="hebo")
-    page.insert_text(fitz.Point(MARGIN_X + 18, y + 62), "GREEN ENERBRAS ONE SCSp • R.C.S. Luxembourg B 278.900 • GP: NEW LIFE Sàrl (B 225.643)", fontsize=8, color=COLOR_MUTED)
+    page.insert_text(fitz.Point(MARGIN_X + 18, y + 62), "GREEN ENERBRAS ONE SCSp • R.C.S. Luxembourg B 295061 • GP: NEW LIFE Sàrl (B 17790)", fontsize=8, color=COLOR_MUTED)
     
     y += 95.0
     

@@ -3650,7 +3650,7 @@ window.setManualModalLang = function(lang) {
         let html = `
             <div style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
                 <h2 style="font-size: 1.35rem; font-weight: 800; color: #10b981; margin-bottom: 0.35rem;">${contentData.title}</h2>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">GREEN ENERBRAS ONE SCSp • R.C.S. Luxembourg B 278.900 • AED Compliance</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">GREEN ENERBRAS ONE SCSp • R.C.S. Luxembourg B 295061 • AED Compliance</p>
             </div>
         `;
 
@@ -3816,7 +3816,7 @@ function exportAmlToPdf() {
     doc.text("GREEN ENERBRAS ONE SCSp - REGISTRE DES APPORTS & CONFORMITÉ AML / LBC-FT", 18, 19);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("Loi modifiée du 12 novembre 2004 • Surveillance AED Luxembourg • R.C.S. B 278.900", 18, 24);
+    doc.text("Loi modifiée du 12 novembre 2004 • Surveillance AED Luxembourg • R.C.S. B 295061", 18, 24);
 
     // Résumé Statistique
     doc.setTextColor(30, 41, 59);

@@ -1,8 +1,8 @@
 # GREEN ENERBRAS ONE SCSp - Luxembourg
 ## Methodological Guide & User Manual for the AML / CFT Compliance Module
 ### Anti-Money Laundering Compliance (AED Oversight / Law of 12 Nov 2004), Partner Capital Monitoring & Investments
-**Company :** GREEN ENERBRAS ONE SCSp &bull; **R.C.S. Luxembourg :** B 278.900 &bull; **National ID (Matricule) :** 2023 2450 123 &bull; **VAT :** LU 34891234
-**General Partner & Manager :** NEW LIFE Sàrl (R.C.S. B 225.643) &bull; **Version :** 2.0 (Fiscal Year 2026) &bull; **Status :** Official Internal Compliance Policy
+**Company :** GREEN ENERBRAS ONE SCSp &bull; **R.C.S. Luxembourg :** B 295061 &bull; **National ID (Matricule) :** 2025 5805 747 &bull; **VAT :** LU 34891234
+**General Partner & Manager :** NEW LIFE Sàrl (R.C.S. B 17790) &bull; **Version :** 2.0 (Fiscal Year 2026) &bull; **Status :** Official Internal Compliance Policy
 
 ---
 

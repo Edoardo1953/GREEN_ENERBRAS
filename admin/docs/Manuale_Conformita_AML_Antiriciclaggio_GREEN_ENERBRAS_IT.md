@@ -1,8 +1,8 @@
 # GREEN ENERBRAS ONE SCSp - Luxembourg
 ## Guida Metodologica & Manuale d'Uso del Modulo AML / Antiriciclaggio
 ### Conformità LBC-FT (Supervisione AED / Legge 12 Nov 2004), Controllo Apporti Soci & Investimenti
-**Società :** GREEN ENERBRAS ONE SCSp &bull; **R.C.S. Luxembourg :** B 278.900 &bull; **Matricola Nazionale :** 2023 2450 123 &bull; **TVA :** LU 34891234
-**General Partner & Gérant :** NEW LIFE Sàrl (R.C.S. B 225.643) &bull; **Versione :** 2.0 (Esercizio 2026) &bull; **Stato :** Documento Ufficiale Interno
+**Società :** GREEN ENERBRAS ONE SCSp &bull; **R.C.S. Luxembourg :** B 295061 &bull; **Matricola Nazionale :** 2025 5805 747 &bull; **TVA :** LU 34891234
+**General Partner & Gérant :** NEW LIFE Sàrl (R.C.S. B 17790) &bull; **Versione :** 2.0 (Esercizio 2026) &bull; **Stato :** Documento Ufficiale Interno
 
 ---
 

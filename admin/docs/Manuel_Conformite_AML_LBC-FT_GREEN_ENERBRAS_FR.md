@@ -1,8 +1,8 @@
 # GREEN ENERBRAS ONE SCSp - Luxembourg
 ## Guide Méthodologique & Manuel d'Utilisation du Module AML / LBC-FT
 ### Conformité Anti-Blanchiment (AED / Loi 12 Nov 2004), Contrôle des Apports Associés & Investissements
-**Société :** GREEN ENERBRAS ONE SCSp &bull; **R.C.S. Luxembourg :** B 278.900 &bull; **Matricule National :** 2023 2450 123 &bull; **TVA :** LU 34891234
-**General Partner & Gérant :** NEW LIFE Sàrl (R.C.S. B 225.643) &bull; **Version :** 2.0 (Exercice 2026) &bull; **Statut :** Document Officiel Interne
+**Société :** GREEN ENERBRAS ONE SCSp &bull; **R.C.S. Luxembourg :** B 295061 &bull; **Matricule National :** 2025 5805 747 &bull; **TVA :** LU 34891234
+**General Partner & Gérant :** NEW LIFE Sàrl (R.C.S. B 17790) &bull; **Version :** 2.0 (Exercice 2026) &bull; **Statut :** Document Officiel Interne
 
 ---
 
