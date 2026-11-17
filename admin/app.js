@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 60000);
 
     // 3. Sort Partners (GP first, then LPs by detention DESC)
-    const validPartners = APP_DATA.partners ? JSON.parse(JSON.stringify(APP_DATA.partners)) : [];
+    let validPartners = APP_DATA.partners ? JSON.parse(JSON.stringify(APP_DATA.partners)) : [];
     
     // Sync partner paid amounts directly with bank transactions if recorded
     validPartners.forEach(p => {
@@ -179,6 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
             p.paid = bankCapByPartner[pNorm];
         }
     });
+
+    // Esclude partner con quota azzerata o ceduta integralmente (detention 0 o versato 0 con cessione)
+    validPartners = validPartners.filter(p => (p.detention > 0 || (p.contribution && p.contribution > 0)) && (p.paid === undefined || p.paid > 0 || p.contribution > 0));
 
     validPartners.sort((a, b) => {
         if (a.type === 'General Partner' && b.type !== 'General Partner') return -1;

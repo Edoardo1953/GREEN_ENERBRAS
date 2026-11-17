@@ -69,9 +69,9 @@ window.GREEN_ENERBRAS_AML_PARTNERS = {
         "email_professional": "",
         "mandate_nature": "Souscription de Parts Sociales d'Associé Commanditaire (LP)",
         "mandate_start_date": "2025-01-01",
-        "contribution_committed": 40000.0,
-        "contribution_paid": 40000.0,
-        "detention_pct": 15.3257,
+        "contribution_committed": 60000.0,
+        "contribution_paid": 60000.0,
+        "detention_pct": 22.9885,
         "ubo_list": [
             { "name": "Edoardo TUBIA", "nationality": "Italienne", "percentage": 100, "rbe_verified": true }
         ],
@@ -88,7 +88,7 @@ window.GREEN_ENERBRAS_AML_PARTNERS = {
             { "name": "Fiche d'Auto-Évaluation KYC & Déclaration SOW", "status": "VALID", "date": "2025-01-15" },
             { "name": "Justificatifs Bancaires de Transfert", "status": "VALID", "date": "2025-10-01" }
         ],
-        "notes": "Associé commanditaire fondateur. Apports de 10.000 € (01/09/2025), 10.000 € (09/09/2025) et 20.000 € (01/10/2025). Origine des fonds documentée et certifiée."
+        "notes": "Associé commanditaire fondateur. Apports de 10.000 € (01/09/2025), 10.000 € (09/09/2025), 20.000 € (01/10/2025) et acquisition de 20.000 € par cession de parts d'Elisa Zaniboni (18/11/2026). Total souscrit et versé: 60.000,00 € (22,99%). Origine des fonds documentée et certifiée."
     },
     "Salvatore DESIDERIO": {
         "id": "PART-003",
@@ -391,7 +391,7 @@ window.GREEN_ENERBRAS_AML_PARTNERS = {
         "legal_name": "Elisa ZANIBONI",
         "entity_type": "PERSONNE_PHYSIQUE",
         "entity_type_label": "Associé Commanditaire (Limited Partner)",
-        "role_type": "Limited Partner",
+        "role_type": "Ex-Associé Commanditaire (Parts cédées)",
         "rcs_number": "N/A (Personne Physique)",
         "matricule": "1998 0224 876",
         "tva_number": "N/A",
@@ -405,11 +405,11 @@ window.GREEN_ENERBRAS_AML_PARTNERS = {
         "phone_mobile": "",
         "email_personal": "",
         "email_professional": "",
-        "mandate_nature": "Souscription de Parts Sociales d'Associé Commanditaire (LP)",
+        "mandate_nature": "Cession intégrale de parts sociales à Tubia Edoardo (18/11/2026)",
         "mandate_start_date": "2025-12-09",
-        "contribution_committed": 20000.0,
-        "contribution_paid": 20000.0,
-        "detention_pct": 7.6628,
+        "contribution_committed": 0.0,
+        "contribution_paid": 0.0,
+        "detention_pct": 0.0,
         "ubo_list": [
             { "name": "Elisa ZANIBONI", "nationality": "Italienne", "percentage": 100, "rbe_verified": true }
         ],
@@ -425,7 +425,7 @@ window.GREEN_ENERBRAS_AML_PARTNERS = {
             { "name": "Bulletin de Souscription Parts SCSp", "status": "VALID", "date": "2025-12-09" },
             { "name": "Fiche KYC", "status": "VALID", "date": "2025-12-09" }
         ],
-        "notes": "Associée commanditaire. Apport de 20.000 € reçu le 09/12/2025. KYC vérifié."
+        "notes": "Ancienne associée commanditaire. Parts sociales (20.000 €) intégralement cédées le 18/11/2026 à Edoardo Tubia. Détention résiduelle : 0,00%. Dossier KYC archivé au titre de la conservation légale de 5 ans (AED / Loi 10 août 1915)."
     },
     "Giovanni MILETTI": {
         "id": "PART-011",

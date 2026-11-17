@@ -999,11 +999,11 @@
                          "paid":  1000
                      },
                      {
-                         "paid":  40000,
+                         "paid":  60000,
                          "type":  "Limited Partner",
-                         "detention":  15.32567049808429,
+                         "detention":  22.988505747126435,
                          "name":  "Edoardo TUBIA",
-                         "contribution":  40000
+                         "contribution":  60000
                      },
                      {
                          "detention":  7.662835249042145,
@@ -1043,13 +1043,6 @@
                      {
                          "detention":  7.662835249042145,
                          "name":  "Greta ZANIBONI",
-                         "contribution":  20000,
-                         "type":  "Limited Partner",
-                         "paid":  20000
-                     },
-                     {
-                         "detention":  7.662835249042145,
-                         "name":  "Elisa ZANIBONI",
                          "contribution":  20000,
                          "type":  "Limited Partner",
                          "paid":  20000
