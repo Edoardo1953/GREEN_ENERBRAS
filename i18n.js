@@ -118,8 +118,8 @@ const translations = {
         // --- AML / LBC-FT COMPLIANCE ---
         'aml_title': 'Registro Flussi di Capitale & Conformità AML / LBC-FT',
         'aml_desc': 'Controllo antiriciclaggio dei versamenti quote dei Soci, investimenti e fascicoli KYC/RBE (Loi 12 Nov 2004 / AED / CSSF).',
-        'aml_kpi_total_volume': 'Volume Totale Controllato',
-        'aml_kpi_total_ops': 'Apporti di Capitale & Flussi',
+        'aml_kpi_total_volume': 'Operazioni Controllate',
+        'aml_kpi_total_ops': 'Volume Apporti di Capitale',
         'aml_kpi_compliant_pct': 'Conformità KYC Soci',
         'aml_kpi_attention': 'Vigilanza Attiva',
         'aml_kpi_pep_count': 'Esposizione PEP / RBE',
@@ -779,8 +779,8 @@ const translations = {
         // --- AML / CFT COMPLIANCE ---
         'aml_title': 'Capital Inflows Register & AML / CFT Compliance',
         'aml_desc': 'Anti-money laundering monitoring of Partner capital contributions, investments, and KYC/RBE files (Law 12 Nov 2004 / AED / CSSF).',
-        'aml_kpi_total_volume': 'Total Controlled Volume',
-        'aml_kpi_total_ops': 'Capital Contributions & Inflows',
+        'aml_kpi_total_volume': 'Controlled Operations',
+        'aml_kpi_total_ops': 'Capital Inflows Volume',
         'aml_kpi_compliant_pct': 'Partner KYC Compliance',
         'aml_kpi_attention': 'Active Vigilance',
         'aml_kpi_pep_count': 'PEP / RBE Exposure',
@@ -1440,8 +1440,8 @@ const translations = {
         // --- AML / LBC-FT CONFORMITÉ ---
         'aml_title': 'Registre des Flux de Capital & Conformité AML / LBC-FT',
         'aml_desc': 'Contrôle anti-blanchiment des apports de capital des Associés, investissements et dossiers KYC/RBE (Loi 12 Nov 2004 / AED / CSSF).',
-        'aml_kpi_total_volume': 'Volume Total Contrôlé',
-        'aml_kpi_total_ops': 'Apports de Capital & Flux',
+        'aml_kpi_total_volume': 'Opérations Contrôlées',
+        'aml_kpi_total_ops': 'Volume des Apports de Capital',
         'aml_kpi_compliant_pct': 'Conformité KYC Associés',
         'aml_kpi_attention': 'Vigilance Active',
         'aml_kpi_pep_count': 'Exposition PEP / RBE',

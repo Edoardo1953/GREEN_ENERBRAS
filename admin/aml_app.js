@@ -272,9 +272,42 @@ function getLocalizedThresholdBadge(thresholdLevel) {
     return `<span class="badge" style="background: rgba(255,255,255,0.06); color: var(--text-muted); font-size: 0.72rem;">${t('threshold_standard', 'Standard')}</span>`;
 }
 
+// Sanificazione e allineamento automatico dei dati soci memorizzati in localStorage
+function sanitizeAmlCustomStorage() {
+    try {
+        const raw = localStorage.getItem('green_enerbras_aml_custom_partners');
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        let modified = false;
+        for (const k in parsed) {
+            const kLower = k.toLowerCase();
+            if (kLower.includes('elisa') && (parsed[k].contribution_paid !== 0 || parsed[k].detention_pct !== 0)) {
+                parsed[k].contribution_paid = 0.0;
+                parsed[k].contribution_committed = 0.0;
+                parsed[k].detention_pct = 0.0;
+                parsed[k].role_type = "Ex-Associé Commanditaire (Parts cédées)";
+                parsed[k].mandate_nature = "Cessione integrale quote a Edoardo Tubia (18/11/2026)";
+                modified = true;
+            }
+            if (kLower.includes('edoardo') && (parsed[k].contribution_paid !== 60000 || (parsed[k].detention_pct && parsed[k].detention_pct < 22))) {
+                parsed[k].contribution_paid = 60000.0;
+                parsed[k].contribution_committed = 60000.0;
+                parsed[k].detention_pct = 22.9885;
+                parsed[k].role_type = "Limited Partner";
+                modified = true;
+            }
+        }
+        if (modified) {
+            localStorage.setItem('green_enerbras_aml_custom_partners', JSON.stringify(parsed));
+            console.log("Cache green_enerbras_aml_custom_partners sanificata con successo.");
+        }
+    } catch (e) {}
+}
+
 // Récupération des données personnalisées / mémorisées dans localStorage
 function getAmlCustomStorage() {
     try {
+        sanitizeAmlCustomStorage();
         const raw = localStorage.getItem('green_enerbras_aml_custom_partners');
         return raw ? JSON.parse(raw) : {};
     } catch (e) {
@@ -1149,7 +1182,51 @@ function getEnrichedPartner(partnerName) {
         }
     }
 
+    // Automatismo per garantire coerenza finanziaria e anagrafica (cessioni, quote attuali, ecc.)
+    applyDynamicCapitalToPartner(res);
+
     return res;
+}
+
+// Automatismo di sincronizzazione quote & capitale sociale per ciascun socio
+function applyDynamicCapitalToPartner(res) {
+    if (!res || !res.name) return;
+    const pName = res.name.toLowerCase();
+
+    // 1. Cessione quote Elisa Zaniboni -> Edoardo Tubia (18/11/2026)
+    if (pName.includes('elisa') && pName.includes('zaniboni')) {
+        res.contribution_paid = 0.0;
+        res.contribution_committed = 0.0;
+        res.detention_pct = 0.0;
+        res.role_type = "Ex-Associé Commanditaire (Parts cédées)";
+        res.mandate_nature = "Cessione integrale quote a Edoardo Tubia (18/11/2026)";
+        res.notes = "Ancienne associée commanditaire. Parts sociales (20.000 €) intégralement cédées le 18/11/2026 à Edoardo Tubia. Détention résiduelle : 0,00%. Dossier KYC archivé au titre de la conservation légale de 5 ans (AED / Loi 10 août 1915).";
+    } else if (pName.includes('edoardo') && pName.includes('tubia')) {
+        res.contribution_paid = 60000.0;
+        res.contribution_committed = 60000.0;
+        res.detention_pct = 22.9885; // 22.99% su 261.000 €
+        res.role_type = "Limited Partner";
+        res.notes = "Associé commanditaire fondateur. Apports de 10.000 € (01/09/2025), 10.000 € (09/09/2025), 20.000 € (01/10/2025) et acquisition de 20.000 € par cession de parts d'Elisa Zaniboni (18/11/2026). Total souscrit et versé: 60.000,00 € (22,99%). Origine des fonds documentée et certifiée.";
+    } else if (typeof APP_DATA !== 'undefined' && Array.isArray(APP_DATA.partners)) {
+        // Sincronizzazione dinamica per gli altri soci da APP_DATA.partners
+        const match = APP_DATA.partners.find(p => p.name && (
+            p.name.toLowerCase() === pName ||
+            pName.includes(p.name.toLowerCase()) ||
+            p.name.toLowerCase().includes(pName)
+        ));
+        if (match) {
+            res.contribution_paid = Number(match.paid !== undefined ? match.paid : match.contribution) || res.contribution_paid;
+            res.contribution_committed = Number(match.contribution || match.paid) || res.contribution_committed;
+            res.detention_pct = Number(match.detention) || res.detention_pct;
+        }
+    }
+
+    // 2. Partecipata brasiliana Tri Star Enerbras One SCP
+    if (pName.includes('tri star') || res.entity_type === 'SCP_BRESIL') {
+        res.contribution_paid = 240000.0;
+        res.detention_pct = 99.78;
+        res.role_type = 'Investissement Target';
+    }
 }
 
 // Récupérer toutes les entrées réelles de capitaux des associés et futurs flux de dividendes
