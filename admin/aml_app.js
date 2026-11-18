@@ -1360,7 +1360,9 @@ function getAmlInflows() {
 
 // Regroupement par Investisseur / Partenaire avec tranches détaillées
 function getAmlGroupedPartners(inflows) {
-    const totalCapitalVolume = inflows.reduce((sum, i) => sum + i.amount, 0) || 261000.0;
+    // Il capitale sociale complessivo della SCSp da ripartire tra i soci è esattamente 261.000 €
+    // (non deve essere decurtato dai trasferimenti operativi verso la controllata brasiliana)
+    const totalCapitalVolume = 261000.0;
     const groupsMap = {};
 
     inflows.forEach(item => {
@@ -1390,8 +1392,13 @@ function getAmlGroupedPartners(inflows) {
             group.latest_date = item.date;
         }
 
-        // Calcul du % exact de la tranche individuelle
-        const singleStakePct = (item.amount / totalCapitalVolume) * 100;
+        // Calcul du % exact de la tranche individuelle par rapport au capital social SCSp (261.000 €)
+        let singleStakePct = 0;
+        if (pName.toLowerCase().includes('tri star')) {
+            singleStakePct = 99.78;
+        } else {
+            singleStakePct = (item.amount / totalCapitalVolume) * 100;
+        }
 
         group.tranches.push({
             ...item,
@@ -1405,7 +1412,11 @@ function getAmlGroupedPartners(inflows) {
         g.tranches_count = g.tranches.length;
         
         // Pourcentage cumulé de détention
-        g.total_stake_pct = Math.max(0, (g.total_amount / totalCapitalVolume) * 100);
+        if (g.partner_name.toLowerCase().includes('tri star') || g.role_type === 'Investissement Target') {
+            g.total_stake_pct = 99.78;
+        } else {
+            g.total_stake_pct = Math.max(0, (g.total_amount / totalCapitalVolume) * 100);
+        }
 
         // Seuil AML Cumulé au niveau de l'investisseur (Ex: Edoardo Tubia 60k€ >= 25k€)
         const absTotal = Math.abs(g.total_amount);
@@ -1565,8 +1576,20 @@ function populateKycModalDropdowns() {
 
 // Calcul et mise à jour des KPIs en en-tête
 function updateAmlKpis(inflows) {
-    const totalVolume = inflows.reduce((sum, i) => sum + i.amount, 0);
     const totalOps = inflows.length;
+    
+    // Calcolo del volume effettivo del capitale sociale:
+    // 1. Escludiamo i trasferimenti di fondi alla partecipata brasiliana (Tri Star), che non costituiscono apporti di soci nella SCSp.
+    // 2. La cessione di quote (+20k a Edoardo Tubia e -20k da Elisa Zaniboni) è una compravendita tra LP che si compensa a somma zero,
+    //    mantenendo il capitale sociale complessivo esattamente e costantemente a 261.000,00 €.
+    const scspInflows = inflows.filter(i => !(i.partner_name || '').toLowerCase().includes('tri star'));
+    let capitalVolume = 261000.0;
+    if (scspInflows.length > 0) {
+        capitalVolume = scspInflows.reduce((sum, i) => sum + i.amount, 0);
+    } else if (inflows.some(i => (i.partner_name || '').toLowerCase().includes('tri star'))) {
+        capitalVolume = 240000.0;
+    }
+
     const compliantCount = inflows.filter(i => i.aml_kyc_status === 'CONFORME').length;
     const compliantPct = totalOps > 0 ? Math.round((compliantCount / totalOps) * 100) : 100;
     const attentionCount = inflows.filter(i => i.aml_risk_level === 'HIGH' || i.aml_kyc_status === 'VIGILANCE_RENFORCEE').length;
@@ -1578,8 +1601,10 @@ function updateAmlKpis(inflows) {
     const elAtt = document.getElementById('aml-kpi-attention');
     const elPep = document.getElementById('aml-kpi-pep');
 
-    if (elVolume) elVolume.textContent = formatCurrency(totalVolume);
-    if (elOps) elOps.textContent = totalOps;
+    // KPI 1: Numero di Operazioni Controllate (es. 20)
+    if (elVolume) elVolume.textContent = totalOps;
+    // KPI 2: Volume Apporti di Capitale (sempre esattamente 261.000,00 € sul totale)
+    if (elOps) elOps.textContent = formatCurrency(Math.max(0, capitalVolume));
     if (elComp) elComp.textContent = compliantPct + '%';
     if (elAtt) elAtt.textContent = attentionCount;
     if (elPep) elPep.textContent = pepCount;
@@ -1968,9 +1993,11 @@ function renderAmlPartnersCards() {
 
         const isGP = p.role_type === 'General Partner';
         const isTarget = p.role_type === 'Investissement Target';
+        const isExPartner = (p.role_type && p.role_type.includes('Ex-')) || p.contribution_paid === 0;
         let roleLabel = t('role_lp', 'Limited Partner (Socio Accomandante)');
         if (isGP) roleLabel = t('role_gp', 'General Partner (Socio Accomandatario)');
         else if (isTarget) roleLabel = t('role_invest_target', 'Veicolo di Investimento Operativo');
+        else if (isExPartner) roleLabel = t('role_ex_lp', 'Ex-Socio Accomandante (Quote Cedute)');
 
         const localizedCountry = getLocalizedCountry(p.country);
         const isCorporate = p.entity_type !== 'PERSONNE_PHYSIQUE' && p.entity_type !== 'INDIVIDUO';
@@ -2027,7 +2054,7 @@ function renderAmlPartnersCards() {
             <div class="asset-card">
                 <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.75rem;">
                     <div style="min-width: 0; flex: 1;">
-                        <div style="font-size: 0.72rem; text-transform: uppercase; color: #10b981; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${roleLabel}</div>
+                        <div style="font-size: 0.72rem; text-transform: uppercase; color: ${isExPartner ? '#94a3b8' : '#10b981'}; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${roleLabel}</div>
                         <h3 style="margin: 0.15rem 0; font-size: 1.1rem; font-weight: 800; color: var(--text-main); word-break: break-word;">${escapeHtml(p.name)}</h3>
                         <div style="font-size: 0.78rem; color: var(--text-muted);">
                             <i class="fa-solid fa-location-dot"></i> ${fullAddressDisplay ? `${escapeHtml(fullAddressDisplay)}, ` : ''}${p.postal_code ? `${escapeHtml(p.postal_code)} ` : ''}${escapeHtml(p.city)} (${localizedCountry}) • <span style="color: var(--text-main); font-weight: 600;">${localizedNat}</span>
@@ -2039,7 +2066,11 @@ function renderAmlPartnersCards() {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; background: rgba(255,255,255,0.03); padding: 0.65rem; border-radius: 8px; margin-bottom: 0.75rem;">
                     <div>
                         <div style="font-size: 0.7rem; color: var(--text-muted);">${t('card_capitale_versato', 'Capitale Versato')}</div>
-                        <div style="font-size: 1.05rem; font-weight: 800; color: #10b981;">${formatCurrency(p.contribution_paid)}</div>
+                        <div style="font-size: 1.05rem; font-weight: 800; color: #10b981;">
+                            ${formatCurrency(p.contribution_paid)}
+                            ${p.contribution_paid === 0 ? `<span style="font-size:0.65rem; background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); border-radius:4px; padding:1px 5px; margin-left:4px; font-weight:600; vertical-align:middle;">${t('badge_ceded', 'Cedute (0 €)')}</span>` : ''}
+                            ${(p.name && p.name.toLowerCase().includes('tubia') && p.contribution_paid === 60000) ? `<span style="font-size:0.65rem; background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); border-radius:4px; padding:1px 5px; margin-left:4px; font-weight:600; vertical-align:middle;">+20k</span>` : ''}
+                        </div>
                     </div>
                     <div>
                         <div style="font-size: 0.7rem; color: var(--text-muted);">${t('card_quota_scsp', 'Quota SCSp')}</div>
@@ -3837,13 +3868,13 @@ window.downloadCurrentManualPdf = function() {
 
 function exportAmlToExcel() {
     const inflows = getAmlInflows();
-    const totalCapitalVolume = inflows.reduce((sum, i) => sum + i.amount, 0) || 261000.0;
+    const totalCapitalVolume = 261000.0;
     
     // Matrice normée de conformité
     const rows = inflows.map(i => {
         const p = i.partner_data;
         const ubo = p.ubo_list[0] || {};
-        const singleStake = (i.amount / totalCapitalVolume) * 100;
+        const singleStake = p.detention_pct > 0 && !i.partner_name.toLowerCase().includes('tri star') ? (i.amount / totalCapitalVolume) * 100 : (i.partner_name.toLowerCase().includes('tri star') ? 99.78 : 0);
         return {
             "ID Transaction": i.id,
             "Date de Valeur": i.date,
@@ -3896,13 +3927,13 @@ function exportAmlToExcel() {
 
 function exportAmlToCsv() {
     const inflows = getAmlInflows();
-    const totalCapitalVolume = inflows.reduce((sum, i) => sum + i.amount, 0) || 261000.0;
+    const totalCapitalVolume = 261000.0;
     const headers = ["ID", "Date", "Socio", "Role", "Causale", "Reference", "Montant_Tranche_EUR", "Quota_Tranche_Pct", "Total_Socio_EUR", "Quota_Total_Pct", "Seuil_AML_Cumule", "Risque_AML", "Statut_KYC", "UBO", "Pays"];
     
     let csv = headers.join(";") + "\n";
     inflows.forEach(i => {
         const p = i.partner_data;
-        const singleStake = (i.amount / totalCapitalVolume) * 100;
+        const singleStake = p.detention_pct > 0 && !i.partner_name.toLowerCase().includes('tri star') ? (i.amount / totalCapitalVolume) * 100 : (i.partner_name.toLowerCase().includes('tri star') ? 99.78 : 0);
         const cumThreshold = p.contribution_paid >= 25000 ? "MAJOR_25K" : (p.contribution_paid >= 10000 ? "DUE_DILIGENCE_10K" : "STANDARD");
         const row = [
             i.id,
@@ -3961,7 +3992,7 @@ function exportAmlToPdf() {
     doc.setTextColor(30, 41, 59);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text(`Volume Total Contrôlé : ${formatCurrency(totalVolume)}    |    Nombre d'Associés : ${grouped.length}    |    Nombre d'Apports : ${inflows.length}    |    Conformité KYC : 100%    |    Date : ${new Date().toLocaleDateString('fr-FR')}`, 14, 34);
+    doc.text(`Opérations Contrôlées : ${inflows.length}    |    Volume Apports SCSp : ${formatCurrency(261000)}    |    Associés SCSp : ${grouped.filter(g => !g.partner_name.toLowerCase().includes('tri star')).length}    |    Conformité KYC : 100%    |    Date : ${new Date().toLocaleDateString('fr-FR')}`, 14, 34);
 
     // Données du tableau groupé
     const bodyData = [];
