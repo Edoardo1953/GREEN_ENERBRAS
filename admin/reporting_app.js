@@ -33,42 +33,149 @@ function toggleFolder(contentId) {
     }
 }
 
-// Caricamento e Salvataggio Localforage (IndexedDB)
-async function loadDocuments() {
+// Caricamento e Salvataggio Ibrido (IndexedDB / LocalForage + LocalStorage + Cloud RTDB)
+function getDeletedDocIds() {
     try {
-        if (typeof firebase !== 'undefined' && firebase.database) {
-            const snap = await firebase.database().ref('green_enerbras_reports').once('value');
-            if (snap.exists()) {
-                const data = snap.val() || {};
-                
-                const getArray = (val) => {
-                    if (!val) return [];
-                    if (Array.isArray(val)) return val;
-                    return Object.values(val);
-                };
-                
+        const stored = localStorage.getItem('green_reports_deleted_ids');
+        if (stored) return new Set(JSON.parse(stored));
+    } catch(e) {}
+    return new Set();
+}
+
+function recordDeletedDocId(docId) {
+    try {
+        const deleted = getDeletedDocIds();
+        deleted.add(docId);
+        localStorage.setItem('green_reports_deleted_ids', JSON.stringify(Array.from(deleted)));
+    } catch(e) {}
+}
+
+async function saveDocumentsLocalOnly() {
+    // 1. Salva su LocalForage (IndexedDB: supporta grandi volumi di dati, blob e base64)
+    try {
+        if (typeof localforage !== 'undefined') {
+            await localforage.setItem('green_enerbras_reports', documents);
+        }
+    } catch (e) {
+        console.warn("Errore salvataggio localforage:", e);
+    }
+
+    // 2. Salva su LocalStorage (per accesso immediato/sincrono)
+    try {
+        localStorage.setItem('green_enerbras_reports', JSON.stringify(documents));
+    } catch (e) {
+        // Se quota LocalStorage superata (es. dataUrl grandi), salva versione alleggerita
+        try {
+            const lightDocs = {
+                'green-enerbras': (documents['green-enerbras'] || []).map(d => ({
+                    ...d,
+                    dataUrl: (d.dataUrl && d.dataUrl.startsWith('data:') && d.dataUrl.length > 50000) ? '' : d.dataUrl
+                })),
+                'tri-star': (documents['tri-star'] || []).map(d => ({
+                    ...d,
+                    dataUrl: (d.dataUrl && d.dataUrl.startsWith('data:') && d.dataUrl.length > 50000) ? '' : d.dataUrl
+                }))
+            };
+            localStorage.setItem('green_enerbras_reports', JSON.stringify(lightDocs));
+        } catch (le) {
+            console.warn("Errore salvataggio LocalStorage compresso:", le);
+        }
+    }
+}
+
+async function loadDocuments() {
+    let loaded = false;
+    const deletedIds = getDeletedDocIds();
+
+    const getCleanArray = (val) => {
+        if (!val) return [];
+        const arr = Array.isArray(val) ? val : Object.values(val);
+        return arr.filter(d => d && d.id && !deletedIds.has(d.id));
+    };
+
+    // 1. Prova da LocalForage (IndexedDB)
+    try {
+        if (typeof localforage !== 'undefined') {
+            const lfData = await localforage.getItem('green_enerbras_reports');
+            if (lfData && (lfData['green-enerbras'] || lfData['tri-star'])) {
                 documents = {
-                    'green-enerbras': getArray(data['green-enerbras']),
-                    'tri-star': getArray(data['tri-star'])
+                    'green-enerbras': getCleanArray(lfData['green-enerbras']),
+                    'tri-star': getCleanArray(lfData['tri-star'])
                 };
+                loaded = true;
+                console.log("Documenti caricati da IndexedDB (localforage)");
             }
         }
     } catch (e) {
-        console.error("Errore nel caricamento dei documenti da Firebase", e);
+        console.warn("Errore lettura localforage:", e);
     }
+
+    // 2. Se non presente in IndexedDB, controlla LocalStorage
+    if (!loaded) {
+        try {
+            const lsData = localStorage.getItem('green_enerbras_reports');
+            if (lsData) {
+                const parsed = JSON.parse(lsData);
+                if (parsed && (parsed['green-enerbras'] || parsed['tri-star'])) {
+                    documents = {
+                        'green-enerbras': getCleanArray(parsed['green-enerbras']),
+                        'tri-star': getCleanArray(parsed['tri-star'])
+                    };
+                    loaded = true;
+                    console.log("Documenti caricati da LocalStorage");
+                }
+            }
+        } catch (e) {
+            console.warn("Errore lettura LocalStorage:", e);
+        }
+    }
+
+    // 3. Se non ancora inizializzato localmente, carica da Firebase Realtime Database
+    if (!loaded) {
+        try {
+            if (typeof firebase !== 'undefined' && firebase.database) {
+                const snap = await Promise.race([
+                    firebase.database().ref('green_enerbras_reports').once('value'),
+                    new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout Firebase')), 5000))
+                ]);
+                if (snap && snap.exists()) {
+                    const data = snap.val() || {};
+                    documents = {
+                        'green-enerbras': getCleanArray(data['green-enerbras']),
+                        'tri-star': getCleanArray(data['tri-star'])
+                    };
+                    loaded = true;
+                    console.log("Documenti inizializzati da Firebase Realtime Database");
+                    await saveDocumentsLocalOnly();
+                }
+            }
+        } catch (e) {
+            console.warn("Errore o timeout nel caricamento dei documenti da Firebase:", e);
+        }
+    }
+
     renderTable('green-enerbras', 'table-ge');
     renderTable('tri-star', 'table-ts');
 }
 
 async function saveDocuments() {
+    // 1. Salva immediatamente in locale (IndexedDB + LocalStorage) per persistenza garantita
+    await saveDocumentsLocalOnly();
+
+    // 2. Tenta la sincronizzazione nel Cloud Firebase (non bloccante)
     try {
         if (typeof firebase !== 'undefined' && firebase.database) {
-            await firebase.database().ref('green_enerbras_reports').set(documents);
+            await Promise.race([
+                firebase.database().ref('green_enerbras_reports').set(documents),
+                new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout salvataggio DB')), 4000))
+            ]);
+            console.log("Documenti sincronizzati nel Cloud Firebase con successo.");
         }
     } catch (e) {
-        console.error("Errore nel salvataggio su Firebase", e);
-        alert("Errore durante il salvataggio dei documenti nel Cloud.");
+        // Nessun alert di errore bloccante: il salvataggio locale è già avvenuto con successo
+        console.warn("Sincronizzazione Cloud Firebase non disponibile o permessi limitati. Documenti salvati in locale:", e.message);
     }
+
     renderTable('green-enerbras', 'table-ge');
     renderTable('tri-star', 'table-ts');
 }
@@ -111,11 +218,6 @@ function setupDragAndDrop(zoneId, inputId, folderKey) {
 async function handleFiles(fileList, folderKey) {
     if (!fileList || !fileList.length) return;
     
-    if (typeof firebase === 'undefined' || !firebase.storage) {
-        alert("Firebase non inizializzato correttamente. Riprova.");
-        return;
-    }
-    
     const overlay = document.getElementById('upload-overlay');
     const progressFill = document.getElementById('upload-progress-fill');
     const progressText = document.getElementById('upload-progress-text');
@@ -133,40 +235,64 @@ async function handleFiles(fileList, folderKey) {
         }
         
         try {
-            let doc = {};
+            let downloadURL = null;
+            let storagePath = null;
             const storageFolderPath = folderKey === 'tri-star' ? 'uploads/tristar/' : 'uploads/reporting/';
-            
             const safeName = Date.now() + "_" + file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-            const storageRef = firebase.storage().ref().child(storageFolderPath + safeName);
-            
-            const uploadTask = storageRef.put(file);
-            
-            uploadTask.on('state_changed', 
-                (snapshot) => {
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    if(progressFill) progressFill.style.width = progress + '%';
-                    if(progressText) progressText.textContent = `Upload in corso: ${Math.round(progress)}%`;
+
+            // 1. Tenta upload su Firebase Storage
+            if (typeof firebase !== 'undefined' && firebase.storage) {
+                try {
+                    const storageRef = firebase.storage().ref().child(storageFolderPath + safeName);
+                    const uploadTask = storageRef.put(file);
+                    
+                    uploadTask.on('state_changed', 
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            if(progressFill) progressFill.style.width = progress + '%';
+                            if(progressText) progressText.textContent = `Upload in corso: ${Math.round(progress)}%`;
+                        }
+                    );
+                    
+                    await Promise.race([
+                        uploadTask,
+                        new Promise((_, rej) => setTimeout(() => rej(new Error('Storage timeout')), 15000))
+                    ]);
+                    downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                    storagePath = storageFolderPath + safeName;
+                } catch (stErr) {
+                    console.warn("Upload su Firebase Storage non riuscito o timeout, attivo fallback locale:", stErr);
                 }
-            );
+            }
+
+            // 2. Fallback locale: salva come Data URL (accessibile da IndexedDB/localforage)
+            if (!downloadURL) {
+                if (progressText) progressText.textContent = 'Salvataggio in memoria locale...';
+                if (progressFill) progressFill.style.width = '100%';
+                downloadURL = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = (e) => reject(new Error("Errore lettura file locale"));
+                    reader.readAsDataURL(file);
+                });
+            }
             
-            await uploadTask;
-            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
-            
-            doc = {
+            const doc = {
                 id: Date.now() + Math.random().toString(36).substr(2, 9),
                 name: file.name,
                 size: formatBytes(file.size),
                 type: getFileType(file.name),
                 date: new Date().toLocaleDateString('it-IT'),
-                visibleToUser: false,
+                visibleToUser: true,
                 dataUrl: downloadURL,
-                storagePath: storageFolderPath + safeName
+                storagePath: storagePath
             };
             
+            if (!documents[folderKey]) documents[folderKey] = [];
             documents[folderKey].push(doc);
             await saveDocuments();
         } catch(e) {
-            console.error("Errore upload file su Firebase", e);
+            console.error("Errore upload file", e);
             alert("Errore durante il caricamento di " + file.name + "\n\nDettaglio: " + e.message);
         }
     }
@@ -311,7 +437,7 @@ window.handleDragOver = function(e) {
     return false;
 };
 
-window.handleDrop = function(e, folderKey, targetDocId) {
+window.handleDrop = async function(e, folderKey, targetDocId) {
     e.stopPropagation();
     
     if (dragFolderKey === folderKey && dragSrcDocId !== targetDocId) {
@@ -322,7 +448,7 @@ window.handleDrop = function(e, folderKey, targetDocId) {
         if (srcIndex > -1 && targetIndex > -1) {
             const [movedDoc] = docs.splice(srcIndex, 1);
             docs.splice(targetIndex, 0, movedDoc);
-            saveDocuments();
+            await saveDocuments();
         }
     }
     return false;
@@ -334,44 +460,78 @@ window.handleDragEnd = function(e) {
 };
 
 // Azioni
-function toggleVisibility(folderKey, docId) {
-    const doc = documents[folderKey].find(d => d.id === docId);
+async function toggleVisibility(folderKey, docId) {
+    const doc = (documents[folderKey] || []).find(d => d.id === docId);
     if (doc) {
         doc.visibleToUser = !doc.visibleToUser;
-        saveDocuments();
+        await saveDocuments();
     }
 }
 
-function deleteDocument(folderKey, docId) {
+async function deleteDocument(folderKey, docId) {
     if (confirm("Sei sicuro di voler eliminare questo documento?")) {
-        documents[folderKey] = documents[folderKey].filter(d => d.id !== docId);
-        saveDocuments();
+        recordDeletedDocId(docId);
+        
+        const docToDelete = (documents[folderKey] || []).find(d => d.id === docId);
+        if (docToDelete && docToDelete.storagePath && typeof firebase !== 'undefined' && firebase.storage) {
+            try {
+                await firebase.storage().ref().child(docToDelete.storagePath).delete();
+            } catch(e) {
+                console.warn("Rimozione file da Storage non eseguita:", e.message);
+            }
+        }
+        
+        documents[folderKey] = (documents[folderKey] || []).filter(d => d.id !== docId);
+        await saveDocuments();
     }
 }
 
-function renameDocument(folderKey, docId) {
-    const doc = documents[folderKey].find(d => d.id === docId);
+async function renameDocument(folderKey, docId) {
+    const doc = (documents[folderKey] || []).find(d => d.id === docId);
     if (doc) {
         const newName = prompt("Inserisci il nuovo nome per il documento:", doc.name);
         if (newName !== null && newName.trim() !== "") {
             doc.name = newName.trim();
-            saveDocuments();
+            await saveDocuments();
         }
     }
 }
 
 function openPreview(docId, folderKey) {
-    const doc = documents[folderKey].find(d => d.id === docId);
+    const doc = (documents[folderKey] || []).find(d => d.id === docId);
     if (!doc) return;
 
-    document.getElementById('preview-title').innerHTML = `<i class="fa-solid fa-file"></i> Anteprima: ${doc.name}`;
+    const modalTitle = document.getElementById('preview-title');
+    if (modalTitle) {
+        modalTitle.innerHTML = `<i class="fa-solid fa-file"></i> Anteprima: ${doc.name}`;
+    }
     
     const previewContainer = document.getElementById('preview-content-container');
-    
     let urlToUse = doc.dataUrl;
-    const lang = localStorage.getItem('app_lang') || 'it';
-    
-    // Removed translation override: book icon should open original document
+
+    // Aggiungi pulsante di apertura / download diretto nell'header della finestra modale
+    const modalHeader = document.querySelector('#preview-modal > div > div:first-child');
+    let directLink = document.getElementById('preview-direct-link');
+    if (!directLink && modalHeader) {
+        directLink = document.createElement('a');
+        directLink.id = 'preview-direct-link';
+        directLink.target = '_blank';
+        directLink.style.cssText = 'color: #10b981; margin-left: auto; margin-right: 1.5rem; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;';
+        const closeBtn = modalHeader.querySelector('button');
+        if (closeBtn) {
+            modalHeader.insertBefore(directLink, closeBtn);
+        }
+    }
+    if (directLink) {
+        if (urlToUse) {
+            directLink.href = urlToUse;
+            directLink.download = doc.name;
+            directLink.innerHTML = '<i class="fa-solid fa-arrow-up-right-from-square"></i> Apri / Scarica';
+            directLink.style.display = 'inline-flex';
+        } else {
+            directLink.style.display = 'none';
+        }
+    }
     
     if (urlToUse) {
         if (doc.type === 'pdf') {
@@ -381,12 +541,15 @@ function openPreview(docId, folderKey) {
         } else if (doc.type === 'video') {
             previewContainer.innerHTML = `<video src="${urlToUse}" controls style="max-width:100%; max-height:100%;"></video>`;
         } else {
-            // Word or other format
+            // Word o altro formato
             previewContainer.innerHTML = `
                 <div style="text-align: center;">
                     <i class="fa-solid fa-file-word" style="font-size: 5rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
                     <h2>${doc.name}</h2>
-                    <p style="color: var(--text-muted); margin-top: 1rem;">L'anteprima in-browser non è supportata per questo formato.<br>Clicca su "Scarica" per ottenere il file.</p>
+                    <p style="color: var(--text-muted); margin-top: 1rem;">L'anteprima in-browser non è supportata per questo formato.<br>Clicca su "Scarica" per ottenere o aprire il file.</p>
+                    <a href="${urlToUse}" download="${doc.name}" target="_blank" style="display:inline-block; margin-top:1rem; padding:0.6rem 1.2rem; background:var(--accent-green); color:#fff; border-radius:6px; text-decoration:none; font-weight:bold;">
+                        <i class="fa-solid fa-download"></i> Scarica File
+                    </a>
                 </div>
             `;
         }
@@ -395,7 +558,7 @@ function openPreview(docId, folderKey) {
             <div style="text-align: center;">
                 <i class="fa-solid fa-triangle-exclamation" style="font-size: 5rem; color: #f59e0b; margin-bottom: 1rem;"></i>
                 <h2>File Non Trovato</h2>
-                <p style="color: var(--text-muted); margin-top: 1rem;">Il contenuto di questo file non è stato salvato (potrebbe essere stato caricato prima dell'aggiornamento). Ricaricalo dall'Admin.</p>
+                <p style="color: var(--text-muted); margin-top: 1rem;">Il contenuto di questo file non è stato salvato o il link non è disponibile. Ricarica il documento dall'area di upload.</p>
             </div>
         `;
     }

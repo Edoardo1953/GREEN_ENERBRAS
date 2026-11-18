@@ -444,14 +444,14 @@
                          {
                              "date":  "18/11/2026",
                              "category":  "Capital Contribution",
-                             "description":  "Acquisition de parts sociales (Cession Elisa Zaniboni)",
+                             "description":  "Paiement Capital Contribution",
                              "partner":  "Tubia Edoardo",
                              "amount":  20000.0
                          },
                          {
                              "date":  "18/11/2026",
                              "category":  "Capital Contribution",
-                             "description":  "Cession intégrale de parts sociales à Tubia Edoardo",
+                             "description":  "Paiement Capital Contribution",
                              "partner":  "Elisa Zaniboni",
                              "amount":  -20000.0
                          }
@@ -989,7 +989,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "18/11/2026 09:10",
+    "lastUpdated":  "18/11/2026 10:11",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
