@@ -182,13 +182,26 @@ function getLocalizedEntityType(entityType) {
 // Localisation des causali e mandati
 function getLocalizedPurpose(purposeKey, category) {
     const lang = (typeof currentLang !== 'undefined' ? currentLang : localStorage.getItem('appLang') || 'it');
-    const isDividend = (category || '').toLowerCase().includes('dividende') || (purposeKey || '').toLowerCase().includes('dividende');
+    const pk = (purposeKey || '').toLowerCase();
+    const isDividend = (category || '').toLowerCase().includes('dividende') || pk.includes('dividende');
     if (isDividend) {
         if (lang === 'en') return "Solar PV Parks Dividend Distribution";
         if (lang === 'fr') return "Distribution de Dividendes Parcs Solaires";
         return "Distribuzione Dividendi Parchi Fotovoltaici";
     }
-    const isGP = (purposeKey || '').toLowerCase().includes('general partner');
+    const isCession = pk.includes('cession') || pk.includes('cedut');
+    if (isCession) {
+        if (lang === 'en') return "Share Transfer / Cession to Edoardo Tubia";
+        if (lang === 'fr') return "Cession de Parts Sociales à Edoardo Tubia";
+        return "Cessione Quote a favore di Edoardo Tubia";
+    }
+    const isAcquisition = pk.includes('acquisition') || pk.includes('acquisizione');
+    if (isAcquisition) {
+        if (lang === 'en') return "Acquisition of Shares by Transfer (Elisa Zaniboni)";
+        if (lang === 'fr') return "Acquisition de Parts Sociales par Cession (Elisa Zaniboni)";
+        return "Acquisizione Quote per Cessione (Elisa Zaniboni)";
+    }
+    const isGP = pk.includes('general partner');
     if (isGP) {
         if (lang === 'en') return "Capital Contribution Payment (General Partner)";
         if (lang === 'fr') return "Paiement Apport de Capital (Associé Commandité)";
@@ -202,6 +215,11 @@ function getLocalizedPurpose(purposeKey, category) {
 function getLocalizedMandate(mandateKey) {
     const lang = (typeof currentLang !== 'undefined' ? currentLang : localStorage.getItem('appLang') || 'it');
     const m = (mandateKey || '').toLowerCase();
+    if (m.includes('cession') || m.includes('cedut')) {
+        if (lang === 'en') return "Full Transfer of Shares to Tubia Edoardo (Residual Holding: 0%)";
+        if (lang === 'fr') return "Cession Intégrale de Parts Sociales à Tubia Edoardo (Détention: 0%)";
+        return "Cessione Integrale Quote a Tubia Edoardo (Quota residua: 0%)";
+    }
     if (m.includes('commanditée') || m.includes('commandité') || m.includes('gérance')) {
         if (lang === 'en') return "General Partner & Statutory Management of the SCSp";
         if (lang === 'fr') return "Associé Commandité & Gérance Statutaire de la SCSp";
@@ -1146,15 +1164,15 @@ function getAmlInflows() {
         const amt = Number(t.amount || 0);
 
         // Exclure les frais, dépenses, achats d'immobilisations, sorties bancaires, stornos et entry fees
-        if (amt <= 0) return false;
+        if (amt === 0) return false;
         if (cat.includes('frais') || desc.includes('frais avances') || desc.includes('remboursement') || 
             desc.includes('storno') || desc.includes('saldo iniziale') || 
             cat.includes('entry fee') || desc.includes('entry fee') || desc.includes('entry fees')) {
             return false;
         }
 
-        // Relever les contributions de capital ou futurs dividendes
-        const isCapital = cat.includes('capital') || desc.includes('capital contribution') || desc.includes('apport');
+        // Relever les contributions de capital ou futurs dividendes, ainsi que les transferts / cessions de parts officielles
+        const isCapital = cat.includes('capital') || desc.includes('capital contribution') || desc.includes('apport') || desc.includes('cession') || desc.includes('parts');
         const isDividend = cat.includes('dividende') || desc.includes('dividende') || desc.includes('distribution') || desc.includes('produit');
         const isPartnerInflow = [
             'new life sarl', 'tubia edoardo', 'tubia silvia', 'bertozzi stefano', 
@@ -1163,13 +1181,15 @@ function getAmlInflows() {
             'tri star enerbras one scp'
         ].some(p => partner.includes(p));
 
-        return (isCapital || isDividend || isPartnerInflow) && amt > 0;
+        return isDividend || ((isCapital || isPartnerInflow) && amt !== 0);
     });
 
-    // 2. Si aucune transaction trouvée dans data.js, charger la liste des 13 versements réels certifiés
+    // 2. Si aucune transaction trouvée dans data.js, charger la liste des versements réels certifiés
     let recordsToMap = filtered;
     if (recordsToMap.length === 0) {
         recordsToMap = [
+            { date: "18/11/2026", category: "Capital Contribution", description: "Acquisition de parts sociales (Cession Elisa Zaniboni)", partner: "Tubia Edoardo", amount: 20000.0 },
+            { date: "18/11/2026", category: "Capital Contribution", description: "Cession intégrale de parts sociales à Tubia Edoardo", partner: "Zaniboni Elisa", amount: -20000.0 },
             { date: "17/07/2026", category: "Capital Contribution", description: "Paiement Capital Contribution", partner: "Sterzi Marco", amount: 40000.0 },
             { date: "17/07/2026", category: "Capital Contribution", description: "Paiement Capital Contribution", partner: "Miletti Giovanni", amount: 20000.0 },
             { date: "11/12/2025", category: "Capital Contribution", description: "Paiement Capital Contribution", partner: "Zaniboni Greta", amount: 20000.0 },
@@ -1215,16 +1235,30 @@ function getAmlInflows() {
 
         const partnerData = getEnrichedPartner(partnerKey);
         const amount = Number(r.amount || 0);
+        const isCession = amount < 0;
+        const absAmount = Math.abs(amount);
 
         let thresholdLevel = 'STANDARD';
-        if (amount >= 25000) thresholdLevel = 'MAJOR_25K';
-        else if (amount >= 10000) thresholdLevel = 'DUE_DILIGENCE_10K';
-        else if (amount >= 5000) thresholdLevel = 'VIGILANCE_5K';
+        if (absAmount >= 25000) thresholdLevel = 'MAJOR_25K';
+        else if (absAmount >= 10000) thresholdLevel = 'DUE_DILIGENCE_10K';
+        else if (absAmount >= 5000) thresholdLevel = 'VIGILANCE_5K';
 
         const isDividend = (r.category || '').toLowerCase().includes('dividende') || (r.description || '').toLowerCase().includes('dividende');
 
+        let rawPurpose = r.description || "Apport de Capital Social (Parts SCSp)";
+        let refNumber = "CONTRAT-SCSP-" + (partnerData.id || 'LP');
+        if (isDividend) {
+            refNumber = "DIV-BR-" + year + "-" + String(idx + 1).padStart(2, '0');
+        } else if (isCession) {
+            rawPurpose = "Cession de Parts Sociales à Edoardo Tubia";
+            refNumber = "ACTE-CESS-2026-001";
+        } else if (partnerKeyLower.includes('edoardo') && (rawDate === '18/11/2026' || (rawPurpose && rawPurpose.toLowerCase().includes('cessi')))) {
+            rawPurpose = "Acquisition de Parts Sociales par Cession (Elisa Zaniboni)";
+            refNumber = "ACTE-CESS-2026-001";
+        }
+
         return {
-            id: 'AML-' + year + '-' + String(idx + 1).padStart(3, '0'),
+            id: isCession ? ('AML-CESS-' + year + '-' + String(idx + 1).padStart(3, '0')) : ('AML-' + year + '-' + String(idx + 1).padStart(3, '0')),
             date: rawDate,
             date_obj: parsedDate,
             year: year,
@@ -1233,11 +1267,11 @@ function getAmlInflows() {
             entity_type: partnerData.entity_type,
             entity_type_label: partnerData.entity_type_label,
             role_type: partnerData.role_type || 'Limited Partner',
-            raw_purpose: r.description || "Apport de Capital Social (Parts SCSp)",
+            raw_purpose: rawPurpose,
             category: r.category || '',
-            ref_number: isDividend ? "DIV-BR-" + year + "-" + String(idx + 1).padStart(2, '0') : "CONTRAT-SCSP-" + (partnerData.id || 'LP'),
+            ref_number: refNumber,
             amount: amount,
-            detention_pct: partnerData.detention_pct || 7.66,
+            detention_pct: partnerData.detention_pct,
             threshold_level: thresholdLevel,
             aml_risk_level: partnerData.aml_risk_level || 'LOW',
             aml_kyc_status: partnerData.aml_kyc_status || 'CONFORME',
@@ -1294,13 +1328,14 @@ function getAmlGroupedPartners(inflows) {
         g.tranches_count = g.tranches.length;
         
         // Pourcentage cumulé de détention
-        g.total_stake_pct = (g.total_amount / totalCapitalVolume) * 100;
+        g.total_stake_pct = Math.max(0, (g.total_amount / totalCapitalVolume) * 100);
 
-        // Seuil AML Cumulé au niveau de l'investisseur (Ex: Edoardo Tubia 40k€ >= 25k€)
+        // Seuil AML Cumulé au niveau de l'investisseur (Ex: Edoardo Tubia 60k€ >= 25k€)
+        const absTotal = Math.abs(g.total_amount);
         let cumulativeThreshold = 'STANDARD';
-        if (g.total_amount >= 25000) cumulativeThreshold = 'MAJOR_25K';
-        else if (g.total_amount >= 10000) cumulativeThreshold = 'DUE_DILIGENCE_10K';
-        else if (g.total_amount >= 5000) cumulativeThreshold = 'VIGILANCE_5K';
+        if (absTotal >= 25000) cumulativeThreshold = 'MAJOR_25K';
+        else if (absTotal >= 10000) cumulativeThreshold = 'DUE_DILIGENCE_10K';
+        else if (absTotal >= 5000) cumulativeThreshold = 'VIGILANCE_5K';
 
         g.threshold_level = cumulativeThreshold;
         return g;
@@ -1499,17 +1534,25 @@ function renderAmlRegistryTable(inflows) {
         const riskBadge = getLocalizedRiskBadge(g.aml_risk_level);
         const kycBadge = getLocalizedKycBadge(g.aml_kyc_status);
 
+        const isZeroOrEx = g.total_amount <= 0 || (g.role_type && g.role_type.includes('Ex-'));
         const roleBadge = g.role_type === 'General Partner' 
             ? '<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; font-size: 0.68rem; margin-left: 0.35rem;">GP</span>'
-            : '<span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; font-size: 0.68rem; margin-left: 0.35rem;">LP</span>';
+            : (isZeroOrEx
+                ? '<span class="badge" style="background: rgba(148, 163, 184, 0.2); color: #94a3b8; font-size: 0.68rem; margin-left: 0.35rem;">Ex-LP (0%)</span>'
+                : '<span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; font-size: 0.68rem; margin-left: 0.35rem;">LP</span>');
 
         const localizedCountry = getLocalizedCountry(g.partner_data.country);
         const localizedMandate = getLocalizedMandate(g.partner_data.mandate_nature);
 
         // Libellé de la causale de groupe
-        let groupPurpose = getLocalizedPurpose(g.tranches[0].raw_purpose, g.tranches[0].category);
-        if (hasMultiple) {
-            groupPurpose += ` (${g.tranches_count} ${t('badge_tranches', 'versamenti')})`;
+        let groupPurpose = '';
+        if (isZeroOrEx && g.tranches.some(tr => tr.amount < 0)) {
+            groupPurpose = t('purpose_share_transfer_complete', 'Cessione Integrale Quote (0% Residuo)');
+        } else {
+            groupPurpose = getLocalizedPurpose(g.tranches[0].raw_purpose, g.tranches[0].category);
+            if (hasMultiple) {
+                groupPurpose += ` (${g.tranches_count} ${t('badge_tranches', 'versamenti')})`;
+            }
         }
 
         // Chevron expand icon or dot
@@ -1518,9 +1561,14 @@ function renderAmlRegistryTable(inflows) {
             : `<span style="display:inline-block; width:22px; margin-right:0.4rem; text-align:center; color:var(--text-muted); opacity:0.3;"><i class="fa-solid fa-circle" style="font-size:0.35rem;"></i></span>`;
 
         // Date badge with tranches count
-        const tranchesCountBadge = hasMultiple 
-            ? `<br><span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-size: 0.68rem; margin-top: 3px; display: inline-block;"><i class="fa-solid fa-layer-group" style="font-size:0.65rem;"></i> ${g.tranches_count} ${t('badge_tranches', 'versamenti')}</span>`
-            : `<br><span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); font-size: 0.68rem; margin-top: 3px; display: inline-block;">${t('badge_single_tranche', '1 versamento')}</span>`;
+        let tranchesCountBadge = '';
+        if (g.tranches.some(tr => tr.amount < 0)) {
+            tranchesCountBadge = `<br><span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; font-size: 0.68rem; margin-top: 3px; display: inline-block;"><i class="fa-solid fa-arrow-right-arrow-left" style="font-size:0.65rem;"></i> ${g.tranches_count} ${t('badge_ops', 'operazioni')} (Cessione)</span>`;
+        } else if (hasMultiple) {
+            tranchesCountBadge = `<br><span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-size: 0.68rem; margin-top: 3px; display: inline-block;"><i class="fa-solid fa-layer-group" style="font-size:0.65rem;"></i> ${g.tranches_count} ${t('badge_tranches', 'versamenti')}</span>`;
+        } else {
+            tranchesCountBadge = `<br><span class="badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-muted); font-size: 0.68rem; margin-top: 3px; display: inline-block;">${t('badge_single_tranche', '1 versamento')}</span>`;
+        }
 
         // Giustificativi Button per la Riga Principale
         let groupDocsBtn = '';
@@ -1596,10 +1644,10 @@ function renderAmlRegistryTable(inflows) {
                     <div style="font-size: 0.72rem; color: var(--text-muted);">${localizedMandate}</div>
                 </td>
                 <td style="font-family: monospace; font-size: 0.78rem; color: var(--text-muted);">${escapeHtml(g.tranches[0].ref_number)}</td>
-                <td class="text-right text-bold" style="color: #10b981; font-size: 1rem;">
+                <td class="text-right text-bold" style="color: ${g.total_amount > 0 ? '#10b981' : '#94a3b8'}; font-size: 1rem;">
                     ${formatCurrency(g.total_amount)}
                 </td>
-                <td class="text-right" style="font-weight: 800; color: #f59e0b; font-size: 0.95rem;">
+                <td class="text-right" style="font-weight: 800; color: ${g.total_stake_pct > 0 ? '#f59e0b' : '#94a3b8'}; font-size: 0.95rem;">
                     ${g.total_stake_pct.toFixed(2)}%
                 </td>
                 <td style="text-align: center;">${thresholdBadge}</td>
@@ -1629,6 +1677,20 @@ function renderAmlRegistryTable(inflows) {
                     : 'background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid var(--border-color);';
                 const sText = sCount > 0 ? `${sCount} ${t('btn_docs_attached', 'Doc')}` : `+ ${t('btn_add_doc', 'Giustificativo')}`;
 
+                const isTrCession = tr.amount < 0;
+                const trAmountColor = isTrCession ? '#f87171' : '#10b981';
+                const trAmountFormatted = isTrCession 
+                    ? ('- ' + formatCurrency(Math.abs(tr.amount)))
+                    : ('+ ' + formatCurrency(tr.amount));
+
+                const trancheLabel = isTrCession 
+                    ? `<span style="font-weight: 700; color: #f87171;"><i class="fa-solid fa-arrow-right-arrow-left"></i> ${t('label_share_cession', 'Cessione Quote')}</span>`
+                    : `<span style="font-weight: 600; color: var(--text-main);">${t('label_tranche', 'Tranche')} #${g.tranches_count - tIdx}</span>`;
+
+                const trStakeFormatted = isTrCession 
+                    ? ('- ' + Math.abs(tr.single_stake_pct).toFixed(2) + '%')
+                    : ('+ ' + tr.single_stake_pct.toFixed(2) + '%');
+
                 html += `
                     <tr class="aml-sub-row aml-sub-row-${gIdx}">
                         <td style="font-family: monospace; font-size: 0.82rem; color: var(--text-muted); padding-left: 1rem;">
@@ -1636,8 +1698,8 @@ function renderAmlRegistryTable(inflows) {
                         </td>
                         <td>
                             <div style="padding-left: 1.8rem; color: var(--text-muted); font-size: 0.8rem; display: flex; align-items: center;">
-                                <i class="fa-solid fa-arrow-turn-up fa-rotate-90 text-emerald" style="margin-right: 0.4rem; opacity: 0.8;"></i>
-                                <span style="font-weight: 600; color: var(--text-main);">${t('label_tranche', 'Tranche')} #${g.tranches_count - tIdx}</span>
+                                <i class="fa-solid fa-arrow-turn-up fa-rotate-90 ${isTrCession ? 'text-amber' : 'text-emerald'}" style="margin-right: 0.4rem; opacity: 0.8;"></i>
+                                ${trancheLabel}
                                 <span style="font-size: 0.72rem; color: var(--text-muted); margin-left: 0.4rem;">(${tr.id})</span>
                             </div>
                         </td>
@@ -1645,11 +1707,11 @@ function renderAmlRegistryTable(inflows) {
                             <div style="color: var(--text-main);">${trPurpose}</div>
                         </td>
                         <td style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(tr.ref_number)}</td>
-                        <td class="text-right" style="font-family: monospace; font-weight: 700; color: #10b981; font-size: 0.9rem;">
-                            ${formatCurrency(tr.amount)}
+                        <td class="text-right" style="font-family: monospace; font-weight: 700; color: ${trAmountColor}; font-size: 0.9rem;">
+                            ${trAmountFormatted}
                         </td>
-                        <td class="text-right" style="font-weight: 600; color: #f59e0b; font-size: 0.85rem;" title="${t('label_single_tranche_quota', 'Quota singola tranche')}">
-                            ${tr.single_stake_pct.toFixed(2)}%
+                        <td class="text-right" style="font-weight: 600; color: ${isTrCession ? '#f87171' : '#f59e0b'}; font-size: 0.85rem;" title="${t('label_single_tranche_quota', 'Quota singola tranche')}">
+                            ${trStakeFormatted}
                         </td>
                         <td style="text-align: center;">${trThresholdBadge}</td>
                         <td style="text-align: center; font-size: 0.75rem; color: var(--text-muted);"><i class="fa-solid fa-shield-check text-emerald"></i></td>
@@ -3827,11 +3889,17 @@ function exportAmlToPdf() {
     // Données du tableau groupé
     const bodyData = [];
     grouped.forEach(g => {
+        const isExOrZero = g.total_amount <= 0 || (g.role_type && g.role_type.includes('Ex-'));
+        const roleText = g.role_type === 'General Partner' ? 'GP' : (isExOrZero ? 'Ex-LP' : 'LP');
+        const purposeText = (isExOrZero && g.tranches.some(t => t.amount < 0))
+            ? "Cessione Integrale Quote (0% Residuo)"
+            : getLocalizedPurpose(g.tranches[0].raw_purpose, g.tranches[0].category);
+
         bodyData.push([
-            g.latest_date + (g.tranches_count > 1 ? ` (${g.tranches_count} tranches)` : ''),
+            g.latest_date + (g.tranches_count > 1 ? ` (${g.tranches_count} ${g.tranches.some(t => t.amount < 0) ? 'operazioni' : 'tranches'})` : ''),
             g.partner_name,
-            g.role_type === 'General Partner' ? 'GP' : 'LP',
-            getLocalizedPurpose(g.tranches[0].raw_purpose, g.tranches[0].category),
+            roleText,
+            purposeText,
             g.tranches[0].ref_number,
             formatCurrency(g.total_amount),
             g.total_stake_pct.toFixed(2) + '%',
@@ -3840,14 +3908,19 @@ function exportAmlToPdf() {
         ]);
         if (g.tranches_count > 1) {
             g.tranches.forEach((tr, idx) => {
+                const isCess = tr.amount < 0;
+                const trLbl = isCess ? '  └ Cessione Quote' : ('  └ Tranche #' + (g.tranches_count - idx));
+                const amtFormatted = isCess ? ('- ' + formatCurrency(Math.abs(tr.amount))) : formatCurrency(tr.amount);
+                const stakeFormatted = (isCess ? '- ' : '+ ') + Math.abs(tr.single_stake_pct).toFixed(2) + '%';
+
                 bodyData.push([
                     '  └ ' + tr.date,
-                    '  └ Tranche #' + (g.tranches_count - idx),
+                    trLbl,
                     '',
                     '  └ ' + getLocalizedPurpose(tr.raw_purpose, tr.category),
                     tr.ref_number,
-                    formatCurrency(tr.amount),
-                    tr.single_stake_pct.toFixed(2) + '%',
+                    amtFormatted,
+                    stakeFormatted,
                     tr.threshold_level,
                     ''
                 ]);

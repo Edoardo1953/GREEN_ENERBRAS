@@ -1997,8 +1997,8 @@ function renderPnlTable(records, totalCharges, totalProduits, netResult) {
                 <td style="padding: 0.85rem 1rem;">
                     <span style="font-weight: 700; color: white;">${group.tipologia}</span>
                 </td>
-                <td style="padding: 0.85rem 1rem;">
-                    <span style="font-size: 0.8rem; background: rgba(255,255,255,0.08); padding: 0.25rem 0.6rem; border-radius: 6px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.35rem;">
+                <td style="padding: 0.85rem 1rem; white-space: nowrap;">
+                    <span style="font-size: 0.8rem; background: rgba(255,255,255,0.08); padding: 0.25rem 0.65rem; border-radius: 6px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap;">
                         <i class="fa-solid fa-list-ul"></i> ${group.items.length} scrittura/e
                     </span>
                 </td>
