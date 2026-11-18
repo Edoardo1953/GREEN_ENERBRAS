@@ -858,13 +858,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Theme Manager & Tools Button
     ThemeManager.init();
 
-    // Mobile menu toggle
+    // Mobile menu toggle & drawer handling
     const sidebar = document.querySelector('.sidebar');
     if (sidebar) {
         const hamburgerBtn = document.createElement('button');
         hamburgerBtn.className = 'mobile-menu-toggle';
+        hamburgerBtn.setAttribute('aria-label', 'Toggle Navigation Menu');
         hamburgerBtn.innerHTML = '<i class="fa-solid fa-bars"></i>';
         document.body.appendChild(hamburgerBtn);
+
+        const backdrop = document.createElement('div');
+        backdrop.className = 'sidebar-backdrop';
+        document.body.appendChild(backdrop);
 
         const prefix = window.location.pathname.includes('/admin/') || window.location.pathname.includes('/user/') ? '../' : './';
         const mobileBrand = document.createElement('div');
@@ -872,14 +877,45 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileBrand.innerHTML = `<img src="${prefix}admin/Loghi/Logo Green Enerbras 01.png" alt="GREEN ENERBRAS">`;
         document.body.appendChild(mobileBrand);
 
-        hamburgerBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
+        const closeSidebar = () => {
+            sidebar.classList.remove('open');
+            backdrop.classList.remove('active');
+        };
+
+        const openSidebar = () => {
+            sidebar.classList.add('open');
+            backdrop.classList.add('active');
+        };
+
+        hamburgerBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (sidebar.classList.contains('open')) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
         });
 
+        backdrop.addEventListener('click', closeSidebar);
+
         document.addEventListener('click', (e) => {
-            if (window.innerWidth <= 768 && !sidebar.contains(e.target) && !hamburgerBtn.contains(e.target)) {
-                sidebar.classList.remove('open');
+            if (window.innerWidth <= 992 && !sidebar.contains(e.target) && !hamburgerBtn.contains(e.target)) {
+                closeSidebar();
             }
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 992) {
+                closeSidebar();
+            }
+        });
+
+        sidebar.querySelectorAll('.nav-item').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 992 && !link.classList.contains('btn-switch-admin')) {
+                    closeSidebar();
+                }
+            });
         });
     }
 
