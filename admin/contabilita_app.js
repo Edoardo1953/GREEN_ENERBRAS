@@ -1380,8 +1380,8 @@ const CONTABILITA_RECORDS = [
     "isInternalOffset": false
   },
   {
-    "data": "2026-11-18",
-    "valuta": "2026-11-18",
+    "data": "2026-11-19",
+    "valuta": "2026-11-19",
     "mese": 11,
     "anno": 2026,
     "competenza": 2026,
