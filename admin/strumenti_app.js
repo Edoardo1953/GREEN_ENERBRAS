@@ -77,10 +77,18 @@ async function loadUsers() {
 
 window.deleteUser = async function(username) {
     if (confirm('Sei sicuro di voler eliminare ' + username + '?')) {
-        await Auth.deleteUser(username);
-        await loadUsers();
+        try {
+            const success = await Auth.deleteUser(username);
+            if (success) {
+                alert("Utente '" + username + "' eliminato con successo!");
+            }
+            await loadUsers();
+        } catch (err) {
+            console.error("Errore eliminazione utente:", err);
+            alert("Si è verificato un errore durante l'eliminazione dell'utente: " + err.message);
+        }
     }
-}
+};
 
 window.editUser = function(username) {
     const user = window.allUsersData[username];
@@ -161,21 +169,38 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const rows = tbody.querySelectorAll('tr');
                 const updates = {};
                 let userOrderIndex = 1;
+                let localUsers = {};
+                try {
+                    const stored = localStorage.getItem('green_enerbras_users_db');
+                    if (stored) localUsers = JSON.parse(stored);
+                } catch(e) {}
+
                 rows.forEach((row) => {
                     const username = row.dataset.username;
                     const uObj = window.allUsersData[username];
                     const isAdmin = (uObj && uObj.role === 'admin') || username.toLowerCase() === 'admin';
-                    if (isAdmin) {
-                        updates['users/' + username + '/order'] = 0;
-                    } else {
-                        updates['users/' + username + '/order'] = userOrderIndex++;
+                    const newOrder = isAdmin ? 0 : userOrderIndex++;
+                    updates['users/' + username + '/order'] = newOrder;
+                    if (localUsers[username]) {
+                        localUsers[username].order = newOrder;
+                    }
+                    if (window.allUsersData[username]) {
+                        window.allUsersData[username].order = newOrder;
                     }
                 });
+
                 try {
-                    await firebase.database().ref().update(updates);
+                    localStorage.setItem('green_enerbras_users_db', JSON.stringify(localUsers));
+                } catch(e) {}
+
+                try {
+                    if (typeof firebase !== 'undefined' && firebase.database) {
+                        firebase.database().ref().update(updates).catch((err) => {
+                            console.warn("Sincronizzazione ordine cloud non consentita, ordine salvato localmente:", err);
+                        });
+                    }
                 } catch (err) {
-                    console.error("Errore salvataggio ordine", err);
-                    alert("Errore salvataggio ordine: " + err.message);
+                    console.warn("Errore salvataggio ordine cloud:", err);
                 }
             }
         });

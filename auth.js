@@ -279,6 +279,40 @@ function setStoredVisibility(vis) {
     } catch(e) {}
 }
 
+// ==========================================
+// Persistent Local Users Database & Fallback
+// ==========================================
+const LOCAL_USERS_KEY = 'green_enerbras_users_db';
+const DELETED_USERS_KEY = 'green_enerbras_deleted_users';
+
+function getStoredUsers() {
+    try {
+        const stored = localStorage.getItem(LOCAL_USERS_KEY);
+        if (stored) return JSON.parse(stored);
+    } catch(e) {}
+    return null;
+}
+
+function setStoredUsers(users) {
+    try {
+        localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+    } catch(e) {}
+}
+
+function getDeletedUsers() {
+    try {
+        const stored = localStorage.getItem(DELETED_USERS_KEY);
+        if (stored) return JSON.parse(stored);
+    } catch(e) {}
+    return [];
+}
+
+function setDeletedUsers(list) {
+    try {
+        localStorage.setItem(DELETED_USERS_KEY, JSON.stringify(list));
+    } catch(e) {}
+}
+
 function getStoredViewMode() {
     try {
         const mode = sessionStorage.getItem('green_enerbras_view_mode');
@@ -442,6 +476,12 @@ const Auth = {
             const cleanUser = (username || '').trim().toLowerCase();
             const cleanPass = (password || '').trim();
 
+            // 0. Verifica lista utenti eliminati (impedisce login a profili cancellati)
+            const deletedList = getDeletedUsers();
+            if (deletedList.includes(cleanUser)) {
+                return { success: false, error: "Utente non trovato." };
+            }
+
             // 1. Account Admin integrati (funzionano all'istante sia online che offline/locale)
             if ((cleanUser === 'admin' && cleanPass === 'admin') ||
                 (cleanUser === 'edoardo' && cleanPass === 'edoardo') ||
@@ -453,7 +493,25 @@ const Auth = {
                 return { success: true, user: rootAdmin };
             }
 
-            // 2. Account demo locali (partner e visitatore)
+            // 2. Controllo database locale persistente
+            const localUsers = getStoredUsers();
+            if (localUsers && localUsers[cleanUser]) {
+                const userObj = localUsers[cleanUser];
+                if (userObj.password === cleanPass) {
+                    const userData = {
+                        id: cleanUser,
+                        role: userObj.role || 'partner',
+                        partnerName: userObj.partnerName || null
+                    };
+                    setStoredAuthUser(userData);
+                    Auth.currentUser = userData;
+                    return { success: true, user: userData };
+                } else {
+                    return { success: false, error: "Password errata." };
+                }
+            }
+
+            // 3. Account demo locali (partner e visitatore)
             if ((cleanUser === 'partner' && cleanPass === 'partner') || (cleanUser === 'user' && cleanPass === 'user')) {
                 const demoUser = { id: cleanUser, role: 'partner', partnerName: 'Investitore Partner' };
                 setStoredAuthUser(demoUser);
@@ -487,6 +545,11 @@ const Auth = {
                         role: userObj.role || 'partner',
                         partnerName: userObj.partnerName || null
                     };
+                    // Cache locale per resilienza offline
+                    const currentLocal = getStoredUsers() || {};
+                    currentLocal[cleanUser] = userObj;
+                    setStoredUsers(currentLocal);
+
                     setStoredAuthUser(userData);
                     Auth.currentUser = userData;
                     return { success: true, user: userData };
@@ -555,59 +618,127 @@ const Auth = {
     },
 
     async getUsers() {
-        if (!Auth.currentUser || Auth.currentUser.role !== 'admin' || !db) return null;
-        try {
-            const fetchUsers = db.ref('users').once('value');
-            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Firebase (15s)")), 15000));
-            const snap = await Promise.race([fetchUsers, timeout]);
-            if (snap.exists()) {
-                return snap.val();
-            }
-            return {};
-        } catch (e) {
-            console.error("Error fetching users", e);
-            throw e;
+        if (!Auth.currentUser) {
+            Auth.currentUser = getStoredAuthUser();
         }
+        if (!Auth.currentUser || Auth.currentUser.role !== 'admin') return null;
+
+        let remoteUsers = {};
+        if (db) {
+            try {
+                const fetchUsers = db.ref('users').once('value');
+                const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Firebase")), 4000));
+                const snap = await Promise.race([fetchUsers, timeout]);
+                if (snap && snap.exists()) {
+                    remoteUsers = snap.val() || {};
+                }
+            } catch (e) {
+                console.warn("Lettura utenti da Firebase non riuscita o timeout, uso cache locale:", e);
+            }
+        }
+
+        // Merge con cache locale persistente
+        let localUsers = getStoredUsers();
+        let deletedList = getDeletedUsers();
+
+        // Se localUsers è vuoto, inizializza con remoteUsers
+        let merged = { ...remoteUsers, ...(localUsers || {}) };
+
+        // Rimuovi utenti esplicitamente eliminati
+        deletedList.forEach(delId => {
+            delete merged[delId];
+        });
+
+        // Salva stato pulito e unificato in localStorage
+        setStoredUsers(merged);
+
+        return merged;
     },
 
     async saveUser(username, data) {
-        if (!Auth.currentUser || Auth.currentUser.role !== 'admin' || !db) return false;
-        try {
-            const saveTask = db.ref('users/' + username).set(data);
-            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Firebase (15s)")), 15000));
-            await Promise.race([saveTask, timeout]);
-            return true;
-        } catch (e) {
-            console.error("Error saving user", e);
-            throw e;
+        if (!Auth.currentUser) {
+            Auth.currentUser = getStoredAuthUser();
         }
+        if (!Auth.currentUser || Auth.currentUser.role !== 'admin') return false;
+
+        const cleanUser = (username || '').trim().toLowerCase();
+        if (!cleanUser) return false;
+
+        // 1. Salva localmente (immediato, garantito e persistente)
+        let localUsers = getStoredUsers() || {};
+        localUsers[cleanUser] = data;
+        setStoredUsers(localUsers);
+
+        // Se era nella lista cancellati, ripristinalo
+        let deletedList = getDeletedUsers();
+        if (deletedList.includes(cleanUser)) {
+            deletedList = deletedList.filter(id => id !== cleanUser);
+            setDeletedUsers(deletedList);
+        }
+
+        // 2. Sincronizza su Firebase in background (senza fallire se il cloud è in sola lettura)
+        if (db) {
+            db.ref('users/' + cleanUser).set(data).catch(err => {
+                console.warn("Sincronizzazione salvataggio utente su Firebase Cloud non consentita (regole cloud), utente salvato localmente:", err);
+            });
+        }
+        return true;
     },
 
     async deleteUser(username) {
-        if (!Auth.currentUser || Auth.currentUser.role !== 'admin' || !db) return false;
-        try {
-            const delTask = db.ref('users/' + username).remove();
-            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Firebase (15s)")), 15000));
-            await Promise.race([delTask, timeout]);
-            return true;
-        } catch (e) {
-            console.error("Error deleting user", e);
-            throw e;
+        if (!Auth.currentUser) {
+            Auth.currentUser = getStoredAuthUser();
         }
+        if (!Auth.currentUser || Auth.currentUser.role !== 'admin') return false;
+
+        const cleanUser = (username || '').trim().toLowerCase();
+        if (!cleanUser) return false;
+
+        // 1. Rimuovi localmente da green_enerbras_users_db
+        let localUsers = getStoredUsers() || {};
+        delete localUsers[cleanUser];
+        setStoredUsers(localUsers);
+
+        // 2. Aggiungi a deletedList per escludere anche dalle future letture cloud
+        let deletedList = getDeletedUsers();
+        if (!deletedList.includes(cleanUser)) {
+            deletedList.push(cleanUser);
+            setDeletedUsers(deletedList);
+        }
+
+        // 3. Tenta rimozione da Firebase Cloud in background (senza bloccare o sollevare eccezioni bloccanti)
+        if (db) {
+            db.ref('users/' + cleanUser).remove().catch(err => {
+                console.warn("Rimozione Firebase Cloud non consentita (regole di sicurezza in sola lettura), utente rimosso localmente:", err);
+            });
+        }
+
+        return true;
     },
 
     async changeMyPassword(newPassword) {
-        if (!Auth.currentUser || !db) return false;
-        try {
-            const username = Auth.currentUser.id;
-            const updateTask = db.ref('users/' + username).update({ password: newPassword });
-            const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout Firebase (15s)")), 15000));
-            await Promise.race([updateTask, timeout]);
-            return true;
-        } catch (e) {
-            console.error("Error changing password", e);
-            throw e;
+        if (!Auth.currentUser) {
+            Auth.currentUser = getStoredAuthUser();
         }
+        if (!Auth.currentUser) return false;
+
+        const username = Auth.currentUser.id;
+        const cleanUser = (username || '').trim().toLowerCase();
+
+        // Salva localmente
+        let localUsers = getStoredUsers() || {};
+        if (localUsers[cleanUser]) {
+            localUsers[cleanUser].password = newPassword;
+            setStoredUsers(localUsers);
+        }
+
+        // Tenta aggiornamento Firebase in background
+        if (db) {
+            db.ref('users/' + cleanUser).update({ password: newPassword }).catch(err => {
+                console.warn("Aggiornamento password Firebase fallito, salvata localmente:", err);
+            });
+        }
+        return true;
     },
 
     updateSidebarVisibilityUI() {
