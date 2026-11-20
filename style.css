@@ -29,7 +29,10 @@ body {
     min-height: 100vh;
 }
 
-.text-green { color: var(--accent-green); }
+.text-green { color: #10b981; }
+.text-red { color: #ef4444; }
+.text-amber { color: #f59e0b; }
+.text-nowrap { white-space: nowrap !important; }
 .bg-green { background: linear-gradient(135deg, var(--accent-green), #047857); }
 .bg-blue { background: linear-gradient(135deg, var(--accent-blue), #1d4ed8); }
 .bg-purple { background: linear-gradient(135deg, var(--accent-purple), #6d28d9); }
@@ -911,7 +914,45 @@ body.theme-light tr,
 body.theme-light th,
 body.theme-light td,
 body.theme-light table strong,
-body.theme-light table span:not(.badge):not(.text-green):not(.text-red) {
+body.theme-light table span:not(.badge):not(.text-green):not(.text-red):not(.text-amber) {
+    color: #0f172a !important;
+}
+
+body.theme-light .text-green,
+body.theme-light table .text-green,
+body.theme-light span.text-green {
+    color: #10b981 !important;
+}
+
+body.theme-light .text-red,
+body.theme-light table .text-red,
+body.theme-light span.text-red {
+    color: #ef4444 !important;
+}
+
+body.theme-light .text-amber,
+body.theme-light table .text-amber,
+body.theme-light span.text-amber {
+    color: #d97706 !important;
+}
+
+/* Specific styling for Limited Partners Results table */
+#table-lp-risultati-el th,
+#table-lp-risultati-el td {
+    white-space: nowrap !important;
+}
+
+body.theme-light #table-lp-risultati-el thead th {
+    color: #1e293b !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-light #table-lp-risultati-el tfoot {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-top: 2px solid rgba(15, 23, 42, 0.15) !important;
+}
+
+body.theme-light #table-lp-risultati-el tfoot td.tfoot-title {
     color: #0f172a !important;
 }
 
