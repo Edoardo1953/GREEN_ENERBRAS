@@ -60,7 +60,7 @@
                 <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.8rem 0;"></div>
                 <div class="nav-item-row" data-page="risultati">
                     <a href="risultati.html" class="nav-item active"><i class="fa-solid fa-chart-line"></i> <span data-i18n="menu_risultati">Risultati</span></a>
-                    <button type="button" class="nav-eye-btn hidden" data-page="risultati" data-visible="false" onclick="Auth.togglePageVisibility('risultati')" title="Nascosto a USER (Clicca per consentire)"><i class="fa-solid fa-eye-slash" style="color: #ef4444;"></i></button>
+                    <button type="button" class="nav-eye-btn visible" data-page="risultati" data-visible="true" onclick="Auth.togglePageVisibility('risultati', event)" title="Visibile a USER (Clicca per bloccare)"><i class="fa-solid fa-eye" style="color: #10b981;"></i></button>
                 </div>
                 <div class="nav-item-row" data-page="contabilita">
                     <a href="contabilita.html" class="nav-item"><i class="fa-solid fa-book-bookmark"></i> <span data-i18n="menu_contabilita">Contabilità</span></a>
@@ -130,9 +130,10 @@
                     </div>
 
                     <!-- Tabs -->
-                    <div class="tabs-container" style="display: flex; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 1.5rem;">
-                        <button class="tab-btn active" onclick="switchTab('tab-ricavi-costi')" style="background: none; border: none; color: white; padding: 1rem 2rem; cursor: pointer; border-bottom: 3px solid #10b981; font-weight: bold;" data-i18n="tab_ricavi_costi">Costi e Ricavi</button>
-                        <button class="tab-btn" onclick="switchTab('tab-capitale')" style="background: none; border: none; color: white; padding: 1rem 2rem; cursor: pointer; border-bottom: 3px solid transparent; opacity: 0.7;" data-i18n="tab_capitale">Capitale e Immobilizzazioni</button>
+                    <div class="tabs-container" style="display: flex; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                        <button class="tab-btn active" onclick="switchTab('tab-ricavi-costi')" style="background: none; border: none; color: white; padding: 1rem 1.5rem; cursor: pointer; border-bottom: 3px solid #10b981; font-weight: bold;" data-i18n="tab_ricavi_costi">Costi e Ricavi</button>
+                        <button class="tab-btn" onclick="switchTab('tab-capitale')" style="background: none; border: none; color: white; padding: 1rem 1.5rem; cursor: pointer; border-bottom: 3px solid transparent; opacity: 0.7;" data-i18n="tab_capitale">Capitale e Immobilizzazioni</button>
+                        <button class="tab-btn" onclick="switchTab('tab-lp-risultati')" style="background: none; border: none; color: white; padding: 1rem 1.5rem; cursor: pointer; border-bottom: 3px solid transparent; opacity: 0.7;" data-i18n="tab_lp_risultati"><i class="fa-solid fa-users-viewfinder" style="margin-right: 8px; color: #10b981;"></i> Risultato Limited Partners (LP)</button>
                     </div>
 
                     <!-- Tab Content 1: Costi / Ricavi -->
@@ -167,6 +168,89 @@
                                     <!-- Injected via JS -->
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content 3: Risultato Economico Limited Partners (LP) -->
+                    <div id="tab-lp-risultati" class="tab-content" style="display: none;">
+                        <!-- Period & Exercise Banner -->
+                        <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem;">
+                                    <span style="background: #10b981; color: #022c22; font-weight: 800; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 6px; text-transform: uppercase;" data-i18n="badge_accorpato">Esercizio 2025 / 2026 (Accorpato)</span>
+                                    <span style="color: var(--text-muted, #94a3b8); font-size: 0.85rem; font-weight: 600;">Special Limited Partnership (SCSp)</span>
+                                </div>
+                                <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-main, #fff); font-weight: 700;" data-i18n="title_risultato_lp">Ripartizione Risultato Economico Annuale per Limited Partner</h3>
+                                <p style="margin: 0.35rem 0 0 0; font-size: 0.85rem; color: var(--text-muted, #94a3b8);">
+                                    Calcolato in funzione dell'apporto individuale, della data di versamento (pro-rata temporis in giorni), dei rimborsi di capitale e dei dividendi corrisposti.
+                                </p>
+                            </div>
+                            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                                <button type="button" class="btn-export" onclick="exportLpResultsExcel()" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-solid fa-file-excel"></i> Excel
+                                </button>
+                                <button type="button" class="btn-export" onclick="exportLpResultsPDF()" style="background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; color: #3b82f6; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fa-solid fa-file-pdf"></i> PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mini KPIs -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                            <div class="glass-panel" style="padding: 1rem 1.25rem; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                                <div style="font-size: 0.78rem; color: var(--text-muted, #94a3b8); font-weight: 600;">Capitale LP Attivo</div>
+                                <div id="kpi-lp-capitale" style="font-size: 1.35rem; font-weight: 800; color: #10b981; margin-top: 0.2rem;">€ 260.000,00</div>
+                            </div>
+                            <div class="glass-panel" style="padding: 1rem 1.25rem; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                                <div style="font-size: 0.78rem; color: var(--text-muted, #94a3b8); font-weight: 600;">Rimborsi di Capitale</div>
+                                <div id="kpi-lp-rimborsi" style="font-size: 1.35rem; font-weight: 800; color: var(--text-main, #fff); margin-top: 0.2rem;">€ 0,00</div>
+                            </div>
+                            <div class="glass-panel" style="padding: 1rem 1.25rem; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                                <div style="font-size: 0.78rem; color: var(--text-muted, #94a3b8); font-weight: 600;">Dividendi Corrisposti</div>
+                                <div id="kpi-lp-dividendi" style="font-size: 1.35rem; font-weight: 800; color: var(--text-main, #fff); margin-top: 0.2rem;">€ 0,00</div>
+                            </div>
+                            <div class="glass-panel" style="padding: 1rem 1.25rem; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
+                                <div style="font-size: 0.78rem; color: var(--text-muted, #94a3b8); font-weight: 600;">Risultato Economico Netto (LP)</div>
+                                <div id="kpi-lp-risultato-netto" style="font-size: 1.35rem; font-weight: 800; color: #ef4444; margin-top: 0.2rem;">- € 7.028,03</div>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="table-container" style="overflow-x: auto; background: rgba(0,0,0,0.15); border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+                            <table style="width: 100%; color: white; border-collapse: collapse; min-width: 950px;">
+                                <thead style="background: rgba(255,255,255,0.05); border-bottom: 2px solid rgba(255,255,255,0.12);">
+                                    <tr>
+                                        <th style="padding: 0.85rem 1rem; text-align: center; width: 45px;">#</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: left;" data-i18n="col_lp_name">Limited Partner (Socio Accomandante)</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: center;" data-i18n="col_lp_date">Data Apporto</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right;" data-i18n="col_lp_capital">Capitale Versato (€)</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right;" data-i18n="col_lp_detention">Quota SCSp (%)</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right;" data-i18n="col_lp_repayments">Rimborsi Capitale (€)</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right;" data-i18n="col_lp_dividends">Dividendi (€)</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right;" data-i18n="col_lp_net_result">Risultato Netto (€)</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right;" data-i18n="col_lp_yield">Risultato %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body-lp-risultati">
+                                    <!-- Injected dynamically via JS -->
+                                </tbody>
+                                <tfoot id="table-foot-lp-risultati" style="background: rgba(255,255,255,0.06); border-top: 2px solid rgba(255,255,255,0.15); font-weight: bold;">
+                                    <!-- Injected dynamically via JS -->
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <!-- Explanatory Box / Methodology Notes -->
+                        <div style="margin-top: 1.5rem; padding: 1.25rem 1.5rem; border-radius: 10px; background: rgba(255,255,255,0.03); border-left: 4px solid #10b981; border-top: 1px solid rgba(255,255,255,0.05); border-right: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <div style="font-weight: 700; color: #10b981; font-size: 0.95rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fa-solid fa-circle-info"></i> Note Metodologiche e Criteri di Calcolo
+                            </div>
+                            <ul style="margin: 0; padding-left: 1.25rem; font-size: 0.85rem; color: var(--text-muted, #94a3b8); line-height: 1.6;">
+                                <li><strong>Accorpamento Esercizio 2025/2026 :</strong> In conformità alla prassi societaria lussemburghese (Legge 10 agosto 1915 sulle SCSp) per il primo esercizio lungo dalla costituzione, i periodi 2025 e 2026 sono accorpati in un unico bilancio d'esercizio cumulato.</li>
+                                <li><strong>Criterio Pro-Rata Temporis :</strong> La ripartizione del risultato economico netto tra i Limited Partners tiene conto della data effettiva di ciascun versamento di capitale (ponderazione in <em>Capital-Days</em>). I soci entrati successivamente partecipano ai costi proporzionalmente ai soli giorni effettivi di permanenza.</li>
+                                <li><strong>Rimborsi di Capitale e Dividendi :</strong> Nel periodo considerato non sono stati corrisposti rimborsi di capitale né distribuzioni di utili/dividendi (valore pari a 0,00 €), in quanto la società è nella fase di finalizzazione investimenti e allacciamento parchi.</li>
+                                <li><strong>Posizione Zaniboni Elisa :</strong> Come da atto di cessione quote del 19/11/2026 a favore di Edoardo Tubia, la posizione residua è integralmente azzerata (Capitale 0,00 €, Risultato Netto 0,00 €).</li>
+                            </ul>
                         </div>
                     </div>
 

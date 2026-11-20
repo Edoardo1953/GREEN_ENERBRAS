@@ -95,7 +95,7 @@ const DEFAULT_PAGE_VISIBILITY = {
     azionariato: false,
     banca: false,
     strumenti: false,
-    risultati: false,
+    risultati: true,
     contabilita: false,
     aml: false
 };
@@ -384,10 +384,14 @@ const Auth = {
         if (!db) return;
         try {
             db.ref('settings/pageVisibility').on('value', (snap) => {
+                const localVis = getStoredVisibility() || {};
                 if (snap.exists()) {
-                    const val = snap.val();
-                    Auth.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...val };
+                    const val = snap.val() || {};
+                    // Merge: DEFAULT < Firebase < localVis (so unauthenticated Firebase does not revert local admin toggles)
+                    Auth.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...val, ...localVis };
                     setStoredVisibility(Auth.pageVisibility);
+                } else {
+                    Auth.pageVisibility = { ...DEFAULT_PAGE_VISIBILITY, ...localVis };
                 }
                 
                 Auth.updateSidebarVisibilityUI();
@@ -442,9 +446,7 @@ const Auth = {
         }
         console.log(`[Auth] Toggling ${pageKey}: ${currentVal} -> ${newVal}`);
         
-        try {
-            localStorage.setItem('green_enerbras_page_visibility', JSON.stringify(Auth.pageVisibility));
-        } catch(e) {}
+        setStoredVisibility(Auth.pageVisibility);
         
         // Aggiornamento immediato interfaccia e notifica toast
         Auth.updateSidebarVisibilityUI();
@@ -454,6 +456,9 @@ const Auth = {
             if (db) {
                 db.ref('settings/pageVisibility/' + pageKey).set(newVal).catch((err) => {
                     console.warn("Salvataggio Firebase non riuscito, fallback locale attivo:", err);
+                    Auth.pageVisibility[pageKey] = newVal;
+                    setStoredVisibility(Auth.pageVisibility);
+                    Auth.updateSidebarVisibilityUI();
                 });
                 if (pageKey === 'documentazione') {
                     db.ref('settings/pageVisibility/reporting').set(newVal).catch(()=>{});

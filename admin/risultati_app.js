@@ -50,6 +50,13 @@ function initRisultati() {
     const yearSelect = document.getElementById('filter-year');
     
     if (yearSelect && yearSelect.options.length <= 1) {
+        yearSelect.innerHTML = '';
+        const optAll = document.createElement('option');
+        optAll.value = 'all';
+        optAll.setAttribute('data-i18n', 'filter_tutti_anni');
+        optAll.textContent = '2025 / 2026 (Accorpato - Tutti gli anni)';
+        yearSelect.appendChild(optAll);
+
         years.forEach(y => {
             const opt = document.createElement('option');
             opt.value = y;
@@ -78,6 +85,7 @@ function renderTables() {
 
     renderRicaviCosti(txs);
     renderCapitaleImmobilizzazioni(txs);
+    renderRisultatoLimitedPartners(selectedYear);
     
     if (typeof applyTranslations === 'function') {
         applyTranslations();
@@ -362,3 +370,414 @@ function renderCapitaleImmobilizzazioni(txs) {
     `;
     tbody.appendChild(trTotImm);
 }
+
+// =========================================================================
+// 3. RISULTATO ECONOMICO LIMITED PARTNERS (LP) - PRO-RATA TEMPORIS
+// =========================================================================
+function parseDateDMY(dStr) {
+    if (!dStr) return null;
+    const p = dStr.split('/');
+    if (p.length === 3) {
+        return new Date(parseInt(p[2], 10), parseInt(p[1], 10) - 1, parseInt(p[0], 10));
+    }
+    return null;
+}
+
+function normalizeLPName(str) {
+    if (!str) return '';
+    return str.toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
+}
+
+function renderRisultatoLimitedPartners(selectedYear) {
+    const tbody = document.getElementById('table-body-lp-risultati');
+    const tfoot = document.getElementById('table-foot-lp-risultati');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (tfoot) tfoot.innerHTML = '';
+
+    const allTxs = APP_DATA.transactions || [];
+    
+    // 1. Calcola Risultato Netto Totale della Società per il periodo selezionato
+    let filteredTxs = allTxs;
+    if (selectedYear !== 'all') {
+        filteredTxs = allTxs.filter(t => t.date && t.date.endsWith('/' + selectedYear));
+    }
+    
+    let totalRevenues = 0;
+    let totalCosts = 0;
+    filteredTxs.forEach(t => {
+        const cat = (t.category || '').toLowerCase();
+        if (cat === 'saldo iniziale') return;
+        if (cat.includes('capital contribution') || cat === 'capitale versato') return;
+        if (cat.includes('immobilisat') || (t.description || '').toLowerCase().includes('participation')) return;
+        if ((cat.includes('ricav') || cat.includes('revenu')) && t.amount > 0) {
+            totalRevenues += t.amount;
+        } else {
+            totalCosts += t.amount;
+        }
+    });
+    const companyNet = totalRevenues + totalCosts; // es. -7.028,03 € per 2025/2026
+
+    // 2. Definizione dei Limited Partners
+    const lpDefinitions = [
+        { name: 'Edoardo TUBIA', matches: ['tubia edoardo', 'edoardo tubia'], role: 'Limited Partner', initialDetention: 22.99 },
+        { name: 'Salvatore DESIDERIO', matches: ['desiderio'], role: 'Limited Partner', initialDetention: 15.33 },
+        { name: 'Marco STERZI', matches: ['sterzi'], role: 'Limited Partner', initialDetention: 15.33 },
+        { name: 'Silvia TUBIA', matches: ['tubia silvia', 'silvia tubia'], role: 'Limited Partner', initialDetention: 7.66 },
+        { name: 'Stefano BERTOZZI', matches: ['bertozzi'], role: 'Limited Partner', initialDetention: 7.66 },
+        { name: 'Maria DE MIGUEL BELLVIS', matches: ['de miguel', 'bellvis'], role: 'Limited Partner', initialDetention: 7.66 },
+        { name: 'Enrico TUBIA', matches: ['tubia enrico', 'enrico tubia'], role: 'Limited Partner', initialDetention: 7.66 },
+        { name: 'Greta ZANIBONI', matches: ['zaniboni greta', 'greta zaniboni'], role: 'Limited Partner', initialDetention: 7.66 },
+        { name: 'Giovanni MILETTI', matches: ['miletti'], role: 'Limited Partner', initialDetention: 7.66 },
+        { name: 'Elisa ZANIBONI', matches: ['zaniboni elisa', 'elisa zaniboni'], role: 'Limited Partner (Cessione)', isZero: true, initialDetention: 0.00 }
+    ];
+
+    // Data di riferimento di fine esercizio (31/12/2026 per periodo accorpato o 31/12/2025 se selezionato 2025)
+    const refEndDate = (selectedYear === '2025') ? new Date(2025, 11, 31) : new Date(2026, 11, 31);
+
+    // 3. Raccoglie versamenti e calcola capital-days per ciascun socio
+    let totalAllLpCapDays = 0;
+    let totalAllLpCapital = 0;
+    let totalAllLpRimborsi = 0;
+    let totalAllLpDividendi = 0;
+
+    const partnerResults = lpDefinitions.map(def => {
+        const normMatches = def.matches.map(m => normalizeLPName(m));
+        
+        // Trova tutte le transazioni di capitale
+        const tranches = allTxs.filter(t => {
+            const cat = (t.category || '').toLowerCase();
+            const isCap = cat.includes('capital contribution') || cat.includes('capitale versato');
+            if (!isCap) return false;
+            const pNorm = normalizeLPName(t.partner);
+            return normMatches.some(m => pNorm.includes(m));
+        });
+
+        // Controlla eventuali rimborsi di capitale o dividendi
+        const rimborsiTxs = allTxs.filter(t => {
+            const cat = (t.category || '').toLowerCase();
+            const desc = (t.description || '').toLowerCase();
+            const isRimb = (cat.includes('rimborso capitale') || desc.includes('rimborso capitale'));
+            if (!isRimb) return false;
+            const pNorm = normalizeLPName(t.partner);
+            return normMatches.some(m => pNorm.includes(m));
+        });
+        const dividendiTxs = allTxs.filter(t => {
+            const cat = (t.category || '').toLowerCase();
+            const desc = (t.description || '').toLowerCase();
+            const isDiv = (cat.includes('dividendo') || desc.includes('dividendo') || cat.includes('dividend'));
+            if (!isDiv) return false;
+            const pNorm = normalizeLPName(t.partner);
+            return normMatches.some(m => pNorm.includes(m));
+        });
+
+        const rimborsiTot = rimborsiTxs.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        const dividendiTot = dividendiTxs.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+        let capDays = 0;
+        let netCap = 0;
+        const validTranches = [];
+
+        if (!def.isZero) {
+            tranches.forEach(tr => {
+                const amt = tr.amount;
+                netCap += amt;
+                if (amt > 0) {
+                    const d = parseDateDMY(tr.date);
+                    const days = d ? Math.max(1, Math.round((refEndDate - d) / (1000 * 60 * 60 * 24))) : 365;
+                    capDays += amt * days;
+                    validTranches.push({ date: tr.date, amount: amt, days: days });
+                }
+            });
+        } else {
+            // Elisa Zaniboni a ZERO come da richiesta esplicita
+            netCap = 0;
+            capDays = 0;
+            tranches.forEach(tr => {
+                validTranches.push({ date: tr.date, amount: tr.amount, days: 0 });
+            });
+        }
+
+        totalAllLpCapDays += capDays;
+        totalAllLpCapital += netCap;
+        totalAllLpRimborsi += rimborsiTot;
+        totalAllLpDividendi += dividendiTot;
+
+        return {
+            name: def.name,
+            role: def.role,
+            isZero: !!def.isZero,
+            initialDetention: def.initialDetention,
+            netCapital: netCap,
+            capDays: capDays,
+            tranches: validTranches,
+            rimborsi: rimborsiTot,
+            dividendi: dividendiTot
+        };
+    });
+
+    // 4. Calcola ripartizione peso temporale e risultato economico netto
+    let totalAllLpNetResult = 0;
+
+    partnerResults.forEach(p => {
+        if (p.isZero || p.netCapital <= 0 || totalAllLpCapDays <= 0) {
+            p.weightPct = 0;
+            p.risultatoNetto = 0;
+            p.risultatoPct = 0;
+            p.detentionPct = 0;
+        } else {
+            p.weightPct = (p.capDays / totalAllLpCapDays) * 100;
+            p.detentionPct = (p.netCapital / 261000) * 100; // Quota nominale su totale capitale sociale 261k
+            // Risultato economico netto della gestione attribuibile al partner
+            p.risultatoNetto = (companyNet * (p.weightPct / 100)) + p.dividendi;
+            p.risultatoPct = (p.risultatoNetto / p.netCapital) * 100;
+        }
+        totalAllLpNetResult += p.risultatoNetto;
+    });
+
+    // 5. Aggiorna KPI in cima al tab
+    const kpiCap = document.getElementById('kpi-lp-capitale');
+    if (kpiCap) kpiCap.textContent = formatEur(totalAllLpCapital);
+    const kpiRimb = document.getElementById('kpi-lp-rimborsi');
+    if (kpiRimb) kpiRimb.textContent = formatEur(totalAllLpRimborsi);
+    const kpiDiv = document.getElementById('kpi-lp-dividendi');
+    if (kpiDiv) kpiDiv.textContent = formatEur(totalAllLpDividendi);
+    const kpiNet = document.getElementById('kpi-lp-risultato-netto');
+    if (kpiNet) {
+        kpiNet.textContent = formatEur(totalAllLpNetResult);
+        kpiNet.style.color = totalAllLpNetResult >= 0 ? '#10b981' : '#ef4444';
+    }
+
+    // 6. Render righe tabella
+    partnerResults.forEach((p, idx) => {
+        const rowId = 'detail-lp-' + idx;
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid rgba(255,255,255,0.08)';
+        tr.style.cursor = p.tranches.length > 0 ? 'pointer' : 'default';
+        if (p.tranches.length > 0) {
+            tr.onclick = () => toggleRowDetail(rowId);
+        }
+
+        // Determina stringa data
+        let dateStr = '-';
+        if (p.isZero) {
+            dateStr = '<span style="color:var(--text-muted, #94a3b8); font-size:0.85rem;">Cessione 19/11/2026</span>';
+        } else if (p.tranches.length === 1) {
+            dateStr = `<span style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.82rem; font-weight: 600;"><i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>${p.tranches[0].date}</span>`;
+        } else if (p.tranches.length > 1) {
+            dateStr = `<span style="background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.82rem; font-weight: 600;" title="Clicca per visualizzare le ${p.tranches.length} tranches"><i class="fa-solid fa-layer-group" style="margin-right: 4px;"></i>${p.tranches[0].date} (${p.tranches.length} vers.)</span>`;
+        }
+
+        // Badge Elisa Zaniboni o Quota
+        let nameHtml = `<strong style="color: var(--text-main, #fff); font-size: 0.95rem;">${p.name}</strong>`;
+        if (p.isZero) {
+            nameHtml += ` <span style="background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 4px; margin-left: 6px; font-weight: 700;">Quota ceduta</span>`;
+        }
+
+        const netColor = p.isZero ? 'var(--text-muted, #94a3b8)' : (p.risultatoNetto >= 0 ? '#10b981' : '#ef4444');
+        const pctColor = p.isZero ? 'var(--text-muted, #94a3b8)' : (p.risultatoPct >= 0 ? '#10b981' : '#ef4444');
+        const chevron = p.tranches.length > 0 ? `<i class="fa-solid fa-chevron-down" style="font-size: 0.75em; margin-right: 8px; color: var(--text-muted, #94a3b8);"></i>` : '';
+
+        tr.innerHTML = `
+            <td style="padding: 0.85rem 0.5rem; text-align: center; color: var(--text-muted, #94a3b8); font-size: 0.85rem; font-weight: 700;">${idx + 1}</td>
+            <td style="padding: 0.85rem 1rem;">${chevron}${nameHtml}</td>
+            <td style="padding: 0.85rem 1rem; text-align: center;">${dateStr}</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 700; color: ${p.netCapital > 0 ? '#10b981' : 'var(--text-muted, #94a3b8)'};">${formatEur(p.netCapital)}</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 600; color: #f59e0b;" title="Ponderata giorni: ${p.weightPct.toFixed(2)}%">${p.detentionPct.toFixed(2)}%</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; color: var(--text-muted, #94a3b8);">${formatEur(p.rimborsi)}</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; color: var(--text-muted, #94a3b8);">${formatEur(p.dividendi)}</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 700; color: ${netColor}; font-size: 0.98rem;">${formatEur(p.risultatoNetto)}</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 700; color: ${pctColor}; font-size: 0.98rem;">${p.isZero ? '0,00%' : (p.risultatoPct >= 0 ? '+' : '') + p.risultatoPct.toFixed(2) + '%'}</td>
+        `;
+        tbody.appendChild(tr);
+
+        // Riga dettaglio espandibile
+        if (p.tranches.length > 0) {
+            const detailTr = document.createElement('tr');
+            detailTr.id = rowId;
+            detailTr.style.display = 'none';
+            detailTr.style.background = 'rgba(0,0,0,0.2)';
+            
+            let detailHtml = `<td colspan="9" style="padding: 0.5rem 1rem 0.75rem 2.5rem;">
+                <div style="font-size: 0.78rem; font-weight: 700; color: #60a5fa; margin-bottom: 0.4rem; text-transform: uppercase;">
+                    <i class="fa-solid fa-list-check" style="margin-right: 5px;"></i> Tranches di Apporto e Ponderazione Temporale (Capital-Days)
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.83rem;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted, #94a3b8);">
+                            <th style="padding: 0.35rem 0.5rem; text-align: left;">Data Versamento</th>
+                            <th style="padding: 0.35rem 0.5rem; text-align: right;">Importo Tranche</th>
+                            <th style="padding: 0.35rem 0.5rem; text-align: right;">Giorni di Permanenza</th>
+                            <th style="padding: 0.35rem 0.5rem; text-align: right;">Ponderazione (Cap-Days)</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+            p.tranches.forEach(trItem => {
+                const capDaysTranche = trItem.amount * (trItem.days || 0);
+                detailHtml += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                    <td style="padding: 0.35rem 0.5rem; color: var(--text-main, #fff);">${trItem.date}</td>
+                    <td style="padding: 0.35rem 0.5rem; text-align: right; color: ${trItem.amount >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600;">${formatEur(trItem.amount)}</td>
+                    <td style="padding: 0.35rem 0.5rem; text-align: right; color: var(--text-muted, #94a3b8);">${trItem.days || 0} gg</td>
+                    <td style="padding: 0.35rem 0.5rem; text-align: right; color: #f59e0b; font-weight: 600;">${capDaysTranche.toLocaleString('de-DE')} €·gg</td>
+                </tr>`;
+            });
+            detailHtml += `</tbody></table></td>`;
+            detailTr.innerHTML = detailHtml;
+            tbody.appendChild(detailTr);
+        }
+    });
+
+    // 7. Riga Totale nel tfoot
+    if (tfoot) {
+        const totalNominalDetention = (totalAllLpCapital / 261000) * 100;
+        const totalAvgPct = totalAllLpCapital > 0 ? (totalAllLpNetResult / totalAllLpCapital) * 100 : 0;
+        const netCol = totalAllLpNetResult >= 0 ? '#10b981' : '#ef4444';
+
+        const trFoot = document.createElement('tr');
+        trFoot.innerHTML = `
+            <td colspan="3" style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; color: #fff;">TOTALE LIMITED PARTNERS:</td>
+            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; color: #10b981;">${formatEur(totalAllLpCapital)}</td>
+            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; color: #f59e0b;">${totalNominalDetention.toFixed(2)}%</td>
+            <td style="padding: 1rem; text-align: right; font-weight: 700; color: var(--text-muted, #94a3b8);">${formatEur(totalAllLpRimborsi)}</td>
+            <td style="padding: 1rem; text-align: right; font-weight: 700; color: var(--text-muted, #94a3b8);">${formatEur(totalAllLpDividendi)}</td>
+            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.1rem; color: ${netCol};">${formatEur(totalAllLpNetResult)}</td>
+            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.1rem; color: ${netCol};">${(totalAvgPct >= 0 ? '+' : '') + totalAvgPct.toFixed(2)}%</td>
+        `;
+        tfoot.appendChild(trFoot);
+    }
+
+    // Salva riferimenti per esportazione
+    window._lastLpResults = partnerResults;
+    window._lastLpTotals = {
+        capital: totalAllLpCapital,
+        rimborsi: totalAllLpRimborsi,
+        dividendi: totalAllLpDividendi,
+        netResult: totalAllLpNetResult,
+        companyNet: companyNet
+    };
+}
+
+// =========================================================================
+// 4. FUNZIONI DI ESPORTAZIONE EXCEL E PDF
+// =========================================================================
+window.exportLpResultsExcel = function() {
+    if (!window._lastLpResults || typeof XLSX === 'undefined') {
+        alert("Dati non disponibili o libreria XLSX non caricata.");
+        return;
+    }
+    const rows = [
+        ["GREEN ENERBRAS ONE SCSp - Ripartizione Risultato Economico Limited Partners"],
+        ["Esercizio Contabile: 2025 / 2026 (Accorpato) - Pro-Rata Temporis"],
+        [],
+        ["#", "Limited Partner", "Data Apporto", "Capitale Versato (€)", "Quota SCSp (%)", "Rimborsi Capitale (€)", "Dividendi (€)", "Risultato Netto (€)", "Risultato %"]
+    ];
+
+    window._lastLpResults.forEach((p, idx) => {
+        const dStr = p.isZero ? "Cessione" : (p.tranches.map(t => t.date).join(', '));
+        rows.push([
+            idx + 1,
+            p.name,
+            dStr,
+            p.netCapital,
+            Number(p.detentionPct.toFixed(2)),
+            p.rimborsi,
+            p.dividendi,
+            Number(p.risultatoNetto.toFixed(2)),
+            Number(p.risultatoPct.toFixed(2))
+        ]);
+    });
+
+    if (window._lastLpTotals) {
+        const tot = window._lastLpTotals;
+        const totPct = tot.capital > 0 ? (tot.netResult / tot.capital) * 100 : 0;
+        rows.push([]);
+        rows.push([
+            "",
+            "TOTALE LIMITED PARTNERS",
+            "",
+            tot.capital,
+            99.62,
+            tot.rimborsi,
+            tot.dividendi,
+            Number(tot.netResult.toFixed(2)),
+            Number(totPct.toFixed(2))
+        ]);
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Risultati_LP_2025_2026");
+    XLSX.writeFile(wb, "GREEN_ENERBRAS_Risultato_LP_2025_2026.xlsx");
+};
+
+window.exportLpResultsPDF = function() {
+    if (!window._lastLpResults || !window.jspdf) {
+        alert("Libreria PDF non disponibile.");
+        return;
+    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    doc.setFontSize(16);
+    doc.setTextColor(16, 185, 129);
+    doc.text("GREEN ENERBRAS ONE SCSp", 14, 15);
+
+    doc.setFontSize(12);
+    doc.setTextColor(40, 40, 40);
+    doc.text("Ripartizione Risultato Economico Limited Partners - Esercizio 2025 / 2026 (Accorpato)", 14, 22);
+
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Criterio: Pro-Rata Temporis (Capital-Days dalla data del versamento) | Rimborsi: 0 € | Dividendi: 0 €", 14, 28);
+
+    const headers = [["#", "Limited Partner", "Data Apporto", "Capitale Versato", "Quota SCSp", "Rimborsi", "Dividendi", "Risultato Netto", "Risultato %"]];
+    const data = window._lastLpResults.map((p, idx) => [
+        idx + 1,
+        p.name,
+        p.isZero ? "Cessione" : p.tranches.map(t => t.date).join(', '),
+        formatEur(p.netCapital),
+        p.detentionPct.toFixed(2) + "%",
+        formatEur(p.rimborsi),
+        formatEur(p.dividendi),
+        formatEur(p.risultatoNetto),
+        (p.isZero ? "0,00%" : (p.risultatoPct >= 0 ? "+" : "") + p.risultatoPct.toFixed(2) + "%")
+    ]);
+
+    if (window._lastLpTotals) {
+        const tot = window._lastLpTotals;
+        const totPct = tot.capital > 0 ? (tot.netResult / tot.capital) * 100 : 0;
+        data.push([
+            "",
+            "TOTALE LP",
+            "",
+            formatEur(tot.capital),
+            "99.62%",
+            formatEur(tot.rimborsi),
+            formatEur(tot.dividendi),
+            formatEur(tot.netResult),
+            (totPct >= 0 ? "+" : "") + totPct.toFixed(2) + "%"
+        ]);
+    }
+
+    doc.autoTable({
+        head: headers,
+        body: data,
+        startY: 33,
+        theme: 'striped',
+        styles: { fontSize: 8.5, cellPadding: 2.5 },
+        headStyles: { fillColor: [16, 185, 129], textColor: [255, 255, 255], fontStyle: 'bold' },
+        columnStyles: {
+            0: { halign: 'center', cellWidth: 10 },
+            1: { cellWidth: 50, fontStyle: 'bold' },
+            2: { halign: 'center', cellWidth: 35 },
+            3: { halign: 'right' },
+            4: { halign: 'right' },
+            5: { halign: 'right' },
+            6: { halign: 'right' },
+            7: { halign: 'right', fontStyle: 'bold' },
+            8: { halign: 'right', fontStyle: 'bold' }
+        }
+    });
+
+    doc.save("GREEN_ENERBRAS_Risultato_LP_2025_2026.pdf");
+};
