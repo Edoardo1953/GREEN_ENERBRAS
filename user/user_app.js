@@ -454,7 +454,7 @@ window.openSchemaSocietarioModal = function() {
     const isRealAdmin = (typeof Auth !== 'undefined' && Auth.currentUser && Auth.currentUser.role === 'admin' && (typeof Auth.isUserView !== 'function' || !Auth.isUserView()));
 
     const pdfFilename = isRealAdmin ? 'Schema societario GE - Tri Star.pdf' : 'Schema societario GE - Tri Star anonimo.pdf';
-    const pdfUrl = `../uploads/${encodeURI(pdfFilename)}`;
+    const pdfUrl = `../uploads/${encodeURI(pdfFilename)}?v=${Date.now()}`;
 
     iframe.src = pdfUrl;
     if (newTabLink) newTabLink.href = pdfUrl;
