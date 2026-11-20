@@ -20,7 +20,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="../auth.js?v=310"></script>
     <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
-    <script src="../i18n.js?v=301"></script>
+    <script src="../i18n.js?v=302"></script>
 </head>
 <body>
     <div class="app-container">
@@ -176,8 +176,9 @@
                         <!-- Period & Exercise Banner -->
                         <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                             <div>
-                                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem;">
-                                    <span style="background: #10b981; color: #022c22; font-weight: 800; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 6px; text-transform: uppercase;" data-i18n="badge_accorpato">Esercizio 2025 / 2026 (Accorpato)</span>
+                                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
+                                    <span id="badge-periodo-lp" style="background: #10b981; color: #022c22; font-weight: 800; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 6px; text-transform: uppercase;" data-i18n="badge_accorpato">Esercizio 2025 / 2026 (Accorpato)</span>
+                                    <span id="badge-status-lp" style="display: none; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); font-weight: 700; font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 6px;" data-i18n="badge_in_attesa_consuntivo">In attesa di consuntivo</span>
                                     <span style="color: var(--text-muted, #94a3b8); font-size: 0.85rem; font-weight: 600;">Special Limited Partnership (SCSp)</span>
                                 </div>
                                 <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-main, #fff); font-weight: 700;" data-i18n="title_risultato_lp">Ripartizione Risultato Economico Annuale per Limited Partner</h3>
@@ -185,7 +186,20 @@
                                     Calcolato in funzione dell'apporto individuale, della data di versamento (pro-rata temporis in giorni), dei rimborsi di capitale e dei dividendi corrisposti.
                                 </p>
                             </div>
-                            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                                <!-- Selettore Esercizio / Periodo LP -->
+                                <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 0.4rem 0.85rem;">
+                                    <i class="fa-regular fa-calendar-days" style="color: #10b981;"></i>
+                                    <label for="select-periodo-lp" style="color: var(--text-muted, #94a3b8); font-size: 0.82rem; font-weight: 700; margin: 0;" data-i18n="label_selettore_periodo">Esercizio / Periodo:</label>
+                                    <select id="select-periodo-lp" class="filter-input" onchange="onLpPeriodChange(this.value)" style="background: rgba(15, 23, 42, 0.85); color: #fff; border: 1px solid rgba(16, 185, 129, 0.5); padding: 0.35rem 0.75rem; border-radius: 6px; font-weight: 700; font-size: 0.88rem; cursor: pointer; outline: none;">
+                                        <option value="2025-2026" selected data-i18n="opt_periodo_2025_2026">2025 / 2026 (Accorpato - In corso)</option>
+                                        <option value="2027" data-i18n="opt_periodo_2027">2027</option>
+                                        <option value="2028" data-i18n="opt_periodo_2028">2028</option>
+                                        <option value="2029" data-i18n="opt_periodo_2029">2029</option>
+                                        <option value="2030" data-i18n="opt_periodo_2030">2030</option>
+                                    </select>
+                                </div>
+
                                 <button type="button" class="btn-export" onclick="exportLpResultsExcel()" style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;">
                                     <i class="fa-solid fa-file-excel"></i> Excel
                                 </button>
@@ -250,6 +264,7 @@
                                 <li><strong data-i18n="note_prorata_title">Criterio Pro-Rata Temporis :</strong> <span data-i18n="note_prorata_desc">La ripartizione del risultato economico netto tra i Limited Partners tiene conto della data effettiva di ciascun versamento di capitale (ponderazione in Capital-Days). I soci entrati successivamente partecipano ai costi proporzionalmente ai soli giorni effettivi di permanenza.</span></li>
                                 <li><strong data-i18n="note_rimborsi_dividendi_title">Rimborsi di Capitale e Dividendi :</strong> <span data-i18n="note_rimborsi_dividendi_desc">Nel periodo considerato non sono stati corrisposti rimborsi di capitale né distribuzioni di utili/dividendi (valore pari a 0,00 €), in quanto la società è nella fase di finalizzazione investimenti e allacciamento parchi.</span></li>
                                 <li><strong data-i18n="note_elisa_title">Posizione Zaniboni Elisa :</strong> <span data-i18n="note_elisa_desc">Come da atto di cessione quote del 19/11/2026 a favore di Edoardo Tubia, la posizione di Elisa Zaniboni è integralmente azzerata (Capitale 0,00 €, Risultato Netto 0,00 €). La quota di 20.000 € acquisita da Edoardo Tubia partecipa al pro-rata con decorrenza dalla data di sottoscrizione originaria (09/12/2025).</span></li>
+                                <li><strong data-i18n="note_esercizi_futuri_title">Esercizi Futuri (2027 e successivi) :</strong> <span data-i18n="note_esercizi_futuri_desc">A partire dall'anno 2027 la società adotterà la cadenza contabile annuale ordinaria (1° gennaio - 31 dicembre). Il capitale versato viene riportato come consistenza iniziale al 01/01 di ciascun esercizio futuro.</span></li>
                             </ul>
                         </div>
                     </div>
@@ -260,7 +275,7 @@
     </div>
 
     <script src="../data.js"></script>
-    <script src="risultati_app.js?v=301"></script>
+    <script src="risultati_app.js?v=302"></script>
 </body>
 </html>
 

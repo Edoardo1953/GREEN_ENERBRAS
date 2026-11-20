@@ -7,6 +7,12 @@ window.addEventListener('languageChanged', () => {
 });
 
 let currentTab = 'tab-ricavi-costi';
+let currentLpPeriod = '2025-2026';
+
+window.onLpPeriodChange = function(newPeriod) {
+    currentLpPeriod = newPeriod;
+    renderRisultatoLimitedPartners(currentLpPeriod);
+};
 
 window.switchTab = function(tabId) {
     currentTab = tabId;
@@ -89,7 +95,13 @@ function renderTables() {
 
     renderRicaviCosti(txs);
     renderCapitaleImmobilizzazioni(txs);
-    renderRisultatoLimitedPartners(selectedYear);
+    
+    // Per Tab 3 usa currentLpPeriod
+    const lpSelect = document.getElementById('select-periodo-lp');
+    if (lpSelect && lpSelect.value) {
+        currentLpPeriod = lpSelect.value;
+    }
+    renderRisultatoLimitedPartners(currentLpPeriod);
     
     if (typeof applyTranslations === 'function') {
         applyTranslations();
@@ -392,28 +404,40 @@ function normalizeLPName(str) {
     return str.toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
 }
 
-function renderRisultatoLimitedPartners(selectedYear) {
+function renderRisultatoLimitedPartners(selectedPeriod) {
     const tbody = document.getElementById('table-body-lp-risultati');
     const tfoot = document.getElementById('table-foot-lp-risultati');
     if (!tbody) return;
     tbody.innerHTML = '';
     if (tfoot) tfoot.innerHTML = '';
 
+    const period = selectedPeriod || currentLpPeriod || '2025-2026';
+    currentLpPeriod = period;
+    const isAccorpato = (period === '2025-2026' || period === '2025/2026' || period === 'all');
+    const targetYear = isAccorpato ? 2026 : parseInt(period, 10);
+
+    // Sincronizza il selettore se presente nel DOM
+    const lpSelect = document.getElementById('select-periodo-lp');
+    if (lpSelect) {
+        if (isAccorpato && lpSelect.value !== '2025-2026') {
+            lpSelect.value = '2025-2026';
+        } else if (!isAccorpato && lpSelect.value !== String(targetYear)) {
+            lpSelect.value = String(targetYear);
+        }
+    }
+
     const allTxs = APP_DATA.transactions || [];
     
-    // 1. Calcola Risultato Netto Totale della Società per il periodo accorpato 2025/2026 (o anno specifico)
-    let filteredTxs = allTxs.filter(t => {
+    // 1. Calcola Risultato Netto Totale della Società per il periodo selezionato
+    const periodTxs = allTxs.filter(t => {
         if (!t.date) return false;
-        if (selectedYear === '2025') {
-            return t.date.endsWith('/2025');
-        }
-        // Di default per 'all' o '2026' o '2025/2026', accorpa 2025 e 2026 come da statuto SCSp
-        return t.date.endsWith('/2025') || t.date.endsWith('/2026');
+        if (isAccorpato) return t.date.endsWith('/2025') || t.date.endsWith('/2026');
+        return t.date.endsWith('/' + targetYear);
     });
     
     let totalRevenues = 0;
     let totalCosts = 0;
-    filteredTxs.forEach(t => {
+    periodTxs.forEach(t => {
         const cat = (t.category || '').toLowerCase();
         if (cat === 'saldo iniziale') return;
         if (cat.includes('capital contribution') || cat === 'capitale versato') return;
@@ -424,7 +448,31 @@ function renderRisultatoLimitedPartners(selectedYear) {
             totalCosts += t.amount;
         }
     });
-    const companyNet = totalRevenues + totalCosts; // es. -7.028,03 € per 2025/2026
+    const companyNet = totalRevenues + totalCosts; // -7.028,03 per 2025/2026; 0.00 se futuro senza txs
+
+    // Aggiorna Badge di periodo nel banner
+    const badgePeriodo = document.getElementById('badge-periodo-lp');
+    const badgeStatus = document.getElementById('badge-status-lp');
+    if (badgePeriodo) {
+        if (isAccorpato) {
+            badgePeriodo.textContent = t('badge_accorpato', 'Esercizio 2025 / 2026 (Accorpato)');
+            badgePeriodo.style.background = '#10b981';
+            badgePeriodo.style.color = '#022c22';
+            if (badgeStatus) badgeStatus.style.display = 'none';
+        } else {
+            badgePeriodo.textContent = `${t('badge_esercizio_ordinario', 'Esercizio')} ${targetYear}`;
+            badgePeriodo.style.background = '#3b82f6';
+            badgePeriodo.style.color = '#ffffff';
+            if (badgeStatus) {
+                if (periodTxs.length === 0) {
+                    badgeStatus.style.display = 'inline-block';
+                    badgeStatus.textContent = t('badge_in_attesa_consuntivo', 'In attesa di consuntivo');
+                } else {
+                    badgeStatus.style.display = 'none';
+                }
+            }
+        }
+    }
 
     // 2. Definizione dei Limited Partners
     const lpDefinitions = [
@@ -440,8 +488,9 @@ function renderRisultatoLimitedPartners(selectedYear) {
         { name: 'Elisa ZANIBONI', matches: ['zaniboni elisa', 'elisa zaniboni'], role: 'Limited Partner (Cessione)', isZero: true, initialDetention: 0.00 }
     ];
 
-    // Data di riferimento di fine esercizio (31/12/2026 per periodo accorpato o 31/12/2025 se selezionato 2025)
-    const refEndDate = (selectedYear === '2025') ? new Date(2025, 11, 31) : new Date(2026, 11, 31);
+    const isLeap = ((targetYear % 4 === 0 && targetYear % 100 !== 0) || targetYear % 400 === 0);
+    const daysInTargetYear = isLeap ? 366 : 365;
+    const refEndDate = new Date(targetYear, 11, 31);
 
     // 3. Raccoglie versamenti e calcola capital-days per ciascun socio
     let totalAllLpCapDays = 0;
@@ -452,31 +501,27 @@ function renderRisultatoLimitedPartners(selectedYear) {
     const partnerResults = lpDefinitions.map(def => {
         const normMatches = def.matches.map(m => normalizeLPName(m));
         
-        // Trova tutte le transazioni di capitale
-        const tranches = allTxs.filter(t => {
-            const cat = (t.category || '').toLowerCase();
-            const isCap = cat.includes('capital contribution') || cat.includes('capitale versato');
-            if (!isCap) return false;
-            const pNorm = normalizeLPName(t.partner);
-            return normMatches.some(m => pNorm.includes(m));
-        });
-
-        // Controlla eventuali rimborsi di capitale o dividendi
+        // Controlla eventuali rimborsi di capitale o dividendi per il periodo
         const rimborsiTxs = allTxs.filter(t => {
             const cat = (t.category || '').toLowerCase();
             const desc = (t.description || '').toLowerCase();
             const isRimb = (cat.includes('rimborso capitale') || desc.includes('rimborso capitale'));
             if (!isRimb) return false;
             const pNorm = normalizeLPName(t.partner);
-            return normMatches.some(m => pNorm.includes(m));
+            if (!normMatches.some(m => pNorm.includes(m))) return false;
+            if (isAccorpato) return t.date && (t.date.endsWith('/2025') || t.date.endsWith('/2026'));
+            return t.date && t.date.endsWith('/' + targetYear);
         });
+
         const dividendiTxs = allTxs.filter(t => {
             const cat = (t.category || '').toLowerCase();
             const desc = (t.description || '').toLowerCase();
             const isDiv = (cat.includes('dividendo') || desc.includes('dividendo') || cat.includes('dividend'));
             if (!isDiv) return false;
             const pNorm = normalizeLPName(t.partner);
-            return normMatches.some(m => pNorm.includes(m));
+            if (!normMatches.some(m => pNorm.includes(m))) return false;
+            if (isAccorpato) return t.date && (t.date.endsWith('/2025') || t.date.endsWith('/2026'));
+            return t.date && t.date.endsWith('/' + targetYear);
         });
 
         const rimborsiTot = rimborsiTxs.reduce((sum, t) => sum + Math.abs(t.amount), 0);
@@ -487,50 +532,108 @@ function renderRisultatoLimitedPartners(selectedYear) {
         const validTranches = [];
 
         if (!def.isZero) {
-            tranches.forEach(tr => {
-                const amt = tr.amount;
-                netCap += amt;
-                if (amt > 0) {
-                    let trancheDate = tr.date;
-                    let displayDate = tr.date;
-                    let trancheNote = '';
+            if (isAccorpato) {
+                // Periodo accorpato 2025 / 2026
+                const tranches = allTxs.filter(t => {
+                    const cat = (t.category || '').toLowerCase();
+                    const isCap = cat.includes('capital contribution') || cat.includes('capitale versato');
+                    if (!isCap) return false;
+                    const pNorm = normalizeLPName(t.partner);
+                    return normMatches.some(m => pNorm.includes(m));
+                });
 
-                    // Se Tubia Edoardo ha rilevato la quota di 20.000 € di Elisa Zaniboni, la data da attribuire
-                    // all'acquisto per il calcolo pro-rata è quella originaria di sottoscrizione (09/12/2025) e non il 18/11/2026
-                    const isEdoardoZaniboniQuota = def.matches.some(m => m.includes('edoardo')) && 
-                        (tr.date === '18/11/2026' || (tr.description || '').toLowerCase().includes('zaniboni') || (amt === 20000 && tr.date !== '01/10/2025'));
+                tranches.forEach(tr => {
+                    const amt = tr.amount;
+                    netCap += amt;
+                    if (amt > 0) {
+                        let trancheDate = tr.date;
+                        let displayDate = tr.date;
+                        let trancheNote = '';
 
-                    if (isEdoardoZaniboniQuota) {
-                        trancheDate = '09/12/2025';
-                        displayDate = '09/12/2025';
-                        trancheNote = t('note_subtable_ex_zaniboni', 'ex Quota E. Zaniboni sottoscritta il 09/12/2025');
+                        // Se Tubia Edoardo ha rilevato la quota di 20.000 € di Elisa Zaniboni, la data da attribuire
+                        // all'acquisto per il calcolo pro-rata è quella originaria di sottoscrizione (09/12/2025) e non il 18/11/2026
+                        const isEdoardoZaniboniQuota = def.matches.some(m => m.includes('edoardo')) && 
+                            (tr.date === '18/11/2026' || (tr.description || '').toLowerCase().includes('zaniboni') || (amt === 20000 && tr.date !== '01/10/2025'));
+
+                        if (isEdoardoZaniboniQuota) {
+                            trancheDate = '09/12/2025';
+                            displayDate = '09/12/2025';
+                            trancheNote = t('note_subtable_ex_zaniboni', 'ex Quota E. Zaniboni sottoscritta il 09/12/2025');
+                        }
+
+                        const d = parseDateDMY(trancheDate);
+                        const days = d ? Math.max(1, Math.round((refEndDate - d) / (1000 * 60 * 60 * 24))) : 365;
+                        capDays += amt * days;
+                        validTranches.push({ 
+                            date: displayDate, 
+                            originalBankDate: tr.date, 
+                            amount: amt, 
+                            days: days, 
+                            note: trancheNote 
+                        });
                     }
+                });
 
-                    const d = parseDateDMY(trancheDate);
-                    const days = d ? Math.max(1, Math.round((refEndDate - d) / (1000 * 60 * 60 * 24))) : 365;
-                    capDays += amt * days;
-                    validTranches.push({ 
-                        date: displayDate, 
-                        originalBankDate: tr.date, 
-                        amount: amt, 
-                        days: days, 
-                        note: trancheNote 
+                validTranches.sort((a, b) => (parseDateDMY(a.date) || 0) - (parseDateDMY(b.date) || 0));
+            } else {
+                // Esercizio futuro YYYY (2027 e successivi)
+                // 1. Capitale iniziale riportato dagli esercizi precedenti (al 31/12/(targetYear-1))
+                let carriedCapital = 0;
+                const priorTxs = allTxs.filter(t => {
+                    const cat = (t.category || '').toLowerCase();
+                    if (!cat.includes('capital contribution') && cat !== 'capitale versato') return false;
+                    const pNorm = normalizeLPName(t.partner);
+                    if (!normMatches.some(m => pNorm.includes(m))) return false;
+                    const d = parseDateDMY(t.date);
+                    return d && d.getFullYear() < targetYear;
+                });
+                priorTxs.forEach(tr => {
+                    carriedCapital += tr.amount;
+                });
+
+                if (carriedCapital > 0) {
+                    netCap += carriedCapital;
+                    const days = daysInTargetYear;
+                    capDays += carriedCapital * days;
+                    validTranches.push({
+                        date: '01/01/' + targetYear,
+                        amount: carriedCapital,
+                        days: days,
+                        note: t('label_carry_over_capital', 'Capitale iniziale al 01/01')
                     });
                 }
-            });
 
-            validTranches.sort((a, b) => {
-                const da = parseDateDMY(a.date);
-                const db = parseDateDMY(b.date);
-                return (da || 0) - (db || 0);
-            });
+                // 2. Eventuali nuovi apporti versati durante l'anno targetYear
+                const currentYearTxs = allTxs.filter(t => {
+                    const cat = (t.category || '').toLowerCase();
+                    if (!cat.includes('capital contribution') && cat !== 'capitale versato') return false;
+                    const pNorm = normalizeLPName(t.partner);
+                    if (!normMatches.some(m => pNorm.includes(m))) return false;
+                    const d = parseDateDMY(t.date);
+                    return d && d.getFullYear() === targetYear;
+                });
+                currentYearTxs.forEach(tr => {
+                    const amt = tr.amount;
+                    netCap += amt;
+                    if (amt > 0) {
+                        const d = parseDateDMY(tr.date);
+                        const days = d ? Math.max(1, Math.round((refEndDate - d) / (1000 * 60 * 60 * 24))) : daysInTargetYear;
+                        capDays += amt * days;
+                        validTranches.push({
+                            date: tr.date,
+                            amount: amt,
+                            days: days,
+                            note: ''
+                        });
+                    }
+                });
+
+                validTranches.sort((a, b) => (parseDateDMY(a.date) || 0) - (parseDateDMY(b.date) || 0));
+            }
         } else {
             // Elisa Zaniboni a ZERO come da richiesta esplicita
             netCap = 0;
             capDays = 0;
-            tranches.forEach(tr => {
-                validTranches.push({ date: tr.date, amount: tr.amount, days: 0 });
-            });
         }
 
         totalAllLpCapDays += capDays;
@@ -701,6 +804,12 @@ window.exportLpResultsExcel = function() {
         alert("Dati non disponibili o libreria XLSX non caricata.");
         return;
     }
+    const isAcc = (currentLpPeriod === '2025-2026' || currentLpPeriod === '2025/2026' || currentLpPeriod === 'all');
+    const periodTitle = isAcc 
+        ? t('badge_accorpato', 'Esercizio Contabile: 2025 / 2026 (Accorpato)') 
+        : `${t('badge_esercizio_ordinario', 'Esercizio Contabile:')} ${currentLpPeriod}`;
+    const fileSuffix = isAcc ? '2025_2026' : currentLpPeriod;
+
     const headers = [
         "#",
         t('col_lp_name', 'Limited Partner'),
@@ -715,7 +824,7 @@ window.exportLpResultsExcel = function() {
 
     const rows = [
         ["GREEN ENERBRAS ONE SCSp - " + t('title_risultato_lp', 'Ripartizione Risultato Economico Limited Partners')],
-        [t('badge_accorpato', 'Esercizio Contabile: 2025 / 2026 (Accorpato)') + " - Pro-Rata Temporis"],
+        [periodTitle + " - Pro-Rata Temporis"],
         [],
         headers
     ];
@@ -755,7 +864,7 @@ window.exportLpResultsExcel = function() {
     const ws = XLSX.utils.aoa_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Risultati_LP");
-    XLSX.writeFile(wb, "GREEN_ENERBRAS_Risultato_LP_2025_2026.xlsx");
+    XLSX.writeFile(wb, `GREEN_ENERBRAS_Risultato_LP_${fileSuffix}.xlsx`);
 };
 
 window.exportLpResultsPDF = function() {
@@ -766,13 +875,19 @@ window.exportLpResultsPDF = function() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
+    const isAcc = (currentLpPeriod === '2025-2026' || currentLpPeriod === '2025/2026' || currentLpPeriod === 'all');
+    const periodTitle = isAcc 
+        ? t('badge_accorpato', 'Esercizio 2025 / 2026 (Accorpato)') 
+        : `${t('badge_esercizio_ordinario', 'Esercizio')} ${currentLpPeriod}`;
+    const fileSuffix = isAcc ? '2025_2026' : currentLpPeriod;
+
     doc.setFontSize(16);
     doc.setTextColor(16, 185, 129);
     doc.text("GREEN ENERBRAS ONE SCSp", 14, 15);
 
     doc.setFontSize(12);
     doc.setTextColor(40, 40, 40);
-    doc.text(t('title_risultato_lp', 'Ripartizione Risultato Economico Limited Partners') + " - " + t('badge_accorpato', 'Esercizio 2025 / 2026 (Accorpato)'), 14, 22);
+    doc.text(t('title_risultato_lp', 'Ripartizione Risultato Economico Limited Partners') + " - " + periodTitle, 14, 22);
 
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
@@ -838,5 +953,5 @@ window.exportLpResultsPDF = function() {
         }
     });
 
-    doc.save("GREEN_ENERBRAS_Risultato_LP_2025_2026.pdf");
+    doc.save(`GREEN_ENERBRAS_Risultato_LP_${fileSuffix}.pdf`);
 };
