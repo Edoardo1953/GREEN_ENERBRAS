@@ -1998,7 +1998,7 @@ const translations = {
         'tab_gestione_slideshow': 'Gestion du Diaporama',
         'table_id_utente': 'ID Utilisateur',
         'table_password': 'Mot de passe',
-        'table_ruolo': 'Rà´le',
+        'table_ruolo': 'Rôle',
         'table_partner_associato': 'Partenaire Associé',
         'table_azioni': 'Actions',
         'table_nome_file': 'Nom du Fichier',
