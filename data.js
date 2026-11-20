@@ -452,7 +452,7 @@
                              "date":  "19/11/2026",
                              "category":  "Capital Contribution",
                              "description":  "Paiement Capital Contribution",
-                             "partner":  "Elisa Zaniboni",
+                             "partner":  "Zaniboni Elisa",
                              "amount":  -20000.0
                          }
                      ],
@@ -989,7 +989,7 @@
                         "lng":  -35.255
                     }
                 ],
-    "lastUpdated":  "19/11/2026 16:33",
+    "lastUpdated":  "20/11/2026 09:02",
     "partners":  [
                      {
                          "detention":  0.38314176245210724,
