@@ -440,11 +440,11 @@ window.openSchemaSocietarioModal = function() {
     const newTabLink = document.getElementById('schema-societario-newtab');
     if (!modal || !iframe) return;
 
-    const isUser = (typeof Auth !== 'undefined' && Auth.currentUser) ? 
-        (Auth.currentUser.role !== 'admin' || (typeof Auth.isUserView === 'function' && Auth.isUserView())) : 
-        false;
+    // Solo l'amministratore reale autenticato (e non in User View) visualizza lo Schema completo con i dettagli;
+    // tutti gli altri utenti (Partner, Visitatori, Ospiti o sessioni non admin) visualizzano lo Schema ANONIMO.
+    const isRealAdmin = (typeof Auth !== 'undefined' && Auth.currentUser && Auth.currentUser.role === 'admin' && (typeof Auth.isUserView !== 'function' || !Auth.isUserView()));
 
-    const pdfFilename = isUser ? 'Schema societario GE - Tri Star anonimo.pdf' : 'Schema societario GE - Tri Star.pdf';
+    const pdfFilename = isRealAdmin ? 'Schema societario GE - Tri Star.pdf' : 'Schema societario GE - Tri Star anonimo.pdf';
     const pdfUrl = `../uploads/${encodeURI(pdfFilename)}`;
 
     iframe.src = pdfUrl;

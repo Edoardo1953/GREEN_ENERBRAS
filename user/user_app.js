@@ -441,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// Schema Societario Modal Functions (User View: Anonymous PDF)
+// Schema Societario Modal Functions (Admin: Full PDF | Users: Anonymous PDF)
 // ==========================================
 window.openSchemaSocietarioModal = function() {
     const modal = document.getElementById('schemaSocietarioModal');
@@ -449,7 +449,13 @@ window.openSchemaSocietarioModal = function() {
     const newTabLink = document.getElementById('schema-societario-newtab');
     if (!modal || !iframe) return;
 
-    const pdfUrl = `../uploads/${encodeURI('Schema societario GE - Tri Star anonimo.pdf')}`;
+    // Solo l'amministratore reale autenticato (e non in User View) visualizza lo Schema completo;
+    // per tutti gli USERS (Partner, Visitatori, Ospiti) compare esclusivamente lo Schema ANONIMO.
+    const isRealAdmin = (typeof Auth !== 'undefined' && Auth.currentUser && Auth.currentUser.role === 'admin' && (typeof Auth.isUserView !== 'function' || !Auth.isUserView()));
+
+    const pdfFilename = isRealAdmin ? 'Schema societario GE - Tri Star.pdf' : 'Schema societario GE - Tri Star anonimo.pdf';
+    const pdfUrl = `../uploads/${encodeURI(pdfFilename)}`;
+
     iframe.src = pdfUrl;
     if (newTabLink) newTabLink.href = pdfUrl;
     modal.style.display = 'flex';
