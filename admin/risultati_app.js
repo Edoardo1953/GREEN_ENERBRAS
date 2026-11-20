@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', () => {
     initRisultati();
 });
 
+window.addEventListener('languageChanged', () => {
+    renderTables();
+});
+
 let currentTab = 'tab-ricavi-costi';
 
 window.switchTab = function(tabId) {
@@ -561,17 +565,17 @@ function renderRisultatoLimitedPartners(selectedYear) {
         // Determina stringa data
         let dateStr = '-';
         if (p.isZero) {
-            dateStr = '<span style="color:var(--text-muted, #94a3b8); font-size:0.85rem;">Cessione 19/11/2026</span>';
+            dateStr = `<span style="color:var(--text-muted, #94a3b8); font-size:0.85rem;">${t('label_cessione_date', 'Cessione 19/11/2026')}</span>`;
         } else if (p.tranches.length === 1) {
             dateStr = `<span style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.82rem; font-weight: 600;"><i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>${p.tranches[0].date}</span>`;
         } else if (p.tranches.length > 1) {
-            dateStr = `<span style="background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.82rem; font-weight: 600;" title="Clicca per visualizzare le ${p.tranches.length} tranches"><i class="fa-solid fa-layer-group" style="margin-right: 4px;"></i>${p.tranches[0].date} (${p.tranches.length} vers.)</span>`;
+            dateStr = `<span style="background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.82rem; font-weight: 600;" title="Clicca per visualizzare le ${p.tranches.length} tranches"><i class="fa-solid fa-layer-group" style="margin-right: 4px;"></i>${p.tranches[0].date} (${p.tranches.length} ${t('label_deposits_count', 'vers.')})</span>`;
         }
 
         // Badge Elisa Zaniboni o Quota
         let nameHtml = `<strong style="color: var(--text-main, #fff); font-size: 0.95rem;">${p.name}</strong>`;
         if (p.isZero) {
-            nameHtml += ` <span style="background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 4px; margin-left: 6px; font-weight: 700;">Quota ceduta</span>`;
+            nameHtml += ` <span style="background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 4px; margin-left: 6px; font-weight: 700;">${t('badge_quota_ceduta', 'Quota ceduta')}</span>`;
         }
 
         const netColor = p.isZero ? 'var(--text-muted, #94a3b8)' : (p.risultatoNetto >= 0 ? '#10b981' : '#ef4444');
@@ -600,15 +604,15 @@ function renderRisultatoLimitedPartners(selectedYear) {
             
             let detailHtml = `<td colspan="9" style="padding: 0.5rem 1rem 0.75rem 2.5rem;">
                 <div style="font-size: 0.78rem; font-weight: 700; color: #60a5fa; margin-bottom: 0.4rem; text-transform: uppercase;">
-                    <i class="fa-solid fa-list-check" style="margin-right: 5px;"></i> Tranches di Apporto e Ponderazione Temporale (Capital-Days)
+                    <i class="fa-solid fa-list-check" style="margin-right: 5px;"></i> ${t('label_subtable_tranches', 'Tranches di Apporto e Ponderazione Temporale (Capital-Days)')}
                 </div>
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.83rem;">
                     <thead>
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted, #94a3b8);">
-                            <th style="padding: 0.35rem 0.5rem; text-align: left;">Data Versamento</th>
-                            <th style="padding: 0.35rem 0.5rem; text-align: right;">Importo Tranche</th>
-                            <th style="padding: 0.35rem 0.5rem; text-align: right;">Giorni di Permanenza</th>
-                            <th style="padding: 0.35rem 0.5rem; text-align: right;">Ponderazione (Cap-Days)</th>
+                            <th style="padding: 0.35rem 0.5rem; text-align: left;">${t('col_subtable_date', 'Data Versamento')}</th>
+                            <th style="padding: 0.35rem 0.5rem; text-align: right;">${t('col_subtable_amount', 'Importo Tranche')}</th>
+                            <th style="padding: 0.35rem 0.5rem; text-align: right;">${t('col_subtable_days', 'Giorni di Permanenza')}</th>
+                            <th style="padding: 0.35rem 0.5rem; text-align: right;">${t('col_subtable_capdays', 'Ponderazione (Cap-Days)')}</th>
                         </tr>
                     </thead>
                     <tbody>`;
@@ -617,7 +621,7 @@ function renderRisultatoLimitedPartners(selectedYear) {
                 detailHtml += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
                     <td style="padding: 0.35rem 0.5rem; color: var(--text-main, #fff);">${trItem.date}</td>
                     <td style="padding: 0.35rem 0.5rem; text-align: right; color: ${trItem.amount >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600;">${formatEur(trItem.amount)}</td>
-                    <td style="padding: 0.35rem 0.5rem; text-align: right; color: var(--text-muted, #94a3b8);">${trItem.days || 0} gg</td>
+                    <td style="padding: 0.35rem 0.5rem; text-align: right; color: var(--text-muted, #94a3b8);">${trItem.days || 0} ${t('unit_days', 'gg')}</td>
                     <td style="padding: 0.35rem 0.5rem; text-align: right; color: #f59e0b; font-weight: 600;">${capDaysTranche.toLocaleString('de-DE')} €·gg</td>
                 </tr>`;
             });
@@ -635,7 +639,7 @@ function renderRisultatoLimitedPartners(selectedYear) {
 
         const trFoot = document.createElement('tr');
         trFoot.innerHTML = `
-            <td colspan="3" style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; color: #fff;">TOTALE LIMITED PARTNERS:</td>
+            <td colspan="3" style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; color: #fff;">${t('total_lp_label', 'TOTALE LIMITED PARTNERS:')}</td>
             <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; color: #10b981;">${formatEur(totalAllLpCapital)}</td>
             <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; color: #f59e0b;">${totalNominalDetention.toFixed(2)}%</td>
             <td style="padding: 1rem; text-align: right; font-weight: 700; color: var(--text-muted, #94a3b8);">${formatEur(totalAllLpRimborsi)}</td>
@@ -665,15 +669,27 @@ window.exportLpResultsExcel = function() {
         alert("Dati non disponibili o libreria XLSX non caricata.");
         return;
     }
+    const headers = [
+        "#",
+        t('col_lp_name', 'Limited Partner'),
+        t('col_lp_date', 'Data Apporto'),
+        t('col_lp_capital', 'Capitale Versato (€)'),
+        t('col_lp_detention', 'Quota SCSp (%)'),
+        t('col_lp_repayments', 'Rimborsi Capitale (€)'),
+        t('col_lp_dividends', 'Dividendi (€)'),
+        t('col_lp_net_result', 'Risultato Netto (€)'),
+        t('col_lp_yield', 'Risultato %')
+    ];
+
     const rows = [
-        ["GREEN ENERBRAS ONE SCSp - Ripartizione Risultato Economico Limited Partners"],
-        ["Esercizio Contabile: 2025 / 2026 (Accorpato) - Pro-Rata Temporis"],
+        ["GREEN ENERBRAS ONE SCSp - " + t('title_risultato_lp', 'Ripartizione Risultato Economico Limited Partners')],
+        [t('badge_accorpato', 'Esercizio Contabile: 2025 / 2026 (Accorpato)') + " - Pro-Rata Temporis"],
         [],
-        ["#", "Limited Partner", "Data Apporto", "Capitale Versato (€)", "Quota SCSp (%)", "Rimborsi Capitale (€)", "Dividendi (€)", "Risultato Netto (€)", "Risultato %"]
+        headers
     ];
 
     window._lastLpResults.forEach((p, idx) => {
-        const dStr = p.isZero ? "Cessione" : (p.tranches.map(t => t.date).join(', '));
+        const dStr = p.isZero ? t('badge_quota_ceduta', 'Cessione') : (p.tranches.map(tItem => tItem.date).join(', '));
         rows.push([
             idx + 1,
             p.name,
@@ -693,7 +709,7 @@ window.exportLpResultsExcel = function() {
         rows.push([]);
         rows.push([
             "",
-            "TOTALE LIMITED PARTNERS",
+            t('total_lp_label', 'TOTALE LIMITED PARTNERS:'),
             "",
             tot.capital,
             99.62,
@@ -706,7 +722,7 @@ window.exportLpResultsExcel = function() {
 
     const ws = XLSX.utils.aoa_to_sheet(rows);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Risultati_LP_2025_2026");
+    XLSX.utils.book_append_sheet(wb, ws, "Risultati_LP");
     XLSX.writeFile(wb, "GREEN_ENERBRAS_Risultato_LP_2025_2026.xlsx");
 };
 
@@ -724,17 +740,28 @@ window.exportLpResultsPDF = function() {
 
     doc.setFontSize(12);
     doc.setTextColor(40, 40, 40);
-    doc.text("Ripartizione Risultato Economico Limited Partners - Esercizio 2025 / 2026 (Accorpato)", 14, 22);
+    doc.text(t('title_risultato_lp', 'Ripartizione Risultato Economico Limited Partners') + " - " + t('badge_accorpato', 'Esercizio 2025 / 2026 (Accorpato)'), 14, 22);
 
     doc.setFontSize(9);
     doc.setTextColor(100, 100, 100);
-    doc.text("Criterio: Pro-Rata Temporis (Capital-Days dalla data del versamento) | Rimborsi: 0 € | Dividendi: 0 €", 14, 28);
+    doc.text(t('desc_risultato_lp', 'Criterio: Pro-Rata Temporis (Capital-Days dalla data del versamento) | Rimborsi: 0 € | Dividendi: 0 €'), 14, 28);
 
-    const headers = [["#", "Limited Partner", "Data Apporto", "Capitale Versato", "Quota SCSp", "Rimborsi", "Dividendi", "Risultato Netto", "Risultato %"]];
+    const headers = [[
+        "#",
+        t('col_lp_name', 'Limited Partner'),
+        t('col_lp_date', 'Data Apporto'),
+        t('col_lp_capital', 'Capitale Versato'),
+        t('col_lp_detention', 'Quota SCSp'),
+        t('col_lp_repayments', 'Rimborsi'),
+        t('col_lp_dividends', 'Dividendi'),
+        t('col_lp_net_result', 'Risultato Netto'),
+        t('col_lp_yield', 'Risultato %')
+    ]];
+
     const data = window._lastLpResults.map((p, idx) => [
         idx + 1,
         p.name,
-        p.isZero ? "Cessione" : p.tranches.map(t => t.date).join(', '),
+        p.isZero ? t('badge_quota_ceduta', 'Cessione') : p.tranches.map(tItem => tItem.date).join(', '),
         formatEur(p.netCapital),
         p.detentionPct.toFixed(2) + "%",
         formatEur(p.rimborsi),
@@ -748,7 +775,7 @@ window.exportLpResultsPDF = function() {
         const totPct = tot.capital > 0 ? (tot.netResult / tot.capital) * 100 : 0;
         data.push([
             "",
-            "TOTALE LP",
+            t('total_lp_label', 'TOTALE LIMITED PARTNERS:'),
             "",
             formatEur(tot.capital),
             "99.62%",
