@@ -219,6 +219,9 @@ function getStoredAuthUser() {
     if (window.location.protocol === 'file:' && window.location.pathname.toLowerCase().includes('/admin/')) {
         return { id: 'admin', role: 'admin', partnerName: 'Edoardo Tubia' };
     }
+    if (window.location.protocol === 'file:' && window.location.pathname.toLowerCase().includes('/user/')) {
+        return { id: 'edoardo', role: 'partner', partnerName: 'Edoardo Tubia' };
+    }
 
     return null;
 }
@@ -365,6 +368,7 @@ const Auth = {
     isUserView() {
         if (!Auth.currentUser) return true;
         if (Auth.currentUser.role !== 'admin') return true;
+        if (window.location.pathname.toLowerCase().includes('/user/')) return true;
         return getStoredViewMode() === 'user';
     },
 
@@ -487,15 +491,22 @@ const Auth = {
                 return { success: false, error: "Utente non trovato." };
             }
 
-            // 1. Account Admin integrati (funzionano all'istante sia online che offline/locale)
-            if ((cleanUser === 'admin' && cleanPass === 'admin') ||
-                (cleanUser === 'edoardo' && cleanPass === 'edoardo') ||
-                (cleanUser === 'edoardo' && cleanPass === 'admin')) {
+            // 1. Account Admin integrato (solo ed esclusivamente utente 'admin')
+            if (cleanUser === 'admin' && (cleanPass === 'admin' || cleanPass === 'password')) {
                 console.log("Admin account riconosciuto, login immediato.");
-                const rootAdmin = { id: cleanUser, role: 'admin', partnerName: 'Edoardo Tubia' };
+                const rootAdmin = { id: 'admin', role: 'admin', partnerName: 'Edoardo Tubia' };
                 setStoredAuthUser(rootAdmin);
                 Auth.currentUser = rootAdmin;
                 return { success: true, user: rootAdmin };
+            }
+
+            // 1b. Account Partner Edoardo Tubia (investitore / utilizzatore)
+            if (cleanUser === 'edoardo' && (cleanPass === 'edoardo' || cleanPass === 'admin')) {
+                console.log("Account utilizzatore Edoardo Tubia riconosciuto.");
+                const edoPartner = { id: 'edoardo', role: 'partner', partnerName: 'Edoardo Tubia' };
+                setStoredAuthUser(edoPartner);
+                Auth.currentUser = edoPartner;
+                return { success: true, user: edoPartner };
             }
 
             // 2. Controllo database locale persistente
@@ -567,11 +578,17 @@ const Auth = {
         } catch (e) {
             console.error("Login error (catch block):", e);
             const cleanUser = (username || '').trim().toLowerCase();
-            if (cleanUser === 'admin' || cleanUser === 'edoardo') {
-                const rootAdmin = { id: cleanUser, role: 'admin', partnerName: 'Edoardo Tubia' };
+            if (cleanUser === 'admin') {
+                const rootAdmin = { id: 'admin', role: 'admin', partnerName: 'Edoardo Tubia' };
                 setStoredAuthUser(rootAdmin);
                 Auth.currentUser = rootAdmin;
                 return { success: true, user: rootAdmin };
+            }
+            if (cleanUser === 'edoardo') {
+                const edoPartner = { id: 'edoardo', role: 'partner', partnerName: 'Edoardo Tubia' };
+                setStoredAuthUser(edoPartner);
+                Auth.currentUser = edoPartner;
+                return { success: true, user: edoPartner };
             }
             return { success: false, error: "Errore di connessione a Firebase: " + e.message };
         }
@@ -815,12 +832,20 @@ const Auth = {
         });
 
         // 4. Gestione pulsanti switch
-        document.querySelectorAll('a[data-i18n="nav_switch_user"], .btn-switch-user').forEach(el => {
+        document.querySelectorAll('a[data-i18n="nav_switch_user"], .btn-switch-user, [data-action="switch-user"]').forEach(el => {
             el.style.setProperty('display', (!isUser && isRealAdmin) ? 'flex' : 'none', 'important');
         });
+        document.querySelectorAll('[data-i18n="nav_switch_user"]').forEach(span => {
+            const parentA = span.closest('a');
+            if (parentA) parentA.style.setProperty('display', (!isUser && isRealAdmin) ? 'flex' : 'none', 'important');
+        });
 
-        document.querySelectorAll('a[data-i18n="nav_switch_admin"], #switch-admin-btn, .btn-switch-admin').forEach(el => {
+        document.querySelectorAll('a[data-i18n="nav_switch_admin"], #switch-admin-btn, .btn-switch-admin, [data-action="switch-admin"]').forEach(el => {
             el.style.setProperty('display', (isUser && isRealAdmin) ? 'flex' : 'none', 'important');
+        });
+        document.querySelectorAll('[data-i18n="nav_switch_admin"]').forEach(span => {
+            const parentA = span.closest('a');
+            if (parentA) parentA.style.setProperty('display', (isUser && isRealAdmin) ? 'flex' : 'none', 'important');
         });
 
         // 5. Aggiorna profilo utente (Nome e Avatar) nella topbar
@@ -974,18 +999,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Event listeners su tutti i link di switch
-    document.querySelectorAll('a[data-i18n="nav_switch_user"]').forEach(el => {
+    document.querySelectorAll('.btn-switch-user, a[data-i18n="nav_switch_user"], [data-action="switch-user"]').forEach(el => {
         el.onclick = (e) => {
             e.preventDefault();
             Auth.switchToUserView();
         };
     });
+    document.querySelectorAll('[data-i18n="nav_switch_user"]').forEach(span => {
+        const parentA = span.closest('a');
+        if (parentA) {
+            parentA.onclick = (e) => {
+                e.preventDefault();
+                Auth.switchToUserView();
+            };
+        }
+    });
 
-    document.querySelectorAll('a[data-i18n="nav_switch_admin"], #switch-admin-btn').forEach(el => {
+    document.querySelectorAll('.btn-switch-admin, #switch-admin-btn, a[data-i18n="nav_switch_admin"], [data-action="switch-admin"]').forEach(el => {
         el.onclick = (e) => {
             e.preventDefault();
             Auth.switchToAdminView();
         };
+    });
+    document.querySelectorAll('[data-i18n="nav_switch_admin"]').forEach(span => {
+        const parentA = span.closest('a');
+        if (parentA) {
+            parentA.onclick = (e) => {
+                e.preventDefault();
+                Auth.switchToAdminView();
+            };
+        }
     });
 
     // Initial sidebar visibility render

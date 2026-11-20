@@ -449,11 +449,8 @@ window.openSchemaSocietarioModal = function() {
     const newTabLink = document.getElementById('schema-societario-newtab');
     if (!modal || !iframe) return;
 
-    // Solo l'amministratore reale autenticato (e non in User View) visualizza lo Schema completo;
-    // per tutti gli USERS (Partner, Visitatori, Ospiti) compare esclusivamente lo Schema ANONIMO.
-    const isRealAdmin = (typeof Auth !== 'undefined' && Auth.currentUser && Auth.currentUser.role === 'admin' && (typeof Auth.isUserView !== 'function' || !Auth.isUserView()));
-
-    const pdfFilename = isRealAdmin ? 'Schema societario GE - Tri Star.pdf' : 'Schema societario GE - Tri Star anonimo.pdf';
+    // Nel portale Utente / Dashboard Utente compare SEMPRE E SOLO lo Schema ANONIMO
+    const pdfFilename = 'Schema societario GE - Tri Star anonimo.pdf';
     const pdfUrl = `../uploads/${encodeURI(pdfFilename)}?v=${Date.now()}`;
 
     iframe.src = pdfUrl;

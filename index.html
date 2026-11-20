@@ -17,7 +17,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <!-- Auth Logic -->
-    <script src="auth.js?v=310"></script>
+    <script src="auth.js?v=330"></script>
 
     <style>
         .landing-container {
@@ -139,9 +139,20 @@
         // Reset eventuale view mode precedente
         sessionStorage.removeItem('green_enerbras_view_mode');
 
-        // Se c'è ?logout=true nell'URL, forza il logout
+        // Se c'è ?logout=true nell'URL, forza il logout completo
         if (window.location.search.includes('logout=true')) {
-            localStorage.removeItem('green_enerbras_auth_user');
+            try { sessionStorage.removeItem('green_enerbras_auth_user'); } catch(e){}
+            try { localStorage.removeItem('green_enerbras_auth_user'); } catch(e){}
+            try { sessionStorage.removeItem('green_enerbras_view_mode'); } catch(e){}
+            try {
+                let nameObj = {};
+                if (window.name && window.name.startsWith('{')) {
+                    try { nameObj = JSON.parse(window.name); } catch(e) {}
+                }
+                delete nameObj.user;
+                delete nameObj.viewMode;
+                window.name = JSON.stringify(nameObj);
+            } catch(e) {}
             if (typeof Auth !== 'undefined') Auth.currentUser = null;
         }
 
