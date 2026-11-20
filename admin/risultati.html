@@ -199,36 +199,36 @@
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                             <div class="glass-panel" style="padding: 1rem 1.25rem; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                                 <div style="font-size: 0.78rem; color: var(--text-muted, #94a3b8); font-weight: 600;" data-i18n="kpi_label_capitale_attivo">Capitale LP Attivo</div>
-                                <div id="kpi-lp-capitale" style="font-size: 1.35rem; font-weight: 800; color: #10b981; margin-top: 0.2rem;">€ 260.000,00</div>
+                                <div id="kpi-lp-capitale" style="font-size: 1.35rem; font-weight: 800; color: #10b981; margin-top: 0.2rem; white-space: nowrap !important;">€ 260.000,00</div>
                             </div>
                             <div class="glass-panel" style="padding: 1rem 1.25rem; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                                 <div style="font-size: 0.78rem; color: var(--text-muted, #94a3b8); font-weight: 600;" data-i18n="kpi_label_rimborsi">Rimborsi di Capitale</div>
-                                <div id="kpi-lp-rimborsi" style="font-size: 1.35rem; font-weight: 800; color: var(--text-main, #fff); margin-top: 0.2rem;">€ 0,00</div>
+                                <div id="kpi-lp-rimborsi" style="font-size: 1.35rem; font-weight: 800; color: var(--text-main, #fff); margin-top: 0.2rem; white-space: nowrap !important;">€ 0,00</div>
                             </div>
                             <div class="glass-panel" style="padding: 1rem 1.25rem; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                                 <div style="font-size: 0.78rem; color: var(--text-muted, #94a3b8); font-weight: 600;" data-i18n="kpi_label_dividendi">Dividendi Corrisposti</div>
-                                <div id="kpi-lp-dividendi" style="font-size: 1.35rem; font-weight: 800; color: var(--text-main, #fff); margin-top: 0.2rem;">€ 0,00</div>
+                                <div id="kpi-lp-dividendi" style="font-size: 1.35rem; font-weight: 800; color: var(--text-main, #fff); margin-top: 0.2rem; white-space: nowrap !important;">€ 0,00</div>
                             </div>
                             <div class="glass-panel" style="padding: 1rem 1.25rem; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);">
                                 <div style="font-size: 0.78rem; color: var(--text-muted, #94a3b8); font-weight: 600;" data-i18n="kpi_label_risultato_netto_lp">Risultato Economico Netto (LP)</div>
-                                <div id="kpi-lp-risultato-netto" style="font-size: 1.35rem; font-weight: 800; color: #ef4444; margin-top: 0.2rem;">- € 7.028,03</div>
+                                <div id="kpi-lp-risultato-netto" style="font-size: 1.35rem; font-weight: 800; color: #ef4444; margin-top: 0.2rem; white-space: nowrap !important;">- € 7.028,03</div>
                             </div>
                         </div>
 
                         <!-- Table -->
-                        <div class="table-container" style="overflow-x: auto; background: rgba(0,0,0,0.15); border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
-                            <table style="width: 100%; color: white; border-collapse: collapse; min-width: 950px;">
+                        <div class="table-container" style="overflow-x: auto; background: rgba(0,0,0,0.15); border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 1.5rem;">
+                            <table id="table-lp-risultati-el" style="width: 100%; color: white; border-collapse: collapse; min-width: 1180px;">
                                 <thead style="background: rgba(255,255,255,0.05); border-bottom: 2px solid rgba(255,255,255,0.12);">
                                     <tr>
-                                        <th style="padding: 0.85rem 1rem; text-align: center; width: 45px;">#</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: left;" data-i18n="col_lp_name">Limited Partner (Socio Accomandante)</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: center;" data-i18n="col_lp_date">Data Apporto</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right;" data-i18n="col_lp_capital">Capitale Versato (€)</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right;" data-i18n="col_lp_detention">Quota SCSp (%)</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right;" data-i18n="col_lp_repayments">Rimborsi Capitale (€)</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right;" data-i18n="col_lp_dividends">Dividendi (€)</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right;" data-i18n="col_lp_net_result">Risultato Netto (€)</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right;" data-i18n="col_lp_yield">Risultato %</th>
+                                        <th style="padding: 0.85rem 0.5rem; text-align: center; width: 45px; min-width: 45px; white-space: nowrap !important;">#</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: left; min-width: 250px; white-space: nowrap !important;" data-i18n="col_lp_name">Limited Partner (Socio Accomandante)</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: center; min-width: 140px; white-space: nowrap !important;" data-i18n="col_lp_date">Data Apporto</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; min-width: 145px; white-space: nowrap !important;" data-i18n="col_lp_capital">Capitale Versato (€)</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; min-width: 110px; white-space: nowrap !important;" data-i18n="col_lp_detention">Quota SCSp (%)</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; min-width: 130px; white-space: nowrap !important;" data-i18n="col_lp_repayments">Rimborsi Capitale (€)</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; min-width: 130px; white-space: nowrap !important;" data-i18n="col_lp_dividends">Dividendi (€)</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; min-width: 145px; white-space: nowrap !important;" data-i18n="col_lp_net_result">Risultato Netto (€)</th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; min-width: 110px; white-space: nowrap !important;" data-i18n="col_lp_yield">Risultato %</th>
                                     </tr>
                                 </thead>
                                 <tbody id="table-body-lp-risultati">

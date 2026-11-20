@@ -33,7 +33,7 @@ function formatEur(num) {
     val = Math.abs(val);
     let parts = val.toFixed(2).split('.');
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    return (isNeg ? '- ' : '') + parts.join(',') + " \u20AC";
+    return (isNeg ? '-\u00A0' : '') + parts.join(',') + "\u00A0\u20AC";
 }
 
 function initRisultati() {
@@ -578,20 +578,20 @@ function renderRisultatoLimitedPartners(selectedYear) {
             nameHtml += ` <span style="background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 4px; margin-left: 6px; font-weight: 700;">${t('badge_quota_ceduta', 'Quota ceduta')}</span>`;
         }
 
-        const netColor = p.isZero ? 'var(--text-muted, #94a3b8)' : (p.risultatoNetto >= 0 ? '#10b981' : '#ef4444');
-        const pctColor = p.isZero ? 'var(--text-muted, #94a3b8)' : (p.risultatoPct >= 0 ? '#10b981' : '#ef4444');
+        const netClass = p.isZero ? 'text-muted' : (p.risultatoNetto >= 0 ? 'text-green' : 'text-red');
+        const pctClass = p.isZero ? 'text-muted' : (p.risultatoPct >= 0 ? 'text-green' : 'text-red');
         const chevron = p.tranches.length > 0 ? `<i class="fa-solid fa-chevron-down" style="font-size: 0.75em; margin-right: 8px; color: var(--text-muted, #94a3b8);"></i>` : '';
 
         tr.innerHTML = `
-            <td style="padding: 0.85rem 0.5rem; text-align: center; color: var(--text-muted, #94a3b8); font-size: 0.85rem; font-weight: 700;">${idx + 1}</td>
-            <td style="padding: 0.85rem 1rem;">${chevron}${nameHtml}</td>
-            <td style="padding: 0.85rem 1rem; text-align: center;">${dateStr}</td>
-            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 700; color: ${p.netCapital > 0 ? '#10b981' : 'var(--text-muted, #94a3b8)'};">${formatEur(p.netCapital)}</td>
-            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 600; color: #f59e0b;" title="Ponderata giorni: ${p.weightPct.toFixed(2)}%">${p.detentionPct.toFixed(2)}%</td>
-            <td style="padding: 0.85rem 1rem; text-align: right; color: var(--text-muted, #94a3b8);">${formatEur(p.rimborsi)}</td>
-            <td style="padding: 0.85rem 1rem; text-align: right; color: var(--text-muted, #94a3b8);">${formatEur(p.dividendi)}</td>
-            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 700; color: ${netColor}; font-size: 0.98rem;">${formatEur(p.risultatoNetto)}</td>
-            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 700; color: ${pctColor}; font-size: 0.98rem;">${p.isZero ? '0,00%' : (p.risultatoPct >= 0 ? '+' : '') + p.risultatoPct.toFixed(2) + '%'}</td>
+            <td style="padding: 0.85rem 0.5rem; text-align: center; color: var(--text-muted, #94a3b8); font-size: 0.85rem; font-weight: 700; white-space: nowrap !important;">${idx + 1}</td>
+            <td style="padding: 0.85rem 1rem; white-space: nowrap !important;">${chevron}${nameHtml}</td>
+            <td style="padding: 0.85rem 1rem; text-align: center; white-space: nowrap !important;">${dateStr}</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 700; white-space: nowrap !important;"><span class="${p.netCapital > 0 ? 'text-green' : 'text-muted'}" style="white-space: nowrap !important;">${formatEur(p.netCapital)}</span></td>
+            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 600; white-space: nowrap !important;" title="Ponderata giorni: ${p.weightPct.toFixed(2)}%"><span class="text-amber" style="white-space: nowrap !important;">${p.detentionPct.toFixed(2)}%</span></td>
+            <td style="padding: 0.85rem 1rem; text-align: right; color: var(--text-muted, #94a3b8); white-space: nowrap !important;"><span style="white-space: nowrap !important;">${formatEur(p.rimborsi)}</span></td>
+            <td style="padding: 0.85rem 1rem; text-align: right; color: var(--text-muted, #94a3b8); white-space: nowrap !important;"><span style="white-space: nowrap !important;">${formatEur(p.dividendi)}</span></td>
+            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 700; font-size: 0.98rem; white-space: nowrap !important;"><span class="${netClass}" style="white-space: nowrap !important;">${formatEur(p.risultatoNetto)}</span></td>
+            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 700; font-size: 0.98rem; white-space: nowrap !important;"><span class="${pctClass}" style="white-space: nowrap !important;">${p.isZero ? '0,00%' : (p.risultatoPct >= 0 ? '+' : '') + p.risultatoPct.toFixed(2) + '%'}</span></td>
         `;
         tbody.appendChild(tr);
 
@@ -609,20 +609,20 @@ function renderRisultatoLimitedPartners(selectedYear) {
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.83rem;">
                     <thead>
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted, #94a3b8);">
-                            <th style="padding: 0.35rem 0.5rem; text-align: left;">${t('col_subtable_date', 'Data Versamento')}</th>
-                            <th style="padding: 0.35rem 0.5rem; text-align: right;">${t('col_subtable_amount', 'Importo Tranche')}</th>
-                            <th style="padding: 0.35rem 0.5rem; text-align: right;">${t('col_subtable_days', 'Giorni di Permanenza')}</th>
-                            <th style="padding: 0.35rem 0.5rem; text-align: right;">${t('col_subtable_capdays', 'Ponderazione (Cap-Days)')}</th>
+                            <th style="padding: 0.35rem 0.5rem; text-align: left; white-space: nowrap !important;">${t('col_subtable_date', 'Data Versamento')}</th>
+                            <th style="padding: 0.35rem 0.5rem; text-align: right; white-space: nowrap !important;">${t('col_subtable_amount', 'Importo Tranche')}</th>
+                            <th style="padding: 0.35rem 0.5rem; text-align: right; white-space: nowrap !important;">${t('col_subtable_days', 'Giorni di Permanenza')}</th>
+                            <th style="padding: 0.35rem 0.5rem; text-align: right; white-space: nowrap !important;">${t('col_subtable_capdays', 'Ponderazione (Cap-Days)')}</th>
                         </tr>
                     </thead>
                     <tbody>`;
             p.tranches.forEach(trItem => {
                 const capDaysTranche = trItem.amount * (trItem.days || 0);
                 detailHtml += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                    <td style="padding: 0.35rem 0.5rem; color: var(--text-main, #fff);">${trItem.date}</td>
-                    <td style="padding: 0.35rem 0.5rem; text-align: right; color: ${trItem.amount >= 0 ? '#10b981' : '#ef4444'}; font-weight: 600;">${formatEur(trItem.amount)}</td>
-                    <td style="padding: 0.35rem 0.5rem; text-align: right; color: var(--text-muted, #94a3b8);">${trItem.days || 0} ${t('unit_days', 'gg')}</td>
-                    <td style="padding: 0.35rem 0.5rem; text-align: right; color: #f59e0b; font-weight: 600;">${capDaysTranche.toLocaleString('de-DE')} €·gg</td>
+                    <td style="padding: 0.35rem 0.5rem; color: var(--text-main, #fff); white-space: nowrap !important;">${trItem.date}</td>
+                    <td style="padding: 0.35rem 0.5rem; text-align: right; white-space: nowrap !important;"><span class="${trItem.amount >= 0 ? 'text-green' : 'text-red'}" style="font-weight: 600; white-space: nowrap !important;">${formatEur(trItem.amount)}</span></td>
+                    <td style="padding: 0.35rem 0.5rem; text-align: right; color: var(--text-muted, #94a3b8); white-space: nowrap !important;">${trItem.days || 0} ${t('unit_days', 'gg')}</td>
+                    <td style="padding: 0.35rem 0.5rem; text-align: right; white-space: nowrap !important;"><span class="text-amber" style="font-weight: 600; white-space: nowrap !important;">${capDaysTranche.toLocaleString('de-DE')}\u00A0€·gg</span></td>
                 </tr>`;
             });
             detailHtml += `</tbody></table></td>`;
@@ -635,17 +635,17 @@ function renderRisultatoLimitedPartners(selectedYear) {
     if (tfoot) {
         const totalNominalDetention = (totalAllLpCapital / 261000) * 100;
         const totalAvgPct = totalAllLpCapital > 0 ? (totalAllLpNetResult / totalAllLpCapital) * 100 : 0;
-        const netCol = totalAllLpNetResult >= 0 ? '#10b981' : '#ef4444';
+        const netColClass = totalAllLpNetResult >= 0 ? 'text-green' : 'text-red';
 
         const trFoot = document.createElement('tr');
         trFoot.innerHTML = `
-            <td colspan="3" style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; color: #fff;">${t('total_lp_label', 'TOTALE LIMITED PARTNERS:')}</td>
-            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; color: #10b981;">${formatEur(totalAllLpCapital)}</td>
-            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; color: #f59e0b;">${totalNominalDetention.toFixed(2)}%</td>
-            <td style="padding: 1rem; text-align: right; font-weight: 700; color: var(--text-muted, #94a3b8);">${formatEur(totalAllLpRimborsi)}</td>
-            <td style="padding: 1rem; text-align: right; font-weight: 700; color: var(--text-muted, #94a3b8);">${formatEur(totalAllLpDividendi)}</td>
-            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.1rem; color: ${netCol};">${formatEur(totalAllLpNetResult)}</td>
-            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.1rem; color: ${netCol};">${(totalAvgPct >= 0 ? '+' : '') + totalAvgPct.toFixed(2)}%</td>
+            <td colspan="3" class="tfoot-title" style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; white-space: nowrap !important;">${t('total_lp_label', 'TOTALE LIMITED PARTNERS:')}</td>
+            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; white-space: nowrap !important;"><span class="text-green" style="white-space: nowrap !important;">${formatEur(totalAllLpCapital)}</span></td>
+            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; white-space: nowrap !important;"><span class="text-amber" style="white-space: nowrap !important;">${totalNominalDetention.toFixed(2)}%</span></td>
+            <td style="padding: 1rem; text-align: right; font-weight: 700; color: var(--text-muted, #94a3b8); white-space: nowrap !important;"><span style="white-space: nowrap !important;">${formatEur(totalAllLpRimborsi)}</span></td>
+            <td style="padding: 1rem; text-align: right; font-weight: 700; color: var(--text-muted, #94a3b8); white-space: nowrap !important;"><span style="white-space: nowrap !important;">${formatEur(totalAllLpDividendi)}</span></td>
+            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.1rem; white-space: nowrap !important;"><span class="${netColClass}" style="white-space: nowrap !important;">${formatEur(totalAllLpNetResult)}</span></td>
+            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.1rem; white-space: nowrap !important;"><span class="${netColClass}" style="white-space: nowrap !important;">${(totalAvgPct >= 0 ? '+' : '') + totalAvgPct.toFixed(2)}%</span></td>
         `;
         tfoot.appendChild(trFoot);
     }
