@@ -401,11 +401,15 @@ function renderRisultatoLimitedPartners(selectedYear) {
 
     const allTxs = APP_DATA.transactions || [];
     
-    // 1. Calcola Risultato Netto Totale della Società per il periodo selezionato
-    let filteredTxs = allTxs;
-    if (selectedYear !== 'all') {
-        filteredTxs = allTxs.filter(t => t.date && t.date.endsWith('/' + selectedYear));
-    }
+    // 1. Calcola Risultato Netto Totale della Società per il periodo accorpato 2025/2026 (o anno specifico)
+    let filteredTxs = allTxs.filter(t => {
+        if (!t.date) return false;
+        if (selectedYear === '2025') {
+            return t.date.endsWith('/2025');
+        }
+        // Di default per 'all' o '2026' o '2025/2026', accorpa 2025 e 2026 come da statuto SCSp
+        return t.date.endsWith('/2025') || t.date.endsWith('/2026');
+    });
     
     let totalRevenues = 0;
     let totalCosts = 0;
@@ -487,11 +491,38 @@ function renderRisultatoLimitedPartners(selectedYear) {
                 const amt = tr.amount;
                 netCap += amt;
                 if (amt > 0) {
-                    const d = parseDateDMY(tr.date);
+                    let trancheDate = tr.date;
+                    let displayDate = tr.date;
+                    let trancheNote = '';
+
+                    // Se Tubia Edoardo ha rilevato la quota di 20.000 € di Elisa Zaniboni, la data da attribuire
+                    // all'acquisto per il calcolo pro-rata è quella originaria di sottoscrizione (09/12/2025) e non il 18/11/2026
+                    const isEdoardoZaniboniQuota = def.matches.some(m => m.includes('edoardo')) && 
+                        (tr.date === '18/11/2026' || (tr.description || '').toLowerCase().includes('zaniboni') || (amt === 20000 && tr.date !== '01/10/2025'));
+
+                    if (isEdoardoZaniboniQuota) {
+                        trancheDate = '09/12/2025';
+                        displayDate = '09/12/2025';
+                        trancheNote = t('note_subtable_ex_zaniboni', 'ex Quota E. Zaniboni sottoscritta il 09/12/2025');
+                    }
+
+                    const d = parseDateDMY(trancheDate);
                     const days = d ? Math.max(1, Math.round((refEndDate - d) / (1000 * 60 * 60 * 24))) : 365;
                     capDays += amt * days;
-                    validTranches.push({ date: tr.date, amount: amt, days: days });
+                    validTranches.push({ 
+                        date: displayDate, 
+                        originalBankDate: tr.date, 
+                        amount: amt, 
+                        days: days, 
+                        note: trancheNote 
+                    });
                 }
+            });
+
+            validTranches.sort((a, b) => {
+                const da = parseDateDMY(a.date);
+                const db = parseDateDMY(b.date);
+                return (da || 0) - (db || 0);
             });
         } else {
             // Elisa Zaniboni a ZERO come da richiesta esplicita
@@ -618,8 +649,9 @@ function renderRisultatoLimitedPartners(selectedYear) {
                     <tbody>`;
             p.tranches.forEach(trItem => {
                 const capDaysTranche = trItem.amount * (trItem.days || 0);
+                const noteHtml = trItem.note ? ` <span style="font-size: 0.76rem; color: #94a3b8; font-style: italic; margin-left: 6px; font-weight: normal;">(${trItem.note})</span>` : '';
                 detailHtml += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-                    <td style="padding: 0.35rem 0.5rem; color: var(--text-main, #fff); white-space: nowrap !important;">${trItem.date}</td>
+                    <td style="padding: 0.35rem 0.5rem; color: var(--text-main, #fff); white-space: nowrap !important;">${trItem.date}${noteHtml}</td>
                     <td style="padding: 0.35rem 0.5rem; text-align: right; white-space: nowrap !important;"><span class="${trItem.amount >= 0 ? 'text-green' : 'text-red'}" style="font-weight: 600; white-space: nowrap !important;">${formatEur(trItem.amount)}</span></td>
                     <td style="padding: 0.35rem 0.5rem; text-align: right; color: var(--text-muted, #94a3b8); white-space: nowrap !important;">${trItem.days || 0} ${t('unit_days', 'gg')}</td>
                     <td style="padding: 0.35rem 0.5rem; text-align: right; white-space: nowrap !important;"><span class="text-amber" style="font-weight: 600; white-space: nowrap !important;">${capDaysTranche.toLocaleString('de-DE')}\u00A0€·gg</span></td>
