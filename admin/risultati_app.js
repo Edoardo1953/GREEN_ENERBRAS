@@ -478,18 +478,67 @@ function renderCapitaleImmobilizzazioni(txs) {
     tbodyCap.innerHTML = '';
     if (tbodyImm) tbodyImm.innerHTML = '';
 
+    let totalInitial = 0;
+    let totalVariations = 0;
     let totalCap = 0;
 
-    // 1. PATRIMONIO NETTO E PASSIVO (Capitale Versato - 3 Colonne: Tipologia, Importo R$, Importo €)
-    const capTxs = txs.filter(t => t.category && (t.category.toLowerCase().includes('capital contribution') || t.category.toLowerCase().includes('capitale versato')));
+    // Helper: Classifica ogni movimento del socio come apporto iniziale o variazione (cessioni, acquisizioni, rimborsi, dividendi)
+    function classifyPartnerTransaction(item, partnerName) {
+        const desc = (item.description || '').toLowerCase();
+        const cat = (item.category || '').toLowerCase();
+        const pLower = (partnerName || '').toLowerCase();
+
+        // 1. Cessioni o riduzioni (importo negativo)
+        if (item.amount < 0) {
+            let label = t('label_mov_variazione_neg', 'Variazione (Riduzione)');
+            if (desc.includes('cessione') || pLower.includes('zaniboni elisa') || item.date === '19/11/2026') {
+                label = t('label_mov_cessione_elisa', 'Cessione Quota a E. Tubia');
+            } else if (cat.includes('rimborso') || desc.includes('rimborso')) {
+                label = t('label_mov_rimborso_cap', 'Rimborso di Capitale');
+            } else if (cat.includes('dividend') || desc.includes('dividend')) {
+                label = t('label_mov_dividendi', 'Dividendi Distribuiti');
+            }
+            return { type: 'variation', amount: item.amount, label: label };
+        }
+
+        // 2. Acquisizione quota (es. Tubia Edoardo acquisisce quota Elisa Zaniboni)
+        const isEdoardoAcquisition = pLower.includes('tubia edoardo') && 
+            (item.date === '18/11/2026' || desc.includes('zaniboni') || (item.amount === 20000 && item.date !== '01/10/2025'));
+
+        if (isEdoardoAcquisition) {
+            return { type: 'variation', amount: item.amount, label: t('label_mov_acquisizione_tubia', 'Acquisizione Quota (ex E. Zaniboni)') };
+        }
+
+        // 3. Altre variazioni esplicite
+        if (desc.includes('acquisizione') || desc.includes('incremento') || cat.includes('acquisizione') || desc.includes('variazione')) {
+            return { type: 'variation', amount: item.amount, label: t('label_mov_incremento_quota', 'Incremento / Acquisizione Quota') };
+        }
+
+        // 4. Apporto Iniziale
+        return { type: 'initial', amount: item.amount, label: t('label_mov_apporto_iniziale', 'Apporto Iniziale') };
+    }
+
+    // 1. PATRIMONIO NETTO E PASSIVO (Capitale Versato - 4 Colonne EUR: Tipologia, Apporto Iniziale, Variazioni, Capitale Attuale)
+    const capTxs = txs.filter(t => t.category && (
+        t.category.toLowerCase().includes('capital contribution') || 
+        t.category.toLowerCase().includes('capitale versato') ||
+        t.category.toLowerCase().includes('rimborso') ||
+        (t.category.toLowerCase().includes('dividend') && t.partner)
+    ));
     
     // Group capital contributions by Partner
     const capGroups = {};
     capTxs.forEach(t => {
         const partnerName = t.partner ? t.partner.trim() : 'Altri Apporti';
-        if (!capGroups[partnerName]) capGroups[partnerName] = { total: 0, items: [] };
-        capGroups[partnerName].total += t.amount;
-        capGroups[partnerName].items.push(t);
+        if (!capGroups[partnerName]) capGroups[partnerName] = { initial: 0, variations: 0, total: 0, items: [] };
+        const cl = classifyPartnerTransaction(t, partnerName);
+        if (cl.type === 'initial') {
+            capGroups[partnerName].initial += cl.amount;
+        } else {
+            capGroups[partnerName].variations += cl.amount;
+        }
+        capGroups[partnerName].total += cl.amount;
+        capGroups[partnerName].items.push({ ...t, classification: cl });
     });
 
     // New Life (General Partner) ALWAYS FIRST by default
@@ -503,10 +552,31 @@ function renderCapitaleImmobilizzazioni(txs) {
 
     sortedPartnerKeys.forEach((partnerName, idx) => {
         const group = capGroups[partnerName];
+        totalInitial += group.initial;
+        totalVariations += group.variations;
         totalCap += group.total;
+        
         const rowId = 'detail-cap-' + idx;
         const isGP = partnerName.toLowerCase().includes('new life') || partnerName.toLowerCase().includes('general partner');
-        const badgeHtml = isGP ? ` <span class="badge badge-gp" style="margin-left: 8px; font-size: 0.75rem;">General Partner</span>` : '';
+        const isCeded = partnerName.toLowerCase().includes('zaniboni elisa') || group.total === 0;
+        
+        let badgeHtml = '';
+        if (isGP) {
+            badgeHtml = ` <span class="badge badge-gp" style="margin-left: 8px; font-size: 0.75rem;">General Partner</span>`;
+        } else if (isCeded) {
+            badgeHtml = ` <span style="margin-left: 8px; font-size: 0.72rem; padding: 0.15rem 0.45rem; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); font-weight: 700;">Part cédée</span>`;
+        }
+
+        // Formatting variations
+        let varText = '-';
+        let varColor = 'var(--text-muted, #94a3b8)';
+        if (group.variations > 0) {
+            varText = `+ ${formatEur(group.variations)}`;
+            varColor = '#10b981';
+        } else if (group.variations < 0) {
+            varText = `- ${formatEur(Math.abs(group.variations))}`;
+            varColor = '#ef4444';
+        }
 
         const tr = document.createElement('tr');
         tr.style.borderBottom = '1px solid rgba(128,128,128,0.15)';
@@ -514,25 +584,36 @@ function renderCapitaleImmobilizzazioni(txs) {
         tr.onclick = () => toggleRowDetail(rowId);
         tr.innerHTML = `
             <td style="padding: 0.85rem 1rem; color: var(--text-main, #1e293b); font-weight: 600;"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em; margin-right: 5px;"></i> ${partnerName}${badgeHtml}</td>
-            <td style="padding: 0.85rem 1rem; text-align: right; color: #3b82f6; font-weight: 600;">${formatBrl(group.total * currentExchangeRate)}</td>
-            <td style="padding: 0.85rem 1rem; text-align: right; color: #3b82f6; font-weight: 600;">${formatEur(group.total)}</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; color: var(--text-main, #ffffff); font-weight: 600;">${formatEur(group.initial)}</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; color: ${varColor}; font-weight: 700;">${varText}</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; color: ${group.total > 0 ? '#3b82f6' : 'var(--text-muted, #94a3b8)'}; font-weight: 700; font-size: 0.98rem;">${formatEur(group.total)}</td>
         `;
         tbodyCap.appendChild(tr);
 
-        // Detail row (3 columns)
+        // Detail row (4 columns)
         const detailTr = document.createElement('tr');
         detailTr.id = rowId;
         detailTr.style.display = 'none';
-        detailTr.style.background = 'rgba(0,0,0,0.1)';
-        let detailHtml = '<td colspan="3" style="padding: 0;"><table style="width:100%; border-collapse:collapse; margin-bottom:1rem;">';
-        detailHtml += '<tr><th style="padding:0.5rem 1rem 0.5rem 2rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Data</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Partner</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Descrizione</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo (R$)</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo (€)</th></tr>';
+        detailTr.style.background = 'rgba(0,0,0,0.12)';
+        let detailHtml = '<td colspan="4" style="padding: 0;"><table style="width:100%; border-collapse:collapse; margin-bottom:1rem;">';
+        detailHtml += `<tr>
+            <th style="padding:0.5rem 1rem 0.5rem 2rem; text-align:left; font-size:0.83rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Data</th>
+            <th style="padding:0.5rem 1rem; text-align:left; font-size:0.83rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Partner</th>
+            <th style="padding:0.5rem 1rem; text-align:left; font-size:0.83rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">${t('table_tipo_operazione', 'Tipo Operazione')}</th>
+            <th style="padding:0.5rem 1rem; text-align:left; font-size:0.83rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Descrizione</th>
+            <th style="padding:0.5rem 1rem; text-align:right; font-size:0.83rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo (€)</th>
+        </tr>`;
+        
         group.items.forEach(item => {
+            const cl = item.classification || classifyPartnerTransaction(item, partnerName);
+            const amtColor = item.amount > 0 ? '#10b981' : (item.amount < 0 ? '#ef4444' : 'var(--text-muted, #64748b)');
+            const signPrefix = (cl.type === 'variation' && item.amount > 0) ? '+ ' : '';
             detailHtml += `<tr>
                 <td style="padding:0.5rem 1rem 0.5rem 2rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.date || '-'}</td>
                 <td style="padding:0.5rem 1rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.partner || '-'}</td>
+                <td style="padding:0.5rem 1rem; font-size:0.85rem; color:var(--text-muted, #94a3b8); font-weight:600; border-bottom:1px solid rgba(128,128,128,0.1);">${cl.label}</td>
                 <td style="padding:0.5rem 1rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.description || '-'}</td>
-                <td style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:#3b82f6; border-bottom:1px solid rgba(128,128,128,0.1); font-weight:600;">${formatBrl(item.amount * currentExchangeRate)}</td>
-                <td style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:#3b82f6; border-bottom:1px solid rgba(128,128,128,0.1); font-weight:600;">${formatEur(item.amount)}</td>
+                <td style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:${amtColor}; border-bottom:1px solid rgba(128,128,128,0.1); font-weight:700;">${signPrefix}${formatEur(item.amount)}</td>
             </tr>`;
         });
         detailHtml += '</table></td>';
@@ -544,7 +625,8 @@ function renderCapitaleImmobilizzazioni(txs) {
     trTotCap.style.background = 'rgba(59, 130, 246, 0.08)';
     trTotCap.innerHTML = `
         <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold;" data-i18n="totale_capitaux">Totale Patrimonio Netto:</td>
-        <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #3b82f6; font-size: 1.05rem;">${formatBrl(totalCap * currentExchangeRate)}</td>
+        <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: var(--text-main, #ffffff); font-size: 1.05rem;">${formatEur(totalInitial)}</td>
+        <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: ${totalVariations === 0 ? 'var(--text-muted, #94a3b8)' : (totalVariations > 0 ? '#10b981' : '#ef4444')}; font-size: 1.05rem;">${totalVariations > 0 ? '+ ' : ''}${formatEur(totalVariations)}</td>
         <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #3b82f6; font-size: 1.05rem;">${formatEur(totalCap)}</td>
     `;
     tbodyCap.appendChild(trTotCap);

@@ -209,14 +209,15 @@
                         <div class="table-container" style="overflow-x: auto; margin-bottom: 2rem; background: rgba(0,0,0,0.12); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
                             <div style="background: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6; padding: 0.75rem 1rem; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                                 <span style="font-weight: 700; color: #60a5fa; font-size: 0.95rem; text-transform: uppercase;" data-i18n="section_capitaux">PATRIMONIO NETTO E PASSIVO</span>
-                                <span style="font-size: 0.8rem; color: var(--text-muted, #94a3b8); font-style: italic;" data-i18n="note_capitale_cambio_attuale">Valutato al cambio EUR/R$ attuale</span>
+                                <span style="font-size: 0.8rem; color: var(--text-muted, #94a3b8); font-style: italic;" data-i18n="note_capitale_riepilogo_lp">Apporti iniziali, variazioni (cessioni/acquisizioni, rimborsi, dividendi) e saldo finale</span>
                             </div>
                             <table style="width: 100%; color: white; border-collapse: collapse;">
                                 <thead style="background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1);">
                                     <tr>
                                         <th style="padding: 0.85rem 1rem; text-align: left;"><span data-i18n="table_tipologia">Tipologia</span></th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 220px;"><span data-i18n="table_importo_brl">Importo (R$)</span></th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 200px;"><span data-i18n="table_importo_eur">Importo (€)</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 180px;"><span data-i18n="table_col_apporto_iniziale">Apporto Iniziale (€)</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 190px;"><span data-i18n="table_col_variazioni">Variazioni (€)</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 180px;"><span data-i18n="table_col_saldo_finale">Capitale Attuale (€)</span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="table-body-capitale">
@@ -351,7 +352,7 @@
     </div>
 
     <script src="../data.js"></script>
-    <script src="risultati_app.js?v=305"></script>
+    <script src="risultati_app.js?v=306"></script>
 </body>
 </html>
 
