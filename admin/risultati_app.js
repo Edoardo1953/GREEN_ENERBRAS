@@ -11,6 +11,12 @@ let currentLpPeriod = '2025-2026';
 
 window.onLpPeriodChange = function(newPeriod) {
     currentLpPeriod = newPeriod;
+    const yearSelect = document.getElementById('filter-year');
+    if (yearSelect && yearSelect.value !== newPeriod) {
+        yearSelect.value = newPeriod;
+        renderTables();
+        return;
+    }
     renderRisultatoLimitedPartners(currentLpPeriod);
 };
 
@@ -183,6 +189,15 @@ function updateExchangeRateBox(rate) {
     if (avgEl) {
         avgEl.textContent = `1 € = ${avgExchangeRate.toLocaleString('it-IT', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} R$`;
     }
+    const perfEl = document.getElementById('rate-eur-brl-perf');
+    if (perfEl && rate > 0 && avgExchangeRate > 0) {
+        const perfPct = ((avgExchangeRate / rate) - 1) * 100;
+        const sign = perfPct >= 0 ? '+' : '';
+        perfEl.textContent = `${sign}${perfPct.toFixed(2).replace('.', ',')}%`;
+        perfEl.style.color = perfPct >= 0 ? '#10b981' : '#ef4444';
+        perfEl.style.background = perfPct >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+        perfEl.style.borderColor = perfPct >= 0 ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+    }
 }
 
 function formatEur(num) {
@@ -231,38 +246,37 @@ function initRisultati() {
 
     if (!APP_DATA || !APP_DATA.transactions) return;
 
-    // Extract available years from transactions
-    const yearsSet = new Set();
-    APP_DATA.transactions.forEach(t => {
-        if (t.date) {
-            const parts = t.date.split('/');
-            if (parts.length === 3 && parts[2]) {
-                yearsSet.add(parts[2].trim());
-            }
-        }
-    });
-
-    const years = Array.from(yearsSet).sort((a, b) => b.localeCompare(a));
     const yearSelect = document.getElementById('filter-year');
-    
-    if (yearSelect && yearSelect.options.length <= 1) {
+    if (yearSelect && (!yearSelect.options || yearSelect.options.length <= 1)) {
         yearSelect.innerHTML = '';
-        const optAll = document.createElement('option');
-        optAll.value = 'all';
-        optAll.setAttribute('data-i18n', 'filter_tutti_anni');
-        optAll.textContent = '2025 / 2026 (Accorpato - Tutti gli anni)';
-        yearSelect.appendChild(optAll);
+        
+        const optCombined = document.createElement('option');
+        optCombined.value = '2025-2026';
+        optCombined.setAttribute('data-i18n', 'opt_periodo_2025_2026');
+        optCombined.textContent = '2025 / 2026 (Accorpato - In corso)';
+        yearSelect.appendChild(optCombined);
 
-        years.forEach(y => {
+        const futureYears = ['2027', '2028', '2029', '2030'];
+        futureYears.forEach(y => {
             const opt = document.createElement('option');
             opt.value = y;
+            opt.setAttribute('data-i18n', 'opt_periodo_' + y);
             opt.textContent = y;
             yearSelect.appendChild(opt);
         });
+
+        const optAll = document.createElement('option');
+        optAll.value = 'all';
+        optAll.setAttribute('data-i18n', 'filter_tutti_anni');
+        optAll.textContent = 'Tutti gli anni';
+        yearSelect.appendChild(optAll);
+
+        yearSelect.value = '2025-2026';
     }
 
-    if (yearSelect) {
+    if (yearSelect && !yearSelect._hasChangeListener) {
         yearSelect.addEventListener('change', renderTables);
+        yearSelect._hasChangeListener = true;
     }
 
     renderTables();
@@ -272,20 +286,23 @@ function renderTables() {
     if (!APP_DATA || !APP_DATA.transactions) return;
     
     const yearSelect = document.getElementById('filter-year');
-    const selectedYear = yearSelect ? yearSelect.value : 'all';
+    const selectedYear = yearSelect ? yearSelect.value : '2025-2026';
     
     let txs = APP_DATA.transactions;
-    if (selectedYear !== 'all') {
+    if (selectedYear === '2025-2026') {
+        txs = txs.filter(t => t.date && (t.date.endsWith('/2025') || t.date.endsWith('/2026')));
+    } else if (selectedYear !== 'all') {
         txs = txs.filter(t => t.date && t.date.endsWith('/' + selectedYear));
     }
 
     renderRicaviCosti(txs);
     renderCapitaleImmobilizzazioni(txs);
     
-    // Per Tab 3 usa currentLpPeriod
+    // Per Tab 3 sincronizza il periodo selezionato
+    currentLpPeriod = (selectedYear === '2025-2026' || selectedYear === 'all') ? '2025-2026' : selectedYear;
     const lpSelect = document.getElementById('select-periodo-lp');
-    if (lpSelect && lpSelect.value) {
-        currentLpPeriod = lpSelect.value;
+    if (lpSelect && lpSelect.value !== currentLpPeriod) {
+        lpSelect.value = currentLpPeriod;
     }
     renderRisultatoLimitedPartners(currentLpPeriod);
     
@@ -455,18 +472,15 @@ function renderRicaviCosti(txs) {
 }
 
 function renderCapitaleImmobilizzazioni(txs) {
-    const tbody = document.getElementById('table-body-capitale');
-    if (!tbody) return;
-    tbody.innerHTML = '';
+    const tbodyCap = document.getElementById('table-body-capitale');
+    const tbodyImm = document.getElementById('table-body-immobilizzazioni');
+    if (!tbodyCap) return;
+    tbodyCap.innerHTML = '';
+    if (tbodyImm) tbodyImm.innerHTML = '';
 
     let totalCap = 0;
 
-    // 1. PATRIMONIO NETTO E PASSIVO (Capitale Versato)
-    const trC = document.createElement('tr');
-    trC.style.background = 'rgba(59, 130, 246, 0.2)';
-    trC.innerHTML = `<td colspan="4" style="padding: 0.85rem 1rem; font-weight: bold;" data-i18n="section_capitaux">PATRIMONIO NETTO E PASSIVO</td>`;
-    tbody.appendChild(trC);
-
+    // 1. PATRIMONIO NETTO E PASSIVO (Capitale Versato - 3 Colonne: Tipologia, Importo R$, Importo €)
     const capTxs = txs.filter(t => t.category && (t.category.toLowerCase().includes('capital contribution') || t.category.toLowerCase().includes('capitale versato')));
     
     // Group capital contributions by Partner
@@ -500,61 +514,52 @@ function renderCapitaleImmobilizzazioni(txs) {
         tr.onclick = () => toggleRowDetail(rowId);
         tr.innerHTML = `
             <td style="padding: 0.85rem 1rem; color: var(--text-main, #1e293b); font-weight: 600;"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em; margin-right: 5px;"></i> ${partnerName}${badgeHtml}</td>
-            <td style="padding: 0.85rem 1rem; text-align: center; color: #10b981; font-weight: 600;">
-                <span>${formatRate(currentExchangeRate)}</span>
-                <span style="font-size: 0.7rem; color: var(--text-muted, #94a3b8); display: block;" data-i18n="badge_cambio_attuale">(attuale)</span>
-            </td>
             <td style="padding: 0.85rem 1rem; text-align: right; color: #3b82f6; font-weight: 600;">${formatBrl(group.total * currentExchangeRate)}</td>
             <td style="padding: 0.85rem 1rem; text-align: right; color: #3b82f6; font-weight: 600;">${formatEur(group.total)}</td>
         `;
-        tbody.appendChild(tr);
+        tbodyCap.appendChild(tr);
 
-        // Detail row
+        // Detail row (3 columns)
         const detailTr = document.createElement('tr');
         detailTr.id = rowId;
         detailTr.style.display = 'none';
         detailTr.style.background = 'rgba(0,0,0,0.1)';
-        let detailHtml = '<td colspan="4" style="padding: 0;"><table style="width:100%; border-collapse:collapse; margin-bottom:1rem;">';
-        detailHtml += '<tr><th style="padding:0.5rem 1rem 0.5rem 2rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Data</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Partner</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Descrizione</th><th style="padding:0.5rem 1rem; text-align:center; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Cambio</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo (R$)</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo (€)</th></tr>';
+        let detailHtml = '<td colspan="3" style="padding: 0;"><table style="width:100%; border-collapse:collapse; margin-bottom:1rem;">';
+        detailHtml += '<tr><th style="padding:0.5rem 1rem 0.5rem 2rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Data</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Partner</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Descrizione</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo (R$)</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo (€)</th></tr>';
         group.items.forEach(item => {
             detailHtml += `<tr>
                 <td style="padding:0.5rem 1rem 0.5rem 2rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.date || '-'}</td>
                 <td style="padding:0.5rem 1rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.partner || '-'}</td>
                 <td style="padding:0.5rem 1rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.description || '-'}</td>
-                <td style="padding:0.5rem 1rem; text-align:center; font-size:0.85rem; color:#10b981; border-bottom:1px solid rgba(128,128,128,0.1);">${formatRate(currentExchangeRate)}</td>
                 <td style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:#3b82f6; border-bottom:1px solid rgba(128,128,128,0.1); font-weight:600;">${formatBrl(item.amount * currentExchangeRate)}</td>
                 <td style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:#3b82f6; border-bottom:1px solid rgba(128,128,128,0.1); font-weight:600;">${formatEur(item.amount)}</td>
             </tr>`;
         });
         detailHtml += '</table></td>';
         detailTr.innerHTML = detailHtml;
-        tbody.appendChild(detailTr);
+        tbodyCap.appendChild(detailTr);
     });
 
     const trTotCap = document.createElement('tr');
+    trTotCap.style.background = 'rgba(59, 130, 246, 0.08)';
     trTotCap.innerHTML = `
         <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold;" data-i18n="totale_capitaux">Totale Patrimonio Netto:</td>
-        <td style="padding: 0.85rem 1rem; text-align: center; font-weight: bold; color: #10b981;">
-            <span>${formatRate(currentExchangeRate)}</span>
-            <span style="font-size: 0.7rem; color: var(--text-muted, #94a3b8); display: block;" data-i18n="badge_cambio_attuale">(attuale)</span>
-        </td>
         <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #3b82f6; font-size: 1.05rem;">${formatBrl(totalCap * currentExchangeRate)}</td>
         <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #3b82f6; font-size: 1.05rem;">${formatEur(totalCap)}</td>
     `;
-    tbody.appendChild(trTotCap);
+    tbodyCap.appendChild(trTotCap);
 
-    // 2. IMMOBILIZZAZIONI (Investimenti / Trasferimenti)
-    const trI = document.createElement('tr');
-    trI.style.background = 'rgba(245, 158, 11, 0.2)';
-    trI.innerHTML = `<td colspan="4" style="padding: 0.85rem 1rem; font-weight: bold;" data-i18n="section_immobili">IMMOBILIZZAZIONI</td>`;
-    tbody.appendChild(trI);
+    // 2. IMMOBILIZZAZIONI (Fixed Assets - 4 Colonne: Tipologia, Importo R$, Cambio EUR/R$, Importo €)
+    const targetImmTbody = tbodyImm || tbodyCap;
 
     // Filter transfers by year if a specific year is selected
     const yearSelect = document.getElementById('filter-year');
-    const selectedYear = yearSelect ? yearSelect.value : 'all';
+    const selectedYear = yearSelect ? yearSelect.value : '2025-2026';
     
     let activeTransfers = TRANSFERS_DATA;
-    if (selectedYear !== 'all') {
+    if (selectedYear === '2025-2026') {
+        activeTransfers = TRANSFERS_DATA.filter(tr => tr.year === 2025 || tr.year === 2026);
+    } else if (selectedYear !== 'all') {
         const yNum = parseInt(selectedYear, 10);
         activeTransfers = TRANSFERS_DATA.filter(tr => tr.year === yNum);
     }
@@ -562,7 +567,7 @@ function renderCapitaleImmobilizzazioni(txs) {
     if (activeTransfers.length === 0) {
         const emptyTr = document.createElement('tr');
         emptyTr.innerHTML = `<td colspan="4" style="padding: 1rem; color: var(--text-muted, #64748b); font-style: italic;">Nessun investimento nel periodo selezionato</td>`;
-        tbody.appendChild(emptyTr);
+        targetImmTbody.appendChild(emptyTr);
     } else {
         let totalImmEur = 0;
         let totalImmBrl = 0;
@@ -575,6 +580,7 @@ function renderCapitaleImmobilizzazioni(txs) {
             
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid rgba(128,128,128,0.15)';
+            // 4 Colonne: Tipologia | Importo (R$) | Cambio EUR/R$ | Importo (€)
             tr.innerHTML = `
                 <td style="padding: 0.85rem 1rem;">
                     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem;">
@@ -586,30 +592,46 @@ function renderCapitaleImmobilizzazioni(txs) {
                         Transfer su: <span style="font-weight: 600;">${trItem.recipient}</span> - ${trItem.bank}
                     </div>
                 </td>
+                <td style="padding: 0.85rem 1rem; text-align: right; color: #d97706; font-weight: 700; font-size: 1rem;">${formatBrl(trItem.brlAmount)}</td>
                 <td style="padding: 0.85rem 1rem; text-align: center; color: #f59e0b; font-weight: 700;">
                     <span>${formatRate(trItem.exchangeRate)}</span>
                     <span style="font-size: 0.7rem; color: var(--text-muted, #94a3b8); display: block;" data-i18n="badge_cambio_storico">(effettivo)</span>
                 </td>
-                <td style="padding: 0.85rem 1rem; text-align: right; color: #d97706; font-weight: 700; font-size: 1rem;">${formatBrl(trItem.brlAmount)}</td>
                 <td style="padding: 0.85rem 1rem; text-align: right; color: #d97706; font-weight: 700; font-size: 1rem;">${formatEur(trItem.eurAmount)}</td>
             `;
-            tbody.appendChild(tr);
+            targetImmTbody.appendChild(tr);
         });
 
-        // Totals row for Immobilizzazioni: average transfer exchange rate
+        // Totals row for Immobilizzazioni: average transfer exchange rate + performance
         const avgImmRate = totalImmEur > 0 ? (totalImmBrl / totalImmEur) : 0;
+        let perfBadgeHtml = '';
+        if (currentExchangeRate > 0 && avgImmRate > 0) {
+            const perfPct = ((avgImmRate / currentExchangeRate) - 1) * 100;
+            const sign = perfPct >= 0 ? '+' : '';
+            const color = perfPct >= 0 ? '#10b981' : '#ef4444';
+            const bg = perfPct >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+            const border = perfPct >= 0 ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+            perfBadgeHtml = `<span style="font-size: 0.75rem; font-weight: 800; padding: 0.12rem 0.45rem; border-radius: 4px; background: ${bg}; color: ${color}; border: 1px solid ${border}; margin-left: 0.4rem;" title="Performance rispetto al cambio attuale">${sign}${perfPct.toFixed(2).replace('.', ',')}%</span>`;
+        }
+
         const trTotImm = document.createElement('tr');
         trTotImm.style.background = 'rgba(245, 158, 11, 0.08)';
+        // 4 Colonne: Tipologia | Importo (R$) | Cambio EUR/R$ + performance | Importo (€)
         trTotImm.innerHTML = `
             <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold;" data-i18n="totale_immobili">Totale Immobilizzazioni:</td>
-            <td style="padding: 0.85rem 1rem; text-align: center; font-weight: 800; color: #3b82f6;">
-                <span style="font-size: 1rem;">${formatRate(avgImmRate)}</span>
-                <span style="font-size: 0.72rem; color: var(--text-muted, #94a3b8); display: block;" data-i18n="badge_cambio_medio">(cambio medio)</span>
-            </td>
             <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #d97706; font-size: 1.05rem;">${formatBrl(totalImmBrl)}</td>
+            <td style="padding: 0.85rem 1rem; text-align: center; font-weight: 800; color: #3b82f6;">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.15rem;">
+                    <div style="display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 1rem;">${formatRate(avgImmRate)}</span>
+                        ${perfBadgeHtml}
+                    </div>
+                    <span style="font-size: 0.72rem; color: var(--text-muted, #94a3b8); font-weight: 500;" data-i18n="badge_cambio_medio">(cambio medio)</span>
+                </div>
+            </td>
             <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #d97706; font-size: 1.05rem;">${formatEur(totalImmEur)}</td>
         `;
-        tbody.appendChild(trTotImm);
+        targetImmTbody.appendChild(trTotImm);
     }
 }
 

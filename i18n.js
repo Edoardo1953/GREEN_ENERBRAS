@@ -323,6 +323,7 @@ const translations = {
         'label_fiscal_residence': 'Residenza Fiscale',
 
         'title_risultati': 'Risultati',
+        'subtitle_risultati': 'Bilancio, Capitale e Ripartizione Utili SCSp',
         'tab_ricavi_costi': 'Costi e Ricavi',
         'tab_capitale': 'Capitale e Immobilizzazioni',
         'tab_lp_risultati': 'Risultato Limited Partners (LP)',
@@ -396,6 +397,8 @@ const translations = {
         'badge_cambio_attuale': '(attuale)',
         'badge_cambio_medio': '(cambio medio)',
         'badge_cambio_storico': '(effettivo)',
+        'note_capitale_cambio_attuale': 'Valutato al cambio EUR/R$ attuale',
+        'note_immobili_cambio_trasferimenti': 'Cambi effettivi da tabella trasferimenti',
 
         'nav_my_report': 'Il Mio Report',
         
@@ -1042,6 +1045,7 @@ const translations = {
         'label_fiscal_residence': 'Tax Residence',
 
         'title_risultati': 'Results',
+        'subtitle_risultati': 'Financial Statements, Capital & SCSp Profit Allocation',
         'tab_ricavi_costi': 'Costs & Revenues',
         'tab_capitale': 'Capital & Fixed Assets',
         'tab_lp_risultati': 'Limited Partners Result (LP)',
@@ -1115,6 +1119,8 @@ const translations = {
         'badge_cambio_attuale': '(current)',
         'badge_cambio_medio': '(average rate)',
         'badge_cambio_storico': '(effective)',
+        'note_capitale_cambio_attuale': 'Valued at current EUR/BRL rate',
+        'note_immobili_cambio_trasferimenti': 'Effective rates from transfers table',
 
         'nav_my_report': 'My Report',
         
@@ -1761,6 +1767,7 @@ const translations = {
         'label_fiscal_residence': 'Résidence Fiscale',
 
         'title_risultati': 'Résultats',
+        'subtitle_risultati': 'États Financiers, Capital & Répartition des Bénéfices SCSp',
         'tab_ricavi_costi': 'Coûts et Revenus',
         'tab_capitale': 'Capital et Immobilisations',
         'tab_lp_risultati': 'Résultat Limited Partners (LP)',
@@ -1834,6 +1841,8 @@ const translations = {
         'badge_cambio_attuale': '(actuel)',
         'badge_cambio_medio': '(taux moyen)',
         'badge_cambio_storico': '(effectif)',
+        'note_capitale_cambio_attuale': 'Évalué au taux EUR/BRL actuel',
+        'note_immobili_cambio_trasferimenti': 'Taux effectifs du tableau des transferts',
 
         'nav_my_report': 'Mon Rapport',
         

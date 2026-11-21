@@ -136,7 +136,10 @@
                 <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
                     <div style="text-align: right; border-left: 1px solid rgba(255,255,255,0.12); padding-left: 1.25rem;">
                         <div style="font-size: 0.76rem; color: var(--text-muted, #94a3b8); font-weight: 600; text-transform: uppercase;" data-i18n="label_cambio_medio_trasferimenti">Cambio medio trasferimenti:</div>
-                        <div id="rate-eur-brl-avg" style="font-size: 1.15rem; font-weight: 800; color: #3b82f6; margin-top: 0.15rem;">1 € = 6,0164 R$</div>
+                        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; margin-top: 0.15rem;">
+                            <span id="rate-eur-brl-avg" style="font-size: 1.15rem; font-weight: 800; color: #3b82f6;">1 € = 6,0164 R$</span>
+                            <span id="rate-eur-brl-perf" style="font-size: 0.78rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 6px; background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4);" title="Performance rispetto al cambio attuale">+2,28%</span>
+                        </div>
                         <div style="font-size: 0.74rem; color: var(--text-muted, #94a3b8);">(Investimenti Brasile)</div>
                     </div>
                     <button type="button" class="btn-refresh-exchange" onclick="refreshLiveExchangeRate()" title="Aggiorna tasso di cambio" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); color: #fff; padding: 0.55rem 0.95rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;">
@@ -151,11 +154,25 @@
                 <div class="glass-panel" style="grid-column: 1 / -1; min-height: 500px; position: relative;">
                     
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-                        <h2 style="margin: 0;" data-i18n="title_risultati">Risultati</h2>
+                        <div style="display: flex; align-items: center; gap: 0.85rem;">
+                            <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%); border: 1px solid rgba(16, 185, 129, 0.35); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: #10b981; flex-shrink: 0;">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </div>
+                            <div>
+                                <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text-main, #ffffff);" data-i18n="title_risultati">Risultati</h2>
+                                <div style="font-size: 0.8rem; color: var(--text-muted, #94a3b8); margin-top: 0.15rem;" data-i18n="subtitle_risultati">Bilancio, Capitale e Ripartizione Utili SCSp</div>
+                            </div>
+                        </div>
                         
-                        <div style="display: flex; gap: 1rem; align-items: center;">
-                            <label style="color: white; font-weight: bold;" data-i18n="filter_anno">Anno</label>
-                            <select id="filter-year" class="filter-input" style="padding: 0.5rem; border-radius: 8px;">
+                        <div class="results-year-filter" style="display: flex; align-items: center; gap: 0.65rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); padding: 0.45rem 0.85rem; border-radius: 10px; backdrop-filter: blur(8px);">
+                            <i class="fa-regular fa-calendar-days" style="color: #3b82f6; font-size: 1rem;"></i>
+                            <label for="filter-year" style="color: var(--text-muted, #94a3b8); font-weight: 700; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; margin: 0;" data-i18n="filter_anno">Anno</label>
+                            <select id="filter-year" class="filter-input" style="background: rgba(15, 23, 42, 0.85); color: #fff; border: 1px solid rgba(59, 130, 246, 0.4); padding: 0.4rem 0.85rem; border-radius: 7px; font-weight: 700; font-size: 0.9rem; cursor: pointer; outline: none; transition: all 0.2s ease;">
+                                <option value="2025-2026" selected data-i18n="opt_periodo_2025_2026">2025 / 2026 (Accorpato - In corso)</option>
+                                <option value="2027" data-i18n="opt_periodo_2027">2027</option>
+                                <option value="2028" data-i18n="opt_periodo_2028">2028</option>
+                                <option value="2029" data-i18n="opt_periodo_2029">2029</option>
+                                <option value="2030" data-i18n="opt_periodo_2030">2030</option>
                                 <option value="all" data-i18n="filter_tutti_anni">Tutti gli anni</option>
                             </select>
                         </div>
@@ -188,17 +205,42 @@
 
                     <!-- Tab Content 2: Capitale / Immobilizzazioni -->
                     <div id="tab-capitale" class="tab-content" style="display: none;">
-                        <div class="table-container" style="overflow-x: auto;">
+                        <!-- Sezione 1: Capitale Versato (Capital & Liabilities) - valutato al cambio attuale -->
+                        <div class="table-container" style="overflow-x: auto; margin-bottom: 2rem; background: rgba(0,0,0,0.12); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+                            <div style="background: rgba(59, 130, 246, 0.15); border-left: 4px solid #3b82f6; padding: 0.75rem 1rem; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                <span style="font-weight: 700; color: #60a5fa; font-size: 0.95rem; text-transform: uppercase;" data-i18n="section_capitaux">PATRIMONIO NETTO E PASSIVO</span>
+                                <span style="font-size: 0.8rem; color: var(--text-muted, #94a3b8); font-style: italic;" data-i18n="note_capitale_cambio_attuale">Valutato al cambio EUR/R$ attuale</span>
+                            </div>
                             <table style="width: 100%; color: white; border-collapse: collapse;">
                                 <thead style="background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1);">
                                     <tr>
                                         <th style="padding: 0.85rem 1rem; text-align: left;"><span data-i18n="table_tipologia">Tipologia</span></th>
-                                        <th style="padding: 0.85rem 1rem; text-align: center; width: 150px;"><span data-i18n="table_cambio_eur_brl">Cambio EUR/R$</span></th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 180px;"><span data-i18n="table_importo_brl">Importo (R$)</span></th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 180px;"><span data-i18n="table_importo_eur">Importo (€)</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 220px;"><span data-i18n="table_importo_brl">Importo (R$)</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 200px;"><span data-i18n="table_importo_eur">Importo (€)</span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="table-body-capitale">
+                                    <!-- Injected via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Sezione 2: Immobilizzazioni (Fixed Assets) - con colonna cambio fra R$ ed EUR -->
+                        <div class="table-container" style="overflow-x: auto; background: rgba(0,0,0,0.12); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+                            <div style="background: rgba(245, 158, 11, 0.15); border-left: 4px solid #f59e0b; padding: 0.75rem 1rem; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                <span style="font-weight: 700; color: #f59e0b; font-size: 0.95rem; text-transform: uppercase;" data-i18n="section_immobili">IMMOBILIZZAZIONI</span>
+                                <span style="font-size: 0.8rem; color: var(--text-muted, #94a3b8); font-style: italic;" data-i18n="note_immobili_cambio_trasferimenti">Cambi effettivi da tabella trasferimenti</span>
+                            </div>
+                            <table style="width: 100%; color: white; border-collapse: collapse;">
+                                <thead style="background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    <tr>
+                                        <th style="padding: 0.85rem 1rem; text-align: left;"><span data-i18n="table_tipologia">Tipologia</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 200px;"><span data-i18n="table_importo_brl">Importo (R$)</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: center; width: 170px;"><span data-i18n="table_cambio_eur_brl">Cambio EUR/R$</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 200px;"><span data-i18n="table_importo_eur">Importo (€)</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body-immobilizzazioni">
                                     <!-- Injected via JS -->
                                 </tbody>
                             </table>
@@ -268,15 +310,15 @@
                             <table id="table-lp-risultati-el" style="width: 100%; color: white; border-collapse: collapse;">
                                 <thead style="background: rgba(255,255,255,0.05); border-bottom: 2px solid rgba(255,255,255,0.12);">
                                     <tr>
-                                        <th style="padding: 0.65rem 0.35rem; text-align: center; width: 35px; white-space: nowrap !important;">#</th>
-                                        <th style="padding: 0.65rem 0.65rem; text-align: left; min-width: 175px; white-space: nowrap !important;" data-i18n="col_lp_name">Limited Partner (Socio Accomandante)</th>
-                                        <th style="padding: 0.65rem 0.5rem; text-align: center; width: 125px; white-space: nowrap !important;" data-i18n="col_lp_date">Data Apporto</th>
-                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 110px; white-space: nowrap !important;" data-i18n="col_lp_capital">Capitale Versato (€)</th>
-                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 85px; white-space: nowrap !important;" data-i18n="col_lp_detention">Quota SCSp (%)</th>
-                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 115px; white-space: nowrap !important;" data-i18n="col_lp_repayments">Rimborsi Capitale (€)</th>
-                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 95px; white-space: nowrap !important;" data-i18n="col_lp_dividends">Dividendi (€)</th>
-                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 115px; white-space: nowrap !important;" data-i18n="col_lp_net_result">Risultato Netto (€)</th>
-                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 85px; white-space: nowrap !important;" data-i18n="col_lp_yield">Risultato %</th>
+                                        <th style="padding: 0.65rem 0.35rem; text-align: center; width: 35px; vertical-align: middle;">#</th>
+                                        <th style="padding: 0.65rem 0.65rem; text-align: left; min-width: 155px; vertical-align: middle; white-space: normal;" data-i18n="col_lp_name">Limited Partner (Socio Accomandante)</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: center; width: 110px; vertical-align: middle; white-space: normal;" data-i18n="col_lp_date">Data Apporto</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 105px; vertical-align: middle; white-space: normal;" data-i18n="col_lp_capital">Capitale Versato (€)</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 75px; vertical-align: middle; white-space: normal;" data-i18n="col_lp_detention">Quota SCSp (%)</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 105px; vertical-align: middle; white-space: normal;" data-i18n="col_lp_repayments">Rimborsi Capitale (€)</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 90px; vertical-align: middle; white-space: normal;" data-i18n="col_lp_dividends">Dividendi (€)</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 105px; vertical-align: middle; white-space: normal;" data-i18n="col_lp_net_result">Risultato Netto (€)</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 80px; vertical-align: middle; white-space: normal;" data-i18n="col_lp_yield">Risultato %</th>
                                     </tr>
                                 </thead>
                                 <tbody id="table-body-lp-risultati">
@@ -309,7 +351,7 @@
     </div>
 
     <script src="../data.js"></script>
-    <script src="risultati_app.js?v=303"></script>
+    <script src="risultati_app.js?v=305"></script>
 </body>
 </html>
 

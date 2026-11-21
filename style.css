@@ -937,9 +937,25 @@ body.theme-light span.text-amber {
 }
 
 /* Specific styling for Limited Partners Results table */
-#table-lp-risultati-el th,
+#table-lp-risultati-el th {
+    white-space: normal !important;
+    vertical-align: middle;
+    line-height: 1.25;
+}
+
 #table-lp-risultati-el td {
-    white-space: nowrap !important;
+    white-space: nowrap;
+}
+
+body.theme-light .results-year-filter {
+    background: #ffffff !important;
+    border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+body.theme-light #filter-year {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: rgba(59, 130, 246, 0.6) !important;
 }
 
 body.theme-light #table-lp-risultati-el thead th {
@@ -970,6 +986,7 @@ body.theme-light #select-periodo-lp {
 }
 
 body.theme-light #table-body-capitale tr td strong,
+body.theme-light #table-body-immobilizzazioni tr td strong,
 body.theme-light #table-body-conto tr td strong {
     color: #0f172a !important;
 }

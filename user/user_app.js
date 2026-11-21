@@ -136,17 +136,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateExchangeDisplay(avgRate, currRate) {
         if (elExchangeAvg) {
-            elExchangeAvg.textContent = `R$ ${avgRate.toFixed(2).replace('.', ',')}`;
-            elExchangeAvg.title = `Cambio esatto: ${avgRate.toFixed(4)}`;
+            elExchangeAvg.textContent = `R$ ${avgRate.toFixed(4).replace('.', ',')}`;
+            elExchangeAvg.title = `Cambio medio: ${avgRate.toFixed(4).replace('.', ',')}`;
         }
         if (elExchangeCurrent) {
-            elExchangeCurrent.textContent = currRate.toFixed(2).replace('.', ',');
-            elExchangeCurrent.title = `Cambio esatto: ${currRate.toFixed(4)}`;
+            elExchangeCurrent.textContent = currRate.toFixed(4).replace('.', ',');
+            elExchangeCurrent.title = `Cambio attuale: ${currRate.toFixed(4).replace('.', ',')}`;
         }
         if (elExchangePerf && avgRate > 0 && currRate > 0) {
             const perfPct = ((avgRate / currRate) - 1) * 100;
             const sign = perfPct >= 0 ? '+' : '';
-            elExchangePerf.textContent = `${sign}${perfPct.toFixed(2)}%`;
+            elExchangePerf.textContent = `${sign}${perfPct.toFixed(2).replace('.', ',')}%`;
             if (perfPct >= 0) {
                 elExchangePerf.style.color = '#10b981';
             } else {
