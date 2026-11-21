@@ -3386,4 +3386,38 @@ body.theme-light .modal-download-btn:hover {
     color: #0369a1;
 }
 
+/* Exchange Rate Banner on Risultati */
+.exchange-rate-banner {
+    position: relative;
+    overflow: hidden;
+}
+body.theme-light .exchange-rate-banner {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+}
+body.theme-light #rate-eur-brl-val {
+    color: #059669 !important;
+}
+body.theme-light #rate-eur-brl-avg {
+    color: #2563eb !important;
+}
+body.theme-light .btn-refresh-exchange {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #1e293b !important;
+}
+body.theme-light .btn-refresh-exchange:hover {
+    background: #e2e8f0 !important;
+}
+@keyframes pulseDot {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.25); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+}
+#badge-exchange-live span:first-child {
+    animation: pulseDot 2s infinite ease-in-out;
+}
+
+
 

@@ -33,6 +33,158 @@ window.switchTab = function(tabId) {
     }
 };
 
+// --- DATI TRASFERIMENTI (Estratti da uploads/TRANSFERTS.xlsx) ---
+const TRANSFERS_DATA = [
+    {
+        id: 1,
+        code: 'OP. NR 01',
+        date: '14/11/2025',
+        bankDate: '12/11/2025',
+        year: 2025,
+        description: 'Achat de participation',
+        dest: 'TRI STAR ENERBRAS ONE SCP',
+        recipient: 'TRI STAR ENERGY LTDA (GP)',
+        bank: 'Banco XP S.A. (Conta: 18638574)',
+        eurAmount: 50000.0,
+        exchangeRate: 6.107994,
+        brlAmount: 305240.0,
+        brlGross: 305247.0
+    },
+    {
+        id: 2,
+        code: 'OP. NR 02',
+        date: '02/12/2025',
+        bankDate: '02/12/2025',
+        year: 2025,
+        description: 'Achat de participation',
+        dest: 'TRI STAR ENERBRAS ONE SCP',
+        recipient: 'TRI STAR ENERGY LTDA (GP)',
+        bank: 'Banco XP S.A. (Conta: 18638574)',
+        eurAmount: 50000.0,
+        exchangeRate: 6.128124,
+        brlAmount: 306246.0,
+        brlGross: 306253.0
+    },
+    {
+        id: 3,
+        code: 'OP. NR 03',
+        date: '16/12/2025',
+        bankDate: '15/12/2025',
+        year: 2025,
+        description: 'Achat de participation',
+        dest: 'TRI STAR ENERBRAS ONE SCP',
+        recipient: 'TRI STAR ENERGY LTDA (GP)',
+        bank: 'Banco XP S.A. (Conta: 18638574)',
+        eurAmount: 50000.0,
+        exchangeRate: 6.36,
+        brlAmount: 317841.0,
+        brlGross: 317848.0
+    },
+    {
+        id: 4,
+        code: 'OP. NR 04',
+        date: '08/05/2026',
+        bankDate: '07/05/2026',
+        year: 2026,
+        description: 'Achat de participation',
+        dest: 'TRI STAR ENERBRAS ONE SCP',
+        recipient: 'TRI STAR ENERGY LTDA (GP)',
+        bank: 'Banco XP S.A. (Conta: 18638574)',
+        eurAmount: 40000.0,
+        exchangeRate: 5.685181,
+        brlAmount: 227258.0,
+        brlGross: 227265.13
+    },
+    {
+        id: 5,
+        code: 'OP. NR 05',
+        date: '28/07/2026',
+        bankDate: '27/07/2026',
+        year: 2026,
+        description: 'Achat de participation',
+        dest: 'TRI STAR ENERBRAS ONE SCP',
+        recipient: 'TRI STAR ENERGY LTDA (GP)',
+        bank: 'Banco XP S.A. (Conta: 18638574)',
+        eurAmount: 50000.0,
+        exchangeRate: 5.75,
+        brlAmount: 287356.0,
+        brlGross: 287356.0
+    }
+];
+
+let currentExchangeRate = (typeof APP_DATA !== 'undefined' && APP_DATA.currentExchangeRate) ? APP_DATA.currentExchangeRate : 5.8823;
+const avgExchangeRate = (typeof APP_DATA !== 'undefined' && APP_DATA.avgExchangeRate) ? APP_DATA.avgExchangeRate : 6.0164;
+
+async function fetchLiveEurBrlRate() {
+    // 1. AwesomeAPI (Real-time live quotation)
+    try {
+        const res = await fetch('https://economia.awesomeapi.com.br/last/EUR-BRL');
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.EURBRL) {
+                const bid = parseFloat(data.EURBRL.bid);
+                const ask = parseFloat(data.EURBRL.ask);
+                const rate = (bid && ask) ? ((bid + ask) / 2) : (bid || ask);
+                if (rate && !isNaN(rate) && rate > 0) return rate;
+            }
+        }
+    } catch (e) {
+        console.warn("AwesomeAPI fallback:", e);
+    }
+
+    // 2. Frankfurter (European Central Bank reference rates)
+    try {
+        const res = await fetch('https://api.frankfurter.app/latest?from=EUR&to=BRL');
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.rates && data.rates.BRL) return parseFloat(data.rates.BRL);
+        }
+    } catch (e) {
+        console.warn("Frankfurter fallback:", e);
+    }
+
+    // 3. Open Exchange Rates
+    try {
+        const res = await fetch('https://open.er-api.com/v6/latest/EUR');
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.rates && data.rates.BRL) return parseFloat(data.rates.BRL);
+        }
+    } catch (e) {
+        console.warn("Open.er-api fallback:", e);
+    }
+
+    return currentExchangeRate;
+}
+
+window.refreshLiveExchangeRate = function() {
+    const icon = document.getElementById('exchange-refresh-icon');
+    if (icon) icon.classList.add('fa-spin');
+    
+    fetchLiveEurBrlRate().then(rate => {
+        if (rate && !isNaN(rate)) {
+            currentExchangeRate = rate;
+            updateExchangeRateBox(currentExchangeRate);
+            renderTables();
+        }
+    }).finally(() => {
+        if (icon) {
+            setTimeout(() => icon.classList.remove('fa-spin'), 600);
+        }
+    });
+};
+
+function updateExchangeRateBox(rate) {
+    const valEl = document.getElementById('rate-eur-brl-val');
+    if (valEl) {
+        valEl.textContent = `1 € = ${rate.toLocaleString('it-IT', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} R$`;
+    }
+    const avgEl = document.getElementById('rate-eur-brl-avg');
+    if (avgEl) {
+        avgEl.textContent = `1 € = ${avgExchangeRate.toLocaleString('it-IT', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} R$`;
+    }
+}
+
 function formatEur(num) {
     let val = parseFloat(num) || 0;
     let isNeg = val < 0;
@@ -42,7 +194,41 @@ function formatEur(num) {
     return (isNeg ? '-\u00A0' : '') + parts.join(',') + "\u00A0\u20AC";
 }
 
+function formatBrl(num) {
+    let val = parseFloat(num) || 0;
+    let isNeg = val < 0;
+    val = Math.abs(val);
+    let parts = val.toFixed(2).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return (isNeg ? '-\u00A0' : '') + 'R$\u00A0' + parts.join(',');
+}
+
+function formatRate(num) {
+    let val = parseFloat(num) || 0;
+    return val.toLocaleString('it-IT', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+}
+
 function initRisultati() {
+    updateExchangeRateBox(currentExchangeRate);
+
+    fetchLiveEurBrlRate().then(rate => {
+        if (rate && !isNaN(rate)) {
+            currentExchangeRate = rate;
+            updateExchangeRateBox(currentExchangeRate);
+            renderTables();
+        }
+    });
+
+    setInterval(() => {
+        fetchLiveEurBrlRate().then(rate => {
+            if (rate && !isNaN(rate) && Math.abs(rate - currentExchangeRate) > 0.0001) {
+                currentExchangeRate = rate;
+                updateExchangeRateBox(currentExchangeRate);
+                renderTables();
+            }
+        });
+    }, 60000);
+
     if (!APP_DATA || !APP_DATA.transactions) return;
 
     // Extract available years from transactions
@@ -124,7 +310,7 @@ function renderRicaviCosti(txs) {
     
     const trR = document.createElement('tr');
     trR.style.background = 'rgba(16, 185, 129, 0.2)';
-    trR.innerHTML = `<td colspan="2" style="padding: 1rem; font-weight: bold;" data-i18n="section_ricavi">RICAVI</td>`;
+    trR.innerHTML = `<td colspan="3" style="padding: 0.85rem 1rem; font-weight: bold;" data-i18n="section_ricavi">RICAVI</td>`;
     tbody.appendChild(trR);
 
     // Filter any revenue transactions if ever present
@@ -148,8 +334,9 @@ function renderRicaviCosti(txs) {
             tr.style.cursor = 'pointer';
             tr.onclick = () => toggleRowDetail(rowId);
             tr.innerHTML = `
-                <td style="padding: 1rem;"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em; margin-right: 5px;"></i> ${cat}</td>
-                <td style="padding: 1rem; text-align: right; color: #10b981; font-weight: 600;">${formatEur(group.total)}</td>
+                <td style="padding: 0.85rem 1rem;"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em; margin-right: 5px;"></i> ${cat}</td>
+                <td style="padding: 0.85rem 1rem; text-align: right; color: #10b981; font-weight: 600;">${formatBrl(group.total * currentExchangeRate)}</td>
+                <td style="padding: 0.85rem 1rem; text-align: right; color: #10b981; font-weight: 600;">${formatEur(group.total)}</td>
             `;
             tbody.appendChild(tr);
 
@@ -157,13 +344,14 @@ function renderRicaviCosti(txs) {
             detailTr.id = rowId;
             detailTr.style.display = 'none';
             detailTr.style.background = 'rgba(0,0,0,0.1)';
-            let detailHtml = '<td colspan="2" style="padding: 0;"><table style="width:100%; border-collapse:collapse; margin-bottom:1rem;">';
-            detailHtml += '<tr><th style="padding:0.5rem 1rem 0.5rem 2rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Data</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Partner</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Descrizione</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo</th></tr>';
+            let detailHtml = '<td colspan="3" style="padding: 0;"><table style="width:100%; border-collapse:collapse; margin-bottom:1rem;">';
+            detailHtml += '<tr><th style="padding:0.5rem 1rem 0.5rem 2rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Data</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Partner</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Descrizione</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo (R$)</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo (€)</th></tr>';
             group.items.forEach(item => {
                 detailHtml += `<tr>
                     <td style="padding:0.5rem 1rem 0.5rem 2rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.date || '-'}</td>
                     <td style="padding:0.5rem 1rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.partner || '-'}</td>
                     <td style="padding:0.5rem 1rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.description || '-'}</td>
+                    <td style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:#10b981; border-bottom:1px solid rgba(128,128,128,0.1); font-weight:600;">${formatBrl(item.amount * currentExchangeRate)}</td>
                     <td style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:#10b981; border-bottom:1px solid rgba(128,128,128,0.1); font-weight:600;">${formatEur(item.amount)}</td>
                 </tr>`;
             });
@@ -175,15 +363,16 @@ function renderRicaviCosti(txs) {
 
     const trTotR = document.createElement('tr');
     trTotR.innerHTML = `
-        <td style="padding: 1rem; text-align: right; font-weight: bold;" data-i18n="totale_ricavi">Totale Ricavi:</td>
-        <td style="padding: 1rem; text-align: right; font-weight: bold; color: #10b981;">${formatEur(totalRevenues)}</td>
+        <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold;" data-i18n="totale_ricavi">Totale Ricavi:</td>
+        <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #10b981;">${formatBrl(totalRevenues * currentExchangeRate)}</td>
+        <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #10b981;">${formatEur(totalRevenues)}</td>
     `;
     tbody.appendChild(trTotR);
 
     // 2. COSTI (Spese suddivise per le categorie del conto bancario)
     const trC = document.createElement('tr');
     trC.style.background = 'rgba(239, 68, 68, 0.2)';
-    trC.innerHTML = `<td colspan="2" style="padding: 1rem; font-weight: bold;" data-i18n="section_costi">COSTI</td>`;
+    trC.innerHTML = `<td colspan="3" style="padding: 0.85rem 1rem; font-weight: bold;" data-i18n="section_costi">COSTI</td>`;
     tbody.appendChild(trC);
 
     let totalCosts = 0;
@@ -194,7 +383,7 @@ function renderRicaviCosti(txs) {
         const catLower = t.category.toLowerCase();
         if (catLower === 'saldo iniziale') return false;
         if (catLower.includes('capital contribution') || catLower === 'capitale versato') return false;
-        if (catLower.includes('immobilisat')) return false;
+        if (catLower.includes('immobilisat') || (t.description || '').toLowerCase().includes('participation')) return false;
         return true;
     });
 
@@ -216,8 +405,9 @@ function renderRicaviCosti(txs) {
         tr.style.cursor = 'pointer';
         tr.onclick = () => toggleRowDetail(rowId);
         tr.innerHTML = `
-            <td style="padding: 1rem; color: var(--text-main, #1e293b); font-weight: 600;"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em; margin-right: 5px;"></i> ${cat}</td>
-            <td style="padding: 1rem; text-align: right; color: #ef4444; font-weight: 600;">${formatEur(group.total)}</td>
+            <td style="padding: 0.85rem 1rem; color: var(--text-main, #1e293b); font-weight: 600;"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em; margin-right: 5px;"></i> ${cat}</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; color: #ef4444; font-weight: 600;">${formatBrl(group.total * currentExchangeRate)}</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; color: #ef4444; font-weight: 600;">${formatEur(group.total)}</td>
         `;
         tbody.appendChild(tr);
 
@@ -226,14 +416,15 @@ function renderRicaviCosti(txs) {
         detailTr.id = rowId;
         detailTr.style.display = 'none';
         detailTr.style.background = 'rgba(0,0,0,0.1)';
-        let detailHtml = '<td colspan="2" style="padding: 0;"><table style="width:100%; border-collapse:collapse; margin-bottom:1rem;">';
-        detailHtml += '<tr><th style="padding:0.5rem 1rem 0.5rem 2rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Data</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Partner</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Descrizione</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo</th></tr>';
+        let detailHtml = '<td colspan="3" style="padding: 0;"><table style="width:100%; border-collapse:collapse; margin-bottom:1rem;">';
+        detailHtml += '<tr><th style="padding:0.5rem 1rem 0.5rem 2rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Data</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Partner</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Descrizione</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo (R$)</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo (€)</th></tr>';
         group.items.forEach(item => {
             const amtColor = item.amount >= 0 ? '#10b981' : '#ef4444';
             detailHtml += `<tr>
                 <td style="padding:0.5rem 1rem 0.5rem 2rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.date || '-'}</td>
                 <td style="padding:0.5rem 1rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.partner || '-'}</td>
                 <td style="padding:0.5rem 1rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.description || '-'}</td>
+                <td style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:${amtColor}; border-bottom:1px solid rgba(128,128,128,0.1); font-weight:600;">${formatBrl(item.amount * currentExchangeRate)}</td>
                 <td style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:${amtColor}; border-bottom:1px solid rgba(128,128,128,0.1); font-weight:600;">${formatEur(item.amount)}</td>
             </tr>`;
         });
@@ -244,8 +435,9 @@ function renderRicaviCosti(txs) {
 
     const trTotC = document.createElement('tr');
     trTotC.innerHTML = `
-        <td style="padding: 1rem; text-align: right; font-weight: bold;" data-i18n="totale_costi">Totale Costi:</td>
-        <td style="padding: 1rem; text-align: right; font-weight: bold; color: #ef4444;">${formatEur(totalCosts)}</td>
+        <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold;" data-i18n="totale_costi">Totale Costi:</td>
+        <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #ef4444;">${formatBrl(totalCosts * currentExchangeRate)}</td>
+        <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #ef4444;">${formatEur(totalCosts)}</td>
     `;
     tbody.appendChild(trTotC);
 
@@ -255,8 +447,9 @@ function renderRicaviCosti(txs) {
     const trNet = document.createElement('tr');
     trNet.style.background = 'rgba(255,255,255,0.1)';
     trNet.innerHTML = `
-        <td style="padding: 1rem; text-align: right; font-weight: bold; font-size: 1.1rem;" data-i18n="risultato_netto">Risultato Netto:</td>
-        <td style="padding: 1rem; text-align: right; font-weight: bold; font-size: 1.1rem; color: ${color};">${formatEur(net)}</td>
+        <td style="padding: 1rem; text-align: right; font-weight: bold; font-size: 1.05rem;" data-i18n="risultato_netto">Risultato Netto:</td>
+        <td style="padding: 1rem; text-align: right; font-weight: bold; font-size: 1.05rem; color: ${color};">${formatBrl(net * currentExchangeRate)}</td>
+        <td style="padding: 1rem; text-align: right; font-weight: bold; font-size: 1.05rem; color: ${color};">${formatEur(net)}</td>
     `;
     tbody.appendChild(trNet);
 }
@@ -267,12 +460,11 @@ function renderCapitaleImmobilizzazioni(txs) {
     tbody.innerHTML = '';
 
     let totalCap = 0;
-    let totalImm = 0;
 
     // 1. PATRIMONIO NETTO E PASSIVO (Capitale Versato)
     const trC = document.createElement('tr');
     trC.style.background = 'rgba(59, 130, 246, 0.2)';
-    trC.innerHTML = `<td colspan="2" style="padding: 1rem; font-weight: bold;" data-i18n="section_capitaux">PATRIMONIO NETTO E PASSIVO</td>`;
+    trC.innerHTML = `<td colspan="4" style="padding: 0.85rem 1rem; font-weight: bold;" data-i18n="section_capitaux">PATRIMONIO NETTO E PASSIVO</td>`;
     tbody.appendChild(trC);
 
     const capTxs = txs.filter(t => t.category && (t.category.toLowerCase().includes('capital contribution') || t.category.toLowerCase().includes('capitale versato')));
@@ -307,8 +499,13 @@ function renderCapitaleImmobilizzazioni(txs) {
         tr.style.cursor = 'pointer';
         tr.onclick = () => toggleRowDetail(rowId);
         tr.innerHTML = `
-            <td style="padding: 1rem; color: var(--text-main, #1e293b); font-weight: 600;"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em; margin-right: 5px;"></i> ${partnerName}${badgeHtml}</td>
-            <td style="padding: 1rem; text-align: right; color: #3b82f6; font-weight: 600;">${formatEur(group.total)}</td>
+            <td style="padding: 0.85rem 1rem; color: var(--text-main, #1e293b); font-weight: 600;"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em; margin-right: 5px;"></i> ${partnerName}${badgeHtml}</td>
+            <td style="padding: 0.85rem 1rem; text-align: center; color: #10b981; font-weight: 600;">
+                <span>${formatRate(currentExchangeRate)}</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted, #94a3b8); display: block;" data-i18n="badge_cambio_attuale">(attuale)</span>
+            </td>
+            <td style="padding: 0.85rem 1rem; text-align: right; color: #3b82f6; font-weight: 600;">${formatBrl(group.total * currentExchangeRate)}</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; color: #3b82f6; font-weight: 600;">${formatEur(group.total)}</td>
         `;
         tbody.appendChild(tr);
 
@@ -317,13 +514,15 @@ function renderCapitaleImmobilizzazioni(txs) {
         detailTr.id = rowId;
         detailTr.style.display = 'none';
         detailTr.style.background = 'rgba(0,0,0,0.1)';
-        let detailHtml = '<td colspan="2" style="padding: 0;"><table style="width:100%; border-collapse:collapse; margin-bottom:1rem;">';
-        detailHtml += '<tr><th style="padding:0.5rem 1rem 0.5rem 2rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Data</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Partner</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Descrizione</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo</th></tr>';
+        let detailHtml = '<td colspan="4" style="padding: 0;"><table style="width:100%; border-collapse:collapse; margin-bottom:1rem;">';
+        detailHtml += '<tr><th style="padding:0.5rem 1rem 0.5rem 2rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Data</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Partner</th><th style="padding:0.5rem 1rem; text-align:left; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Descrizione</th><th style="padding:0.5rem 1rem; text-align:center; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Cambio</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo (R$)</th><th style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:var(--text-muted, #64748b); border-bottom:1px solid rgba(128,128,128,0.15);">Importo (€)</th></tr>';
         group.items.forEach(item => {
             detailHtml += `<tr>
                 <td style="padding:0.5rem 1rem 0.5rem 2rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.date || '-'}</td>
                 <td style="padding:0.5rem 1rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.partner || '-'}</td>
                 <td style="padding:0.5rem 1rem; font-size:0.85rem; color:var(--text-main, #1e293b); border-bottom:1px solid rgba(128,128,128,0.1);">${item.description || '-'}</td>
+                <td style="padding:0.5rem 1rem; text-align:center; font-size:0.85rem; color:#10b981; border-bottom:1px solid rgba(128,128,128,0.1);">${formatRate(currentExchangeRate)}</td>
+                <td style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:#3b82f6; border-bottom:1px solid rgba(128,128,128,0.1); font-weight:600;">${formatBrl(item.amount * currentExchangeRate)}</td>
                 <td style="padding:0.5rem 1rem; text-align:right; font-size:0.85rem; color:#3b82f6; border-bottom:1px solid rgba(128,128,128,0.1); font-weight:600;">${formatEur(item.amount)}</td>
             </tr>`;
         });
@@ -334,57 +533,84 @@ function renderCapitaleImmobilizzazioni(txs) {
 
     const trTotCap = document.createElement('tr');
     trTotCap.innerHTML = `
-        <td style="padding: 1rem; text-align: right; font-weight: bold;" data-i18n="totale_capitaux">Totale Patrimonio Netto:</td>
-        <td style="padding: 1rem; text-align: right; font-weight: bold; color: #3b82f6; font-size: 1.05rem;">${formatEur(totalCap)}</td>
+        <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold;" data-i18n="totale_capitaux">Totale Patrimonio Netto:</td>
+        <td style="padding: 0.85rem 1rem; text-align: center; font-weight: bold; color: #10b981;">
+            <span>${formatRate(currentExchangeRate)}</span>
+            <span style="font-size: 0.7rem; color: var(--text-muted, #94a3b8); display: block;" data-i18n="badge_cambio_attuale">(attuale)</span>
+        </td>
+        <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #3b82f6; font-size: 1.05rem;">${formatBrl(totalCap * currentExchangeRate)}</td>
+        <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #3b82f6; font-size: 1.05rem;">${formatEur(totalCap)}</td>
     `;
     tbody.appendChild(trTotCap);
 
-    // 2. IMMOBILIZZAZIONI (Investimenti / Partecipazioni)
+    // 2. IMMOBILIZZAZIONI (Investimenti / Trasferimenti)
     const trI = document.createElement('tr');
     trI.style.background = 'rgba(245, 158, 11, 0.2)';
-    trI.innerHTML = `<td colspan="2" style="padding: 1rem; font-weight: bold;" data-i18n="section_immobili">IMMOBILIZZAZIONI</td>`;
+    trI.innerHTML = `<td colspan="4" style="padding: 0.85rem 1rem; font-weight: bold;" data-i18n="section_immobili">IMMOBILIZZAZIONI</td>`;
     tbody.appendChild(trI);
 
-    const immTxs = txs.filter(t => {
-        const cat = (t.category || '').toLowerCase();
-        const desc = (t.description || '').toLowerCase();
-        return cat.includes('immobilisat') || desc.includes('participation');
-    });
+    // Filter transfers by year if a specific year is selected
+    const yearSelect = document.getElementById('filter-year');
+    const selectedYear = yearSelect ? yearSelect.value : 'all';
+    
+    let activeTransfers = TRANSFERS_DATA;
+    if (selectedYear !== 'all') {
+        const yNum = parseInt(selectedYear, 10);
+        activeTransfers = TRANSFERS_DATA.filter(tr => tr.year === yNum);
+    }
 
-    if (immTxs.length === 0) {
+    if (activeTransfers.length === 0) {
         const emptyTr = document.createElement('tr');
-        emptyTr.innerHTML = `<td colspan="2" style="padding: 1rem; color: var(--text-muted, #64748b); font-style: italic;">Nessun investimento nel periodo selezionato</td>`;
+        emptyTr.innerHTML = `<td colspan="4" style="padding: 1rem; color: var(--text-muted, #64748b); font-style: italic;">Nessun investimento nel periodo selezionato</td>`;
         tbody.appendChild(emptyTr);
     } else {
-        immTxs.forEach((t, idx) => {
-            const amt = Math.abs(t.amount);
-            totalImm += amt;
-            const dest = t.partner ? t.partner : 'TRI STAR ENERBRAS ONE SCP';
-            const desc = t.description || 'Achat de participation';
-            const dateBadge = t.date ? `<span style="background: rgba(245, 158, 11, 0.2); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.4); padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.85rem; margin-right: 0.75rem;"><i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>${t.date}</span>` : '';
+        let totalImmEur = 0;
+        let totalImmBrl = 0;
 
+        activeTransfers.forEach(trItem => {
+            totalImmEur += trItem.eurAmount;
+            totalImmBrl += trItem.brlAmount;
+
+            const dateBadge = `<span style="background: rgba(245, 158, 11, 0.2); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.4); padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 700; font-size: 0.82rem; margin-right: 0.6rem;"><i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>${trItem.date}</span>`;
+            
             const tr = document.createElement('tr');
             tr.style.borderBottom = '1px solid rgba(128,128,128,0.15)';
             tr.innerHTML = `
-                <td style="padding: 0.9rem 1rem;">
+                <td style="padding: 0.85rem 1rem;">
                     <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem;">
                         ${dateBadge}
-                        <strong style="color: var(--text-main, #1e293b); font-weight: 700;">${desc}</strong>
-                        <span style="color: var(--text-muted, #64748b); font-size: 0.88rem; font-weight: 600;">- ${dest}</span>
+                        <strong style="color: var(--text-main, #1e293b); font-weight: 700;">${trItem.code}</strong>
+                        <span style="color: var(--text-muted, #64748b); font-size: 0.85rem; font-weight: 600;">- ${trItem.description} (${trItem.dest})</span>
+                    </div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted, #94a3b8); margin-top: 0.2rem; margin-left: 2px;">
+                        Transfer su: <span style="font-weight: 600;">${trItem.recipient}</span> - ${trItem.bank}
                     </div>
                 </td>
-                <td style="padding: 0.9rem 1rem; text-align: right; color: #d97706; font-weight: 700; font-size: 1rem;">${formatEur(amt)}</td>
+                <td style="padding: 0.85rem 1rem; text-align: center; color: #f59e0b; font-weight: 700;">
+                    <span>${formatRate(trItem.exchangeRate)}</span>
+                    <span style="font-size: 0.7rem; color: var(--text-muted, #94a3b8); display: block;" data-i18n="badge_cambio_storico">(effettivo)</span>
+                </td>
+                <td style="padding: 0.85rem 1rem; text-align: right; color: #d97706; font-weight: 700; font-size: 1rem;">${formatBrl(trItem.brlAmount)}</td>
+                <td style="padding: 0.85rem 1rem; text-align: right; color: #d97706; font-weight: 700; font-size: 1rem;">${formatEur(trItem.eurAmount)}</td>
             `;
             tbody.appendChild(tr);
         });
-    }
 
-    const trTotImm = document.createElement('tr');
-    trTotImm.innerHTML = `
-        <td style="padding: 1rem; text-align: right; font-weight: bold;" data-i18n="totale_immobili">Totale Immobilizzazioni:</td>
-        <td style="padding: 1rem; text-align: right; font-weight: bold; color: #d97706; font-size: 1.05rem;">${formatEur(totalImm)}</td>
-    `;
-    tbody.appendChild(trTotImm);
+        // Totals row for Immobilizzazioni: average transfer exchange rate
+        const avgImmRate = totalImmEur > 0 ? (totalImmBrl / totalImmEur) : 0;
+        const trTotImm = document.createElement('tr');
+        trTotImm.style.background = 'rgba(245, 158, 11, 0.08)';
+        trTotImm.innerHTML = `
+            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold;" data-i18n="totale_immobili">Totale Immobilizzazioni:</td>
+            <td style="padding: 0.85rem 1rem; text-align: center; font-weight: 800; color: #3b82f6;">
+                <span style="font-size: 1rem;">${formatRate(avgImmRate)}</span>
+                <span style="font-size: 0.72rem; color: var(--text-muted, #94a3b8); display: block;" data-i18n="badge_cambio_medio">(cambio medio)</span>
+            </td>
+            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #d97706; font-size: 1.05rem;">${formatBrl(totalImmBrl)}</td>
+            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: bold; color: #d97706; font-size: 1.05rem;">${formatEur(totalImmEur)}</td>
+        `;
+        tbody.appendChild(trTotImm);
+    }
 }
 
 // =========================================================================
@@ -717,15 +943,15 @@ function renderRisultatoLimitedPartners(selectedPeriod) {
         const chevron = p.tranches.length > 0 ? `<i class="fa-solid fa-chevron-down" style="font-size: 0.75em; margin-right: 8px; color: var(--text-muted, #94a3b8);"></i>` : '';
 
         tr.innerHTML = `
-            <td style="padding: 0.85rem 0.5rem; text-align: center; color: var(--text-muted, #94a3b8); font-size: 0.85rem; font-weight: 700; white-space: nowrap !important;">${idx + 1}</td>
-            <td style="padding: 0.85rem 1rem; white-space: nowrap !important;">${chevron}${nameHtml}</td>
-            <td style="padding: 0.85rem 1rem; text-align: center; white-space: nowrap !important;">${dateStr}</td>
-            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 700; white-space: nowrap !important;"><span class="${p.netCapital > 0 ? 'text-green' : 'text-muted'}" style="white-space: nowrap !important;">${formatEur(p.netCapital)}</span></td>
-            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 600; white-space: nowrap !important;" title="Ponderata giorni: ${p.weightPct.toFixed(2)}%"><span class="text-amber" style="white-space: nowrap !important;">${p.detentionPct.toFixed(2)}%</span></td>
-            <td style="padding: 0.85rem 1rem; text-align: right; color: var(--text-muted, #94a3b8); white-space: nowrap !important;"><span style="white-space: nowrap !important;">${formatEur(p.rimborsi)}</span></td>
-            <td style="padding: 0.85rem 1rem; text-align: right; color: var(--text-muted, #94a3b8); white-space: nowrap !important;"><span style="white-space: nowrap !important;">${formatEur(p.dividendi)}</span></td>
-            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 700; font-size: 0.98rem; white-space: nowrap !important;"><span class="${netClass}" style="white-space: nowrap !important;">${formatEur(p.risultatoNetto)}</span></td>
-            <td style="padding: 0.85rem 1rem; text-align: right; font-weight: 700; font-size: 0.98rem; white-space: nowrap !important;"><span class="${pctClass}" style="white-space: nowrap !important;">${p.isZero ? '0,00%' : (p.risultatoPct >= 0 ? '+' : '') + p.risultatoPct.toFixed(2) + '%'}</span></td>
+            <td style="padding: 0.65rem 0.35rem; text-align: center; color: var(--text-muted, #94a3b8); font-size: 0.85rem; font-weight: 700; white-space: nowrap !important;">${idx + 1}</td>
+            <td style="padding: 0.65rem 0.65rem; white-space: nowrap !important;">${chevron}${nameHtml}</td>
+            <td style="padding: 0.65rem 0.5rem; text-align: center; white-space: nowrap !important;">${dateStr}</td>
+            <td style="padding: 0.65rem 0.5rem; text-align: right; font-weight: 700; white-space: nowrap !important;"><span class="${p.netCapital > 0 ? 'text-green' : 'text-muted'}" style="white-space: nowrap !important;">${formatEur(p.netCapital)}</span></td>
+            <td style="padding: 0.65rem 0.5rem; text-align: right; font-weight: 600; white-space: nowrap !important;" title="Ponderata giorni: ${p.weightPct.toFixed(2)}%"><span class="text-amber" style="white-space: nowrap !important;">${p.detentionPct.toFixed(2)}%</span></td>
+            <td style="padding: 0.65rem 0.5rem; text-align: right; color: var(--text-muted, #94a3b8); white-space: nowrap !important;"><span style="white-space: nowrap !important;">${formatEur(p.rimborsi)}</span></td>
+            <td style="padding: 0.65rem 0.5rem; text-align: right; color: var(--text-muted, #94a3b8); white-space: nowrap !important;"><span style="white-space: nowrap !important;">${formatEur(p.dividendi)}</span></td>
+            <td style="padding: 0.65rem 0.5rem; text-align: right; font-weight: 700; font-size: 0.95rem; white-space: nowrap !important;"><span class="${netClass}" style="white-space: nowrap !important;">${formatEur(p.risultatoNetto)}</span></td>
+            <td style="padding: 0.65rem 0.5rem; text-align: right; font-weight: 700; font-size: 0.95rem; white-space: nowrap !important;"><span class="${pctClass}" style="white-space: nowrap !important;">${p.isZero ? '0,00%' : (p.risultatoPct >= 0 ? '+' : '') + p.risultatoPct.toFixed(2) + '%'}</span></td>
         `;
         tbody.appendChild(tr);
 
@@ -736,7 +962,7 @@ function renderRisultatoLimitedPartners(selectedPeriod) {
             detailTr.style.display = 'none';
             detailTr.style.background = 'rgba(0,0,0,0.2)';
             
-            let detailHtml = `<td colspan="9" style="padding: 0.5rem 1rem 0.75rem 2.5rem;">
+            let detailHtml = `<td colspan="9" style="padding: 0.5rem 0.85rem 0.75rem 1.85rem;">
                 <div style="font-size: 0.78rem; font-weight: 700; color: #60a5fa; margin-bottom: 0.4rem; text-transform: uppercase;">
                     <i class="fa-solid fa-list-check" style="margin-right: 5px;"></i> ${t('label_subtable_tranches', 'Tranches di Apporto e Ponderazione Temporale (Capital-Days)')}
                 </div>
@@ -774,13 +1000,13 @@ function renderRisultatoLimitedPartners(selectedPeriod) {
 
         const trFoot = document.createElement('tr');
         trFoot.innerHTML = `
-            <td colspan="3" class="tfoot-title" style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; white-space: nowrap !important;">${t('total_lp_label', 'TOTALE LIMITED PARTNERS:')}</td>
-            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; white-space: nowrap !important;"><span class="text-green" style="white-space: nowrap !important;">${formatEur(totalAllLpCapital)}</span></td>
-            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.05rem; white-space: nowrap !important;"><span class="text-amber" style="white-space: nowrap !important;">${totalNominalDetention.toFixed(2)}%</span></td>
-            <td style="padding: 1rem; text-align: right; font-weight: 700; color: var(--text-muted, #94a3b8); white-space: nowrap !important;"><span style="white-space: nowrap !important;">${formatEur(totalAllLpRimborsi)}</span></td>
-            <td style="padding: 1rem; text-align: right; font-weight: 700; color: var(--text-muted, #94a3b8); white-space: nowrap !important;"><span style="white-space: nowrap !important;">${formatEur(totalAllLpDividendi)}</span></td>
-            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.1rem; white-space: nowrap !important;"><span class="${netColClass}" style="white-space: nowrap !important;">${formatEur(totalAllLpNetResult)}</span></td>
-            <td style="padding: 1rem; text-align: right; font-weight: 800; font-size: 1.1rem; white-space: nowrap !important;"><span class="${netColClass}" style="white-space: nowrap !important;">${(totalAvgPct >= 0 ? '+' : '') + totalAvgPct.toFixed(2)}%</span></td>
+            <td colspan="3" class="tfoot-title" style="padding: 0.75rem 0.65rem; text-align: right; font-weight: 800; font-size: 0.95rem; white-space: nowrap !important;">${t('total_lp_label', 'TOTALE LIMITED PARTNERS:')}</td>
+            <td style="padding: 0.75rem 0.5rem; text-align: right; font-weight: 800; font-size: 0.95rem; white-space: nowrap !important;"><span class="text-green" style="white-space: nowrap !important;">${formatEur(totalAllLpCapital)}</span></td>
+            <td style="padding: 0.75rem 0.5rem; text-align: right; font-weight: 800; font-size: 0.95rem; white-space: nowrap !important;"><span class="text-amber" style="white-space: nowrap !important;">${totalNominalDetention.toFixed(2)}%</span></td>
+            <td style="padding: 0.75rem 0.5rem; text-align: right; font-weight: 700; color: var(--text-muted, #94a3b8); white-space: nowrap !important;"><span style="white-space: nowrap !important;">${formatEur(totalAllLpRimborsi)}</span></td>
+            <td style="padding: 0.75rem 0.5rem; text-align: right; font-weight: 700; color: var(--text-muted, #94a3b8); white-space: nowrap !important;"><span style="white-space: nowrap !important;">${formatEur(totalAllLpDividendi)}</span></td>
+            <td style="padding: 0.75rem 0.5rem; text-align: right; font-weight: 800; font-size: 0.98rem; white-space: nowrap !important;"><span class="${netColClass}" style="white-space: nowrap !important;">${formatEur(totalAllLpNetResult)}</span></td>
+            <td style="padding: 0.75rem 0.5rem; text-align: right; font-weight: 800; font-size: 0.98rem; white-space: nowrap !important;"><span class="${netColClass}" style="white-space: nowrap !important;">${(totalAvgPct >= 0 ? '+' : '') + totalAvgPct.toFixed(2)}%</span></td>
         `;
         tfoot.appendChild(trFoot);
     }

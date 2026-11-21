@@ -12,7 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     
-    <link rel="stylesheet" href="../style.css?v=311">
+    <link rel="stylesheet" href="../style.css?v=312">
 
     <link rel="manifest" href="../manifest.json">
     <link rel="apple-touch-icon" href="Loghi/Green Enerbras solo logo.png">
@@ -20,7 +20,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="../auth.js?v=330"></script>
     <script>Auth.requireRole(['admin', 'partner', 'visitor']);</script>
-    <script src="../i18n.js?v=302"></script>
+    <script src="../i18n.js?v=303"></script>
 </head>
 <body>
     <div class="app-container">
@@ -113,9 +113,41 @@
 
             
 
+            <!-- Riquadro Evidente Tasso di Cambio EUR / R$ -->
+            <div class="glass-panel exchange-rate-banner" style="margin-top: 1.5rem; margin-bottom: 0.5rem; padding: 1.25rem 1.75rem; border-radius: 14px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(59, 130, 246, 0.14) 100%); border: 1px solid rgba(16, 185, 129, 0.35); box-shadow: 0 8px 24px rgba(0,0,0,0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 1.25rem;">
+                    <div style="width: 56px; height: 56px; border-radius: 14px; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; color: #10b981; flex-shrink: 0;">
+                        <i class="fa-solid fa-money-bill-transfer"></i>
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.25rem; flex-wrap: wrap;">
+                            <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-muted, #94a3b8); text-transform: uppercase; letter-spacing: 0.6px;" data-i18n="label_cambio_attuale_eur_brl">Tasso di Cambio EUR / R$ Utilizzato</span>
+                            <span id="badge-exchange-live" style="background: rgba(16, 185, 129, 0.25); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.45); font-size: 0.72rem; padding: 0.18rem 0.55rem; border-radius: 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;">
+                                <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block;"></span> <span id="badge-exchange-text" data-i18n="label_cambio_live">Live (Tempo reale)</span>
+                            </span>
+                        </div>
+                        <div style="display: flex; align-items: baseline; gap: 0.85rem; flex-wrap: wrap;">
+                            <span id="rate-eur-brl-val" style="font-size: 2rem; font-weight: 800; color: #10b981; letter-spacing: -0.5px; line-height: 1.1;">1 € = 5,8823 R$</span>
+                            <span id="rate-eur-brl-desc" style="font-size: 0.82rem; color: var(--text-muted, #94a3b8);" data-i18n="desc_cambio_mercati">Tasso di riferimento mercati valutari (tempo reale)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+                    <div style="text-align: right; border-left: 1px solid rgba(255,255,255,0.12); padding-left: 1.25rem;">
+                        <div style="font-size: 0.76rem; color: var(--text-muted, #94a3b8); font-weight: 600; text-transform: uppercase;" data-i18n="label_cambio_medio_trasferimenti">Cambio medio trasferimenti:</div>
+                        <div id="rate-eur-brl-avg" style="font-size: 1.15rem; font-weight: 800; color: #3b82f6; margin-top: 0.15rem;">1 € = 6,0164 R$</div>
+                        <div style="font-size: 0.74rem; color: var(--text-muted, #94a3b8);">(Investimenti Brasile)</div>
+                    </div>
+                    <button type="button" class="btn-refresh-exchange" onclick="refreshLiveExchangeRate()" title="Aggiorna tasso di cambio" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); color: #fff; padding: 0.55rem 0.95rem; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;">
+                        <i class="fa-solid fa-rotate" id="exchange-refresh-icon"></i> <span data-i18n="btn_aggiorna_cambio">Aggiorna</span>
+                    </button>
+                </div>
+            </div>
+
             <!-- Bank Movements -->
             
-            <section class="dashboard-grid" style="grid-template-columns: 1fr; margin-top: 2rem;">
+            <section class="dashboard-grid" style="grid-template-columns: 1fr; margin-top: 1.5rem;">
                 <div class="glass-panel" style="grid-column: 1 / -1; min-height: 500px; position: relative;">
                     
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
@@ -139,11 +171,12 @@
                     <!-- Tab Content 1: Costi / Ricavi -->
                     <div id="tab-ricavi-costi" class="tab-content" style="display: block;">
                         <div class="table-container" style="overflow-x: auto;">
-                            <table style="width: 100%; color: white; border-collapse: collapse; min-width: 800px;">
+                            <table style="width: 100%; color: white; border-collapse: collapse;">
                                 <thead style="background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1);">
                                     <tr>
-                                        <th style="padding: 1rem; text-align: left;"><span data-i18n="table_tipologia">Tipologia</span></th>
-                                        <th style="padding: 1rem; text-align: right;"><span data-i18n="table_importo">Importo (€)</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: left;"><span data-i18n="table_tipologia">Tipologia</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 180px;"><span data-i18n="table_importo_brl">Importo (R$)</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 180px;"><span data-i18n="table_importo_eur">Importo (€)</span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="table-body-ricavi-costi">
@@ -155,13 +188,14 @@
 
                     <!-- Tab Content 2: Capitale / Immobilizzazioni -->
                     <div id="tab-capitale" class="tab-content" style="display: none;">
-                        
                         <div class="table-container" style="overflow-x: auto;">
-                            <table style="width: 100%; color: white; border-collapse: collapse; min-width: 800px;">
+                            <table style="width: 100%; color: white; border-collapse: collapse;">
                                 <thead style="background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1);">
                                     <tr>
-                                        <th style="padding: 1rem; text-align: left;"><span data-i18n="table_tipologia">Tipologia</span></th>
-                                        <th style="padding: 1rem; text-align: right;"><span data-i18n="table_importo">Importo (€)</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: left;"><span data-i18n="table_tipologia">Tipologia</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: center; width: 150px;"><span data-i18n="table_cambio_eur_brl">Cambio EUR/R$</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 180px;"><span data-i18n="table_importo_brl">Importo (R$)</span></th>
+                                        <th style="padding: 0.85rem 1rem; text-align: right; width: 180px;"><span data-i18n="table_importo_eur">Importo (€)</span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="table-body-capitale">
@@ -231,18 +265,18 @@
 
                         <!-- Table -->
                         <div class="table-container" style="overflow-x: auto; background: rgba(0,0,0,0.15); border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 1.5rem;">
-                            <table id="table-lp-risultati-el" style="width: 100%; color: white; border-collapse: collapse; min-width: 1180px;">
+                            <table id="table-lp-risultati-el" style="width: 100%; color: white; border-collapse: collapse;">
                                 <thead style="background: rgba(255,255,255,0.05); border-bottom: 2px solid rgba(255,255,255,0.12);">
                                     <tr>
-                                        <th style="padding: 0.85rem 0.5rem; text-align: center; width: 45px; min-width: 45px; white-space: nowrap !important;">#</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: left; min-width: 250px; white-space: nowrap !important;" data-i18n="col_lp_name">Limited Partner (Socio Accomandante)</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: center; min-width: 140px; white-space: nowrap !important;" data-i18n="col_lp_date">Data Apporto</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right; min-width: 145px; white-space: nowrap !important;" data-i18n="col_lp_capital">Capitale Versato (€)</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right; min-width: 110px; white-space: nowrap !important;" data-i18n="col_lp_detention">Quota SCSp (%)</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right; min-width: 130px; white-space: nowrap !important;" data-i18n="col_lp_repayments">Rimborsi Capitale (€)</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right; min-width: 130px; white-space: nowrap !important;" data-i18n="col_lp_dividends">Dividendi (€)</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right; min-width: 145px; white-space: nowrap !important;" data-i18n="col_lp_net_result">Risultato Netto (€)</th>
-                                        <th style="padding: 0.85rem 1rem; text-align: right; min-width: 110px; white-space: nowrap !important;" data-i18n="col_lp_yield">Risultato %</th>
+                                        <th style="padding: 0.65rem 0.35rem; text-align: center; width: 35px; white-space: nowrap !important;">#</th>
+                                        <th style="padding: 0.65rem 0.65rem; text-align: left; min-width: 175px; white-space: nowrap !important;" data-i18n="col_lp_name">Limited Partner (Socio Accomandante)</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: center; width: 125px; white-space: nowrap !important;" data-i18n="col_lp_date">Data Apporto</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 110px; white-space: nowrap !important;" data-i18n="col_lp_capital">Capitale Versato (€)</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 85px; white-space: nowrap !important;" data-i18n="col_lp_detention">Quota SCSp (%)</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 115px; white-space: nowrap !important;" data-i18n="col_lp_repayments">Rimborsi Capitale (€)</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 95px; white-space: nowrap !important;" data-i18n="col_lp_dividends">Dividendi (€)</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 115px; white-space: nowrap !important;" data-i18n="col_lp_net_result">Risultato Netto (€)</th>
+                                        <th style="padding: 0.65rem 0.5rem; text-align: right; width: 85px; white-space: nowrap !important;" data-i18n="col_lp_yield">Risultato %</th>
                                     </tr>
                                 </thead>
                                 <tbody id="table-body-lp-risultati">
@@ -275,7 +309,7 @@
     </div>
 
     <script src="../data.js"></script>
-    <script src="risultati_app.js?v=302"></script>
+    <script src="risultati_app.js?v=303"></script>
 </body>
 </html>
 
